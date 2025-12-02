@@ -1,14 +1,15 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '../ui/Button';
 import { cn } from '../../lib/utils';
 import { Menu, X } from 'lucide-react';
 import { Logo } from '../ui/Logo';
+import { useAuth } from '../../context/AuthContext';
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const { isAuthenticated, logout, user } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -29,9 +30,11 @@ const Navbar: React.FC = () => {
 
   const navLinks = [
     { name: 'Home', path: '/' },
-    { name: 'Pet Profile', path: '/pet-profile' },
+    ...(isAuthenticated ? [
+      { name: 'Pet Profile', path: '/pet-profile' },
+      { name: 'Bookings', path: '/booking' },
+    ] : []),
     { name: 'Become a Sitter', path: '/become-a-sitter' },
-    { name: 'Bookings', path: '/booking' },
   ];
 
   return (
@@ -74,10 +77,44 @@ const Navbar: React.FC = () => {
                 </Link>
               )
             ))}
+            {isAuthenticated ? (
+              <div className="flex items-center gap-4">
+                <span className="text-sm font-medium text-muted-foreground">Hi, {user?.name}</span>
+                <Button
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-primary"
+                  onClick={logout}
+                >
+                  Log out
+                </Button>
+              </div>
+            ) : (
+              <Link to="/login">
+                <Button variant="secondary" className="shadow-glow">
+                  Log in
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center">
+            {isAuthenticated ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mr-2 text-muted-foreground hover:text-primary"
+                onClick={logout}
+              >
+                Log out
+              </Button>
+            ) : (
+              <Link to="/login" className="mr-2">
+                <Button variant="secondary" size="sm" className="shadow-glow">
+                  Log in
+                </Button>
+              </Link>
+            )}
             <button
               onClick={toggleMenu}
               className="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:text-primary focus:outline-none"

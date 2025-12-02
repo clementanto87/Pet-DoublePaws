@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
@@ -15,11 +16,25 @@ import {
   Search
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useAuth } from '../context/AuthContext';
 
 const BookingPage: React.FC = () => {
   const [petType, setPetType] = useState<'dog' | 'cat'>('dog');
   const [selectedService, setSelectedService] = useState('boarding');
   const [selectedSize, setSelectedSize] = useState('medium');
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated } = useAuth();
+
+  const handleSearch = () => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: location } });
+      return;
+    }
+    // Proceed with search/booking logic
+    console.log('Searching for sitters...');
+  };
 
   const services = [
     { id: 'boarding', label: 'Boarding', icon: Moon, description: 'Overnight in your sitter\'s home', category: 'away' },
@@ -180,7 +195,11 @@ const BookingPage: React.FC = () => {
             )}
 
             {/* Search Button */}
-            <Button size="lg" className="w-full h-16 text-xl font-bold shadow-glow hover:scale-[1.02] transition-transform">
+            <Button
+              size="lg"
+              className="w-full h-16 text-xl font-bold shadow-glow hover:scale-[1.02] transition-transform"
+              onClick={handleSearch}
+            >
               <Search className="w-6 h-6 mr-2" />
               Search for Sitters
             </Button>
