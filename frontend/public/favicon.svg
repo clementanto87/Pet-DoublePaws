@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Blue Paw (Back) -->
+  <g transform="rotate(-12 50 50) translate(-10 0)">
+    <path d="M30 65C30 78.8071 41.1929 90 55 90C68.8071 90 80 78.8071 80 65C80 51.1929 68.8071 40 55 40C41.1929 40 30 51.1929 30 65Z" fill="#0EA5E9"/>
+    <circle cx="35" cy="35" r="10" fill="#0EA5E9"/>
+    <circle cx="55" cy="25" r="10" fill="#0EA5E9"/>
+    <circle cx="75" cy="35" r="10" fill="#0EA5E9"/>
+    <circle cx="85" cy="55" r="10" fill="#0EA5E9"/>
+  </g>
+
+  <!-- Orange Paw (Front) -->
+  <g transform="rotate(12 50 50) translate(10 0)">
+    <!-- White Outline/Halo -->
+    <path d="M30 65C30 78.8071 41.1929 90 55 90C68.8071 90 80 78.8071 80 65C80 51.1929 68.8071 40 55 40C41.1929 40 30 51.1929 30 65Z" stroke="white" stroke-width="6" fill="#F97316"/>
+    <circle cx="35" cy="35" r="13" fill="white"/>
+    <circle cx="55" cy="25" r="13" fill="white"/>
+    <circle cx="75" cy="35" r="13" fill="white"/>
+    <circle cx="85" cy="55" r="13" fill="white"/>
+    
+    <!-- Actual Orange Paw -->
+    <circle cx="35" cy="35" r="10" fill="#F97316"/>
+    <circle cx="55" cy="25" r="10" fill="#F97316"/>
+    <circle cx="75" cy="35" r="10" fill="#F97316"/>
+    <circle cx="85" cy="55" r="10" fill="#F97316"/>
+  </g>
+</svg>

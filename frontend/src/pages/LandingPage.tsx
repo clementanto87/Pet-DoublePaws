@@ -16,6 +16,7 @@ import {
   Star,
   PawPrint
 } from 'lucide-react';
+import { PawPrints } from '../components/ui/PawPrints';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -30,6 +31,10 @@ const LandingPage: React.FC = () => {
           <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full bg-primary/10 blur-[100px] animate-float"></div>
           <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-secondary/10 blur-[100px] animate-float" style={{ animationDelay: '2s' }}></div>
         </div>
+
+        {/* Cute Paw Animations */}
+        <PawPrints variant="floating" />
+        <PawPrints variant="walking" className="opacity-50" />
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
