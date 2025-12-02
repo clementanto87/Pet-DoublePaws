@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '../ui/Button';
-import { Card, CardContent } from '../ui/Card';
+
 import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
 import { Checkbox } from '../ui/Checkbox';
