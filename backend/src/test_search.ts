@@ -22,7 +22,13 @@ const runTest = async (name: string, params: any, expectedNames: string[]) => {
         console.log('Params:', JSON.stringify(params));
 
         const url = new URL(API_URL);
-        Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+        Object.keys(params).forEach(key => {
+            if (Array.isArray(params[key])) {
+                params[key].forEach((val: any) => url.searchParams.append(key, val.toString()));
+            } else {
+                url.searchParams.append(key, params[key]);
+            }
+        });
 
         const response = await fetch(url.toString());
 
@@ -122,7 +128,21 @@ const runTests = async () => {
             startDate: '2025-12-25',
             endDate: '2025-12-26'
         },
-        ['Alice'] // Filter removed, so Alice SHOULD appear now.
+        ['Alice']
+    );
+
+    // 8. Search NY for Small AND Large Dogs
+    // Alice: S/M/L. Bob: S.
+    // Expected: Alice only.
+    await runTest(
+        'Search NY for Small AND Large Dogs',
+        {
+            latitude: 40.785091,
+            longitude: -73.968285,
+            petType: 'dog',
+            weight: [5, 30] // Small (5kg) and Large (30kg)
+        },
+        ['Alice']
     );
 };
 

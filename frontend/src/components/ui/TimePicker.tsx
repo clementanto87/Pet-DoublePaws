@@ -43,22 +43,22 @@ export const TimePicker: React.FC<TimePickerProps> = ({
         const rect = buttonRef.current.getBoundingClientRect();
         const popupWidth = 320;
         let left = rect.left;
-        
+
         if (left + popupWidth > window.innerWidth - 16) {
           left = window.innerWidth - popupWidth - 16;
         }
         if (left < 16) left = 16;
 
         setPosition({
-          top: rect.bottom + window.scrollY + 8,
-          left: left + window.scrollX
+          top: rect.bottom + 8,
+          left: left
         });
       }
     };
 
     const handleClickOutside = (e: MouseEvent) => {
       if (
-        popupRef.current && 
+        popupRef.current &&
         !popupRef.current.contains(e.target as Node) &&
         buttonRef.current &&
         !buttonRef.current.contains(e.target as Node)
@@ -83,7 +83,7 @@ export const TimePicker: React.FC<TimePickerProps> = ({
     let hours24 = hour;
     if (period === 'PM' && hour !== 12) hours24 = hour + 12;
     else if (period === 'AM' && hour === 12) hours24 = 0;
-    
+
     onChange(`${hours24.toString().padStart(2, '0')}:${minute}`);
     setIsOpen(false);
   };

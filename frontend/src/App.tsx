@@ -8,6 +8,8 @@ import BookingPage from './pages/BookingPage';
 import PetSitterRegistration from './pages/PetSitterRegistration';
 import BecomeSitterLandingPage from './pages/BecomeSitterLandingPage';
 import SitterDashboard from './pages/SitterDashboard';
+import SitterProfileView from './pages/SitterProfileView';
+import ContactSitterPage from './pages/ContactSitterPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import Dashboard from './pages/Dashboard';
@@ -53,6 +55,8 @@ function App() {
 
                   <Route path="/booking" element={<BookingPage />} />
                   <Route path="/search" element={<SearchResultsPage />} />
+                  <Route path="/sitter/:id" element={<SitterProfileView />} />
+                  <Route path="/contact-sitter/:id" element={<ContactSitterPage />} />
                   <Route path="/become-a-sitter" element={<BecomeSitterLandingPage />} />
                   <Route path="/become-a-sitter/register" element={<PetSitterRegistration />} />
                   <Route

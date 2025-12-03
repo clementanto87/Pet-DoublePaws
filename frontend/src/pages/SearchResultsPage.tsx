@@ -117,7 +117,12 @@ const SearchResultsPage: React.FC = () => {
                                     <div className="flex gap-2">
                                         {/* Skills/Tags could go here */}
                                     </div>
-                                    <Button size="sm">View Profile</Button>
+                                    <Button 
+                                        size="sm"
+                                        onClick={() => navigate(`/sitter/${sitter.id}`, { state: { sitter } })}
+                                    >
+                                        View Profile
+                                    </Button>
                                 </div>
                             </div>
                         </div>

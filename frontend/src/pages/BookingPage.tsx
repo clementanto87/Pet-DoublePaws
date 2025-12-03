@@ -47,7 +47,7 @@ const BookingPage: React.FC = () => {
   const [endTime, setEndTime] = useState('');
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
   const petDropdownRef = useRef<HTMLDivElement>(null);
@@ -112,38 +112,38 @@ const BookingPage: React.FC = () => {
   const needsEndDate = selectedService === 'boarding' || selectedService === 'house-sitting' || bookingType === 'recurring';
 
   const services = [
-    { 
-      id: 'boarding', 
-      label: 'Boarding', 
-      icon: Home, 
+    {
+      id: 'boarding',
+      label: 'Boarding',
+      icon: Home,
       description: 'Your pet stays at the sitter\'s home',
       color: 'from-orange-500 to-amber-500'
     },
-    { 
-      id: 'house-sitting', 
-      label: 'House Sitting', 
-      icon: Building, 
+    {
+      id: 'house-sitting',
+      label: 'House Sitting',
+      icon: Building,
       description: 'Sitter stays at your home',
       color: 'from-blue-500 to-cyan-500'
     },
-    { 
-      id: 'drop-in', 
-      label: 'Drop-In Visits', 
-      icon: Sun, 
+    {
+      id: 'drop-in',
+      label: 'Drop-In Visits',
+      icon: Sun,
       description: '30-60 min check-ins at your home',
       color: 'from-yellow-500 to-orange-500'
     },
-    { 
-      id: 'day-care', 
-      label: 'Doggy Day Care', 
-      icon: Dog, 
+    {
+      id: 'day-care',
+      label: 'Doggy Day Care',
+      icon: Dog,
       description: 'Daytime care at sitter\'s home',
       color: 'from-green-500 to-emerald-500'
     },
-    { 
-      id: 'walking', 
-      label: 'Dog Walking', 
-      icon: PawPrint, 
+    {
+      id: 'walking',
+      label: 'Dog Walking',
+      icon: PawPrint,
       description: 'Regular walks in your neighborhood',
       color: 'from-purple-500 to-pink-500'
     },
@@ -151,28 +151,38 @@ const BookingPage: React.FC = () => {
 
   const handleSearch = () => {
     setIsSearching(true);
-    
+
     const params = new URLSearchParams();
     if (coordinates) {
       params.append('latitude', coordinates.lat.toString());
       params.append('longitude', coordinates.lon.toString());
     }
     params.append('serviceType', selectedService);
-    
+
     const petType = petCounts.dog > 0 ? 'dog' : (petCounts.cat > 0 ? 'cat' : '');
     if (petType) params.append('petType', petType);
-    
-    if (selectedSize) {
+
+    if (selectedSizes.length > 0) {
       const sizeWeights: Record<string, number> = { small: 5, medium: 12, large: 30, giant: 50 };
-      params.append('weight', sizeWeights[selectedSize].toString());
+      selectedSizes.forEach(size => {
+        params.append('weight', sizeWeights[size].toString());
+      });
     }
-    
+
     if (startDate) params.append('startDate', startDate);
     if (endDate) params.append('endDate', endDate);
-    
+
     setTimeout(() => {
       navigate(`/search?${params.toString()}`);
     }, 500);
+  };
+
+  const toggleSize = (sizeId: string) => {
+    setSelectedSizes(prev =>
+      prev.includes(sizeId)
+        ? prev.filter(id => id !== sizeId)
+        : [...prev, sizeId]
+    );
   };
 
   const isFormValid = hasPets && location && startDate && (needsEndDate ? endDate : true);
@@ -194,11 +204,11 @@ const BookingPage: React.FC = () => {
             <Sparkles className="w-4 h-4 text-primary" />
             <span className="text-sm font-semibold text-primary">Find Your Perfect Match</span>
           </div>
-          
+
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-gray-900 dark:text-white leading-tight mb-4">
             Book a pet sitter for
           </h1>
-          
+
           {/* Pet Selection Inline */}
           <div className="relative inline-block" ref={petDropdownRef}>
             <button
@@ -206,8 +216,8 @@ const BookingPage: React.FC = () => {
               className={cn(
                 "inline-flex items-center gap-2 px-6 py-3 rounded-2xl border-2 transition-all duration-300",
                 "bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl",
-                hasPets 
-                  ? "border-primary text-primary" 
+                hasPets
+                  ? "border-primary text-primary"
                   : "border-gray-200 dark:border-gray-700 text-gray-500 animate-pulse"
               )}
             >
@@ -241,8 +251,8 @@ const BookingPage: React.FC = () => {
                         disabled={petCounts.dog === 0}
                         className={cn(
                           "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
-                          petCounts.dog === 0 
-                            ? "bg-gray-100 dark:bg-gray-700 text-gray-400" 
+                          petCounts.dog === 0
+                            ? "bg-gray-100 dark:bg-gray-700 text-gray-400"
                             : "bg-primary/10 text-primary hover:bg-primary/20"
                         )}
                       >
@@ -283,8 +293,8 @@ const BookingPage: React.FC = () => {
                         disabled={petCounts.cat === 0}
                         className={cn(
                           "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
-                          petCounts.cat === 0 
-                            ? "bg-gray-100 dark:bg-gray-700 text-gray-400" 
+                          petCounts.cat === 0
+                            ? "bg-gray-100 dark:bg-gray-700 text-gray-400"
                             : "bg-primary/10 text-primary hover:bg-primary/20"
                         )}
                       >
@@ -333,7 +343,14 @@ const BookingPage: React.FC = () => {
                 return (
                   <button
                     key={service.id}
-                    onClick={() => setSelectedService(service.id)}
+                    onClick={() => {
+                      setSelectedService(service.id);
+                      setStartDate('');
+                      setEndDate('');
+                      setStartTime('');
+                      setEndTime('');
+                      setBookingType('one-time');
+                    }}
                     className={cn(
                       "relative p-4 rounded-2xl border-2 transition-all duration-300 text-left group overflow-hidden",
                       isSelected
@@ -347,12 +364,12 @@ const BookingPage: React.FC = () => {
                       service.color,
                       isSelected ? "opacity-10" : "group-hover:opacity-5"
                     )} />
-                    
+
                     <div className="relative z-10">
                       <div className={cn(
                         "w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-all",
-                        isSelected 
-                          ? `bg-gradient-to-br ${service.color} text-white shadow-lg` 
+                        isSelected
+                          ? `bg-gradient-to-br ${service.color} text-white shadow-lg`
                           : "bg-gray-100 dark:bg-gray-700 text-gray-500 group-hover:text-primary"
                       )}>
                         <service.icon className="w-5 h-5" />
@@ -367,7 +384,7 @@ const BookingPage: React.FC = () => {
                         {service.description}
                       </p>
                     </div>
-                    
+
                     {/* Selected indicator */}
                     {isSelected && (
                       <div className="absolute top-2 right-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
@@ -405,7 +422,7 @@ const BookingPage: React.FC = () => {
                   )}
                 />
                 <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
-                
+
                 {location && (
                   <button
                     onClick={() => {
@@ -493,7 +510,7 @@ const BookingPage: React.FC = () => {
                     placeholder="Select start date"
                   />
                 </div>
-                
+
                 {needsEndDate && (
                   <div>
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
@@ -543,11 +560,11 @@ const BookingPage: React.FC = () => {
                 </h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {PET_SIZES.map((size) => {
-                    const isSelected = selectedSize === size.id;
+                    const isSelected = selectedSizes.includes(size.id);
                     return (
                       <button
                         key={size.id}
-                        onClick={() => setSelectedSize(size.id)}
+                        onClick={() => toggleSize(size.id)}
                         className={cn(
                           "p-4 rounded-2xl border-2 transition-all duration-300 text-center",
                           isSelected

@@ -3,467 +3,515 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import {
-  DollarSign,
-  Clock,
-  Heart,
-  Shield,
-  MapPin,
-  Star,
-  CheckCircle,
-  ArrowRight,
-  Sparkles,
-  Users,
-  Calendar,
-  Briefcase,
-  PawPrint,
-  BadgeCheck,
-  TrendingUp,
-  Wallet
+    DollarSign,
+    Clock,
+    Heart,
+    Shield,
+    MapPin,
+    CheckCircle,
+    ArrowRight,
+    Sparkles,
+    Users,
+    Calendar,
+    Briefcase,
+    PawPrint,
+    BadgeCheck,
+    Wallet,
+    Headphones,
+    Camera,
+    CreditCard,
+    Gift,
+    Home,
+    Award,
+    Zap,
+    Target
 } from 'lucide-react';
 import { PawPrints } from '../components/ui/PawPrints';
+import { cn } from '../lib/utils';
 
 const BecomeSitterLandingPage: React.FC = () => {
-  const navigate = useNavigate();
+    const navigate = useNavigate();
 
-  const benefits = [
-    {
-      icon: DollarSign,
-      title: 'Earn Great Income',
-      description: 'Set your own rates and earn up to $1,000+ per month doing what you love—caring for pets.',
-      highlight: '$1,000+/mo'
-    },
-    {
-      icon: Clock,
-      title: 'Flexible Schedule',
-      description: 'Work when you want. You control your availability, whether part-time or full-time.',
-      highlight: 'Your Hours'
-    },
-    {
-      icon: Heart,
-      title: 'Love What You Do',
-      description: 'Spend your days with adorable pets. Turn your passion for animals into a rewarding career.',
-      highlight: 'Dream Job'
-    },
-    {
-      icon: MapPin,
-      title: 'Work From Home',
-      description: 'Provide boarding and daycare from the comfort of your own home. No commute needed.',
-      highlight: 'Home-Based'
-    }
-  ];
+    // Benefits with earnings focus
+    const benefits = [
+        {
+            icon: DollarSign,
+            title: 'Set Your Own Rates',
+            description: 'You decide what you charge. Keep 85% of every booking. Top sitters earn $1,000+ monthly.',
+            gradient: 'from-green-500 to-emerald-500'
+        },
+        {
+            icon: Clock,
+            title: 'Complete Flexibility',
+            description: 'Work when you want, as much as you want. Perfect for students, retirees, or anyone with a flexible schedule.',
+            gradient: 'from-blue-500 to-cyan-500'
+        },
+        {
+            icon: Heart,
+            title: 'Do What You Love',
+            description: 'Get paid to spend time with adorable pets. Turn your passion for animals into a rewarding side income.',
+            gradient: 'from-pink-500 to-rose-500'
+        },
+        {
+            icon: Home,
+            title: 'Work From Home',
+            description: 'Offer boarding and daycare right from your home. No commute, no office—just you and the pets.',
+            gradient: 'from-primary to-orange-500'
+        }
+    ];
 
-  const howItWorks = [
-    {
-      step: 1,
-      title: 'Create Your Profile',
-      description: 'Tell us about yourself, your experience with pets, and the services you want to offer.',
-      icon: Users
-    },
-    {
-      step: 2,
-      title: 'Set Your Services',
-      description: 'Choose from boarding, daycare, walking, drop-in visits, and more. Set your own rates.',
-      icon: Briefcase
-    },
-    {
-      step: 3,
-      title: 'Get Verified',
-      description: 'Complete our verification process to build trust with pet parents in your area.',
-      icon: BadgeCheck
-    },
-    {
-      step: 4,
-      title: 'Start Earning',
-      description: 'Accept bookings, care for pets, and get paid securely through our platform.',
-      icon: Wallet
-    }
-  ];
+    // How it works - simplified
+    const howItWorks = [
+        {
+            step: 1,
+            title: 'Create Your Profile',
+            description: 'Tell us about yourself and the services you want to offer. Add photos and set your rates.',
+            icon: Users,
+            color: 'from-blue-500 to-cyan-500'
+        },
+        {
+            step: 2,
+            title: 'Get Verified',
+            description: 'Complete a quick verification to build trust with pet parents. We make it easy and fast.',
+            icon: BadgeCheck,
+            color: 'from-purple-500 to-pink-500'
+        },
+        {
+            step: 3,
+            title: 'Start Earning',
+            description: 'Receive booking requests, accept the ones you want, and get paid securely after each stay.',
+            icon: Wallet,
+            color: 'from-green-500 to-emerald-500'
+        }
+    ];
 
-  const stats = [
-    { value: '10K+', label: 'Active Sitters', icon: Users },
-    { value: '$50M+', label: 'Paid to Sitters', icon: TrendingUp },
-    { value: '4.9★', label: 'Average Rating', icon: Star },
-    { value: '100K+', label: 'Pets Cared For', icon: PawPrint }
-  ];
+    // What you get
+    const perks = [
+        { icon: Shield, title: 'Insurance Coverage', description: 'Every booking is covered by our comprehensive pet insurance' },
+        { icon: Headphones, title: '24/7 Support', description: 'Our dedicated team is always here to help you succeed' },
+        { icon: CreditCard, title: 'Fast Payments', description: 'Get paid within 2 days after each completed booking' },
+        { icon: Camera, title: 'Easy App', description: 'Manage bookings, chat with clients, and update availability easily' },
+        { icon: Gift, title: 'No Upfront Costs', description: 'Completely free to join—we only earn when you earn' },
+        { icon: Target, title: 'Marketing Support', description: 'We help connect you with pet parents in your area' }
+    ];
 
-  const testimonials = [
-    {
-      name: 'Jessica M.',
-      role: 'Dog Sitter since 2022',
-      image: 'https://i.pravatar.cc/100?img=23',
-      quote: 'I left my office job to become a full-time sitter. Best decision ever! I now earn more while doing what I love.',
-      earnings: '$2,400/month'
-    },
-    {
-      name: 'Michael T.',
-      role: 'Cat & Dog Sitter',
-      image: 'https://i.pravatar.cc/100?img=12',
-      quote: 'The flexibility is amazing. I can study and still earn great money taking care of pets on weekends.',
-      earnings: '$800/month'
-    },
-    {
-      name: 'Emily R.',
-      role: 'Premium Sitter',
-      image: 'https://i.pravatar.cc/100?img=45',
-      quote: 'Double Paws gave me the platform to turn my home into a pet paradise. The support team is incredible!',
-      earnings: '$3,200/month'
-    }
-  ];
+    // Services you can offer
+    const services = [
+        { name: 'Pet Boarding', desc: 'Overnight care at your home', earning: '$25-50/night' },
+        { name: 'Doggy Day Care', desc: 'Daytime care and play', earning: '$20-40/day' },
+        { name: 'Dog Walking', desc: 'Exercise and adventure', earning: '$15-30/walk' },
+        { name: 'Drop-in Visits', desc: 'Quick check-ins', earning: '$15-25/visit' },
+        { name: 'House Sitting', desc: 'Stay at client\'s home', earning: '$40-75/night' }
+    ];
 
-  const requirements = [
-    'Must be 18 years or older',
-    'Love for animals and genuine passion for pet care',
-    'Safe, pet-friendly environment',
-    'Reliable and responsible',
-    'Good communication skills',
-    'Pass background verification'
-  ];
+    // Requirements - simplified
+    const requirements = [
+        { text: '18 years or older', icon: CheckCircle },
+        { text: 'Love for animals', icon: Heart },
+        { text: 'Safe, pet-friendly space', icon: Home },
+        { text: 'Reliable & responsible', icon: BadgeCheck },
+        { text: 'Pass background check', icon: Shield }
+    ];
 
-  return (
-    <div className="flex-1 w-full overflow-hidden">
-      {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-20">
-        {/* Background Elements */}
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-background-alt-dark dark:via-background-alt-dark dark:to-background-alt-dark -z-20"></div>
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
-          <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-primary/20 blur-[120px] animate-float"></div>
-          <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-secondary/15 blur-[100px] animate-float" style={{ animationDelay: '2s' }}></div>
-          <div className="absolute top-[40%] left-[30%] w-[300px] h-[300px] rounded-full bg-yellow-400/10 blur-[80px] animate-float" style={{ animationDelay: '4s' }}></div>
-        </div>
-
-        {/* Paw Animations */}
-        <PawPrints variant="floating" />
-
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
-            <div className="flex-1 text-center lg:text-left animate-slide-up">
-              <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-white/10 border border-primary/30 shadow-lg mb-8 animate-fade-in">
-                <Sparkles className="w-4 h-4 text-primary" />
-                <span className="text-sm font-semibold text-primary">Join 10,000+ Pet Sitters</span>
-              </div>
-
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-display font-bold mb-6 leading-[1.1] tracking-tight">
-                Turn Your Love for Pets Into <br />
-                <span className="text-gradient">Extra Income</span>
-              </h1>
-
-              <p className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-                Become a Double Paws sitter and earn money doing what you love—caring for adorable pets in your neighborhood.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-10">
-                <Button
-                  onClick={() => navigate('/become-a-sitter/register')}
-                  size="lg"
-                  className="text-lg px-10 py-6 h-auto shadow-glow hover:scale-105 transition-all duration-300 group"
-                >
-                  Start Your Application
-                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                  size="lg"
-                  className="text-lg px-10 py-6 h-auto bg-white/70 backdrop-blur-sm hover:bg-white"
-                >
-                  Learn More
-                </Button>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6 text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  <span className="text-sm font-medium">Free to Join</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  <span className="text-sm font-medium">No Fees to Start</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  <span className="text-sm font-medium">Insurance Included</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex-1 relative animate-scale-in mt-8 lg:mt-0">
-              <div className="relative z-10">
-                <img
-                  src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
-                  alt="Happy pet sitter with dog"
-                  className="rounded-3xl shadow-2xl w-full max-w-lg mx-auto transform -rotate-2 hover:rotate-0 transition-transform duration-500"
-                />
-
-                {/* Earnings Card */}
-                <div className="absolute -bottom-6 -left-6 md:-bottom-8 md:-left-8 bg-white dark:bg-card p-5 rounded-2xl shadow-xl animate-float hidden sm:block border border-gray-100 dark:border-white/10" style={{ animationDelay: '0.5s' }}>
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-lg">
-                      <DollarSign className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-lg text-foreground">$1,000+</p>
-                      <p className="text-sm text-muted-foreground">Monthly Earnings</p>
-                    </div>
-                  </div>
+    return (
+        <div className="flex-1 w-full overflow-hidden">
+            {/* Hero Section */}
+            <section className="relative min-h-[95vh] flex items-center justify-center overflow-hidden">
+                {/* Animated Background */}
+                <div className="absolute inset-0 bg-gradient-to-br from-green-50 via-emerald-50/50 to-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 -z-20" />
+                <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+                    <div className="absolute top-[-20%] right-[-10%] w-[700px] h-[700px] rounded-full bg-green-400/15 blur-[120px] animate-float" />
+                    <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-primary/15 blur-[100px] animate-float" style={{ animationDelay: '2s' }} />
+                    <div className="absolute top-[30%] left-[20%] w-[300px] h-[300px] rounded-full bg-emerald-400/10 blur-[80px] animate-float" style={{ animationDelay: '4s' }} />
                 </div>
 
-                {/* Rating Card */}
-                <div className="absolute -top-4 -right-4 md:-top-6 md:-right-6 bg-white dark:bg-card p-5 rounded-2xl shadow-xl animate-float hidden sm:block border border-gray-100 dark:border-white/10" style={{ animationDelay: '1s' }}>
-                  <div className="flex items-center gap-4">
-                    <div className="flex -space-x-3">
-                      {[5, 6, 7].map((i) => (
-                        <img 
-                          key={i} 
-                          src={`https://i.pravatar.cc/80?img=${i + 20}`} 
-                          alt="Pet owner" 
-                          className="w-10 h-10 rounded-full border-3 border-white dark:border-card object-cover"
-                        />
-                      ))}
-                    </div>
-                    <div>
-                      <div className="flex text-yellow-400">
-                        {[1,2,3,4,5].map(i => <Star key={i} className="w-4 h-4 fill-current" />)}
-                      </div>
-                      <p className="text-sm text-muted-foreground font-medium">Trusted by Pet Parents</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                <PawPrints variant="floating" />
 
-              {/* Background blob */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[130%] h-[130%] bg-gradient-to-br from-primary/25 to-yellow-400/20 rounded-full blur-3xl -z-10"></div>
-            </div>
-          </div>
-        </div>
-      </section>
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-20">
+                    <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+                        <div className="flex-1 text-center lg:text-left">
+                            {/* Earnings Badge */}
+                            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-gray-800 border border-green-200 dark:border-green-800 shadow-lg mb-8 animate-fade-in">
+                                <DollarSign className="w-5 h-5 text-green-600" />
+                                <span className="text-sm font-semibold text-green-700 dark:text-green-400">Earn $1,000+/month doing what you love</span>
+                            </div>
 
-      {/* Stats Section */}
-      <section className="py-16 border-y border-border bg-white/80 dark:bg-white/5 backdrop-blur-sm">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center group cursor-default">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 text-primary mb-4 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
-                  <stat.icon className="w-7 h-7" />
-                </div>
-                <div className="text-4xl md:text-5xl font-display font-bold text-foreground mb-2">{stat.value}</div>
-                <div className="text-sm text-muted-foreground font-medium uppercase tracking-wider">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+                            <h1 className="text-5xl md:text-6xl lg:text-7xl font-display font-bold mb-6 leading-[1.05] tracking-tight">
+                                Get Paid to <br />
+                                <span className="text-gradient">Love Pets</span>
+                            </h1>
 
-      {/* Benefits Section */}
-      <section className="py-24 bg-background relative overflow-hidden">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center mb-16 max-w-3xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-display font-bold mb-6">
-              Why Become a <span className="text-gradient">Double Paws</span> Sitter?
-            </h2>
-            <p className="text-xl text-muted-foreground">
-              Join our community of passionate pet lovers and enjoy amazing benefits while doing what you love.
-            </p>
-          </div>
+                            <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                                Join Double Paws and turn your love for animals into flexible income. 
+                                <span className="text-foreground font-semibold"> Set your own schedule, your own rates.</span>
+                            </p>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {benefits.map((benefit, index) => (
-              <Card key={index} className="group hover:shadow-glow border-border/50 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:-translate-y-2 relative overflow-hidden">
-                <div className="absolute top-0 right-0 bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-bl-xl">
-                  {benefit.highlight}
-                </div>
-                <CardContent className="p-8 pt-10">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-orange-400 text-white flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    <benefit.icon className="w-8 h-8" />
-                  </div>
-                  <h3 className="text-xl font-display font-bold mb-3 group-hover:text-primary transition-colors">{benefit.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed text-sm">
-                    {benefit.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+                            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-10">
+                                <Button
+                                    onClick={() => navigate('/become-a-sitter/register')}
+                                    size="lg"
+                                    className="text-lg px-8 py-6 h-auto shadow-glow hover:scale-105 transition-all duration-300 group bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                                >
+                                    Start Earning Today
+                                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+                                    size="lg"
+                                    className="text-lg px-8 py-6 h-auto bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-800"
+                                >
+                                    See How It Works
+                                </Button>
+                            </div>
 
-      {/* How It Works Section */}
-      <section id="how-it-works" className="py-24 bg-background-alt dark:bg-background-alt-dark relative overflow-hidden">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16 max-w-3xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-display font-bold mb-6">
-              How to Get <span className="text-gradient">Started</span>
-            </h2>
-            <p className="text-xl text-muted-foreground">
-              Four simple steps to start earning as a pet sitter. The whole process takes less than 15 minutes!
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 relative">
-            {/* Connection line for desktop */}
-            <div className="hidden lg:block absolute top-[60px] left-[12.5%] right-[12.5%] h-1 bg-gradient-to-r from-primary/20 via-primary to-primary/20 rounded-full"></div>
-            
-            {howItWorks.map((step, index) => (
-              <div key={index} className="relative group">
-                <div className="bg-white dark:bg-card rounded-2xl p-8 shadow-lg border border-gray-100 dark:border-white/5 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                  <div className="relative z-10">
-                    <div className="w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center mb-6 text-xl font-bold shadow-glow mx-auto lg:mx-0">
-                      {step.step}
-                    </div>
-                    <h3 className="text-xl font-display font-bold mb-3 text-center lg:text-left">{step.title}</h3>
-                    <p className="text-muted-foreground leading-relaxed text-center lg:text-left text-sm">
-                      {step.description}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center mt-16">
-            <Button
-              onClick={() => navigate('/become-a-sitter/register')}
-              size="lg"
-              className="text-lg px-12 py-6 h-auto shadow-glow hover:scale-105 transition-all duration-300 group"
-            >
-              Begin Registration
-              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section className="py-24 bg-background relative overflow-hidden">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16 max-w-3xl mx-auto">
-            <h2 className="text-4xl md:text-5xl font-display font-bold mb-6">
-              Hear From Our <span className="text-gradient">Sitters</span>
-            </h2>
-            <p className="text-xl text-muted-foreground">
-              Real stories from real pet sitters who turned their passion into income.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <Card key={index} className="group hover:shadow-glow border-border/50 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 relative overflow-hidden">
-                <CardContent className="p-8">
-                  <div className="flex items-center gap-4 mb-6">
-                    <img 
-                      src={testimonial.image} 
-                      alt={testimonial.name}
-                      className="w-14 h-14 rounded-full object-cover border-2 border-primary/20"
-                    />
-                    <div>
-                      <h4 className="font-bold text-foreground">{testimonial.name}</h4>
-                      <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                    </div>
-                  </div>
-                  <p className="text-muted-foreground leading-relaxed mb-6 italic">
-                    "{testimonial.quote}"
-                  </p>
-                  <div className="flex items-center justify-between pt-4 border-t border-border">
-                    <div className="flex text-yellow-400">
-                      {[1,2,3,4,5].map(i => <Star key={i} className="w-4 h-4 fill-current" />)}
-                    </div>
-                    <div className="text-sm font-bold text-green-600 dark:text-green-400">
-                      {testimonial.earnings}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Requirements Section */}
-      <section className="py-24 bg-background-alt dark:bg-background-alt-dark relative overflow-hidden">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-white dark:bg-card rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 dark:border-white/5">
-              <div className="flex flex-col md:flex-row gap-10">
-                <div className="flex-1">
-                  <h2 className="text-3xl md:text-4xl font-display font-bold mb-4">
-                    What You <span className="text-gradient">Need</span>
-                  </h2>
-                  <p className="text-muted-foreground mb-8">
-                    We're looking for reliable, caring individuals who love animals. Here's what you need to get started:
-                  </p>
-                  
-                  <div className="space-y-4">
-                    {requirements.map((req, index) => (
-                      <div key={index} className="flex items-center gap-3">
-                        <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
-                          <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                            {/* Trust Indicators */}
+                            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6 text-sm">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <CheckCircle className="w-5 h-5 text-green-500" />
+                                    <span className="font-medium">Free to Join</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <CheckCircle className="w-5 h-5 text-green-500" />
+                                    <span className="font-medium">Keep 85% of Earnings</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <CheckCircle className="w-5 h-5 text-green-500" />
+                                    <span className="font-medium">Insurance Included</span>
+                                </div>
+                            </div>
                         </div>
-                        <span className="text-foreground">{req}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="flex-1 flex items-center justify-center">
-                  <div className="text-center bg-gradient-to-br from-primary/5 to-secondary/5 rounded-2xl p-8 border border-primary/10">
-                    <Shield className="w-16 h-16 text-primary mx-auto mb-4" />
-                    <h3 className="text-xl font-bold mb-2">You're Protected</h3>
-                    <p className="text-muted-foreground text-sm mb-4">
-                      Every booking includes insurance coverage and 24/7 support for peace of mind.
-                    </p>
-                    <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <CheckCircle className="w-4 h-4 text-green-500" />
-                        Insurance
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <CheckCircle className="w-4 h-4 text-green-500" />
-                        24/7 Support
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Final CTA Section */}
-      <section className="py-24 bg-primary relative overflow-hidden">
-        {/* Pattern overlay */}
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
-        
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="max-w-4xl mx-auto text-center text-white">
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-6">
-              Ready to Start Your Journey?
-            </h2>
-            <p className="text-xl md:text-2xl text-white/90 mb-10 max-w-2xl mx-auto">
-              Join thousands of pet lovers earning extra income while doing what they love. Your perfect pet-sitting career awaits!
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                onClick={() => navigate('/become-a-sitter/register')}
-                variant="secondary"
-                size="lg"
-                className="text-lg px-12 py-6 h-auto bg-white text-primary hover:bg-gray-100 shadow-2xl hover:scale-105 transition-all duration-300 group"
-              >
-                Apply Now — It's Free
-                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </div>
-            <p className="mt-8 text-white/70 text-sm">
-              Takes less than 15 minutes • No credit card required • Start earning this week
-            </p>
-          </div>
+                        <div className="flex-1 relative mt-8 lg:mt-0">
+                            <div className="relative z-10">
+                                <img
+                                    src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+                                    alt="Happy pet sitter with dogs"
+                                    className="rounded-3xl shadow-2xl w-full max-w-lg mx-auto transform -rotate-2 hover:rotate-0 transition-transform duration-500"
+                                />
+
+                                {/* Earnings Card */}
+                                <div className="absolute -bottom-6 -left-6 md:-bottom-8 md:-left-8 bg-white dark:bg-card p-5 rounded-2xl shadow-xl animate-float hidden sm:block border border-gray-100 dark:border-gray-800">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-lg">
+                                            <DollarSign className="w-7 h-7 text-white" />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-2xl text-foreground">$1,000+</p>
+                                            <p className="text-sm text-muted-foreground">Monthly potential</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Flexibility Card */}
+                                <div className="absolute -top-4 -right-4 md:-top-6 md:-right-6 bg-white dark:bg-card p-5 rounded-2xl shadow-xl animate-float hidden sm:block border border-gray-100 dark:border-gray-800" style={{ animationDelay: '1s' }}>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                                            <Clock className="w-6 h-6 text-primary" />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-foreground">Your Schedule</p>
+                                            <p className="text-xs text-muted-foreground">Work when you want</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Background blob */}
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[130%] h-[130%] bg-gradient-to-br from-green-400/20 to-emerald-400/20 rounded-full blur-3xl -z-10" />
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Trust Bar */}
+            <section className="py-8 bg-white dark:bg-gray-900 border-y border-gray-100 dark:border-gray-800">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16">
+                        <div className="flex items-center gap-3">
+                            <Shield className="w-6 h-6 text-green-600" />
+                            <span className="font-medium text-gray-700 dark:text-gray-300">Insurance Included</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Headphones className="w-6 h-6 text-green-600" />
+                            <span className="font-medium text-gray-700 dark:text-gray-300">24/7 Support</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <CreditCard className="w-6 h-6 text-green-600" />
+                            <span className="font-medium text-gray-700 dark:text-gray-300">Fast Payments</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Gift className="w-6 h-6 text-green-600" />
+                            <span className="font-medium text-gray-700 dark:text-gray-300">Free to Join</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Benefits Section */}
+            <section className="py-24 bg-background relative overflow-hidden">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-16 max-w-3xl mx-auto">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 rounded-full mb-6">
+                            <Sparkles className="w-4 h-4 text-green-600" />
+                            <span className="text-sm font-semibold text-green-700 dark:text-green-400">Why Join Us</span>
+                        </div>
+                        <h2 className="text-4xl md:text-5xl font-display font-bold mb-6">
+                            The <span className="text-gradient">Perfect Side Hustle</span> for Pet Lovers
+                        </h2>
+                        <p className="text-xl text-muted-foreground">
+                            Whether you're looking for extra income or a career change, pet sitting offers flexibility, joy, and great earnings.
+                        </p>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {benefits.map((benefit, index) => (
+                            <Card key={index} className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-0 bg-white dark:bg-gray-800 overflow-hidden">
+                                <CardContent className="p-6">
+                                    <div className={cn(
+                                        "w-14 h-14 rounded-2xl flex items-center justify-center mb-5 shadow-lg group-hover:scale-110 transition-transform bg-gradient-to-br text-white",
+                                        benefit.gradient
+                                    )}>
+                                        <benefit.icon className="w-7 h-7" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors">{benefit.title}</h3>
+                                    <p className="text-muted-foreground text-sm leading-relaxed">{benefit.description}</p>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Earning Potential Section */}
+            <section className="py-24 bg-gradient-to-b from-green-50 to-white dark:from-gray-900 dark:to-gray-800">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-16 max-w-3xl mx-auto">
+                        <h2 className="text-4xl md:text-5xl font-display font-bold mb-6">
+                            Services You Can <span className="text-gradient">Offer</span>
+                        </h2>
+                        <p className="text-xl text-muted-foreground">
+                            Choose which services to offer based on your availability and preferences. You're in control.
+                        </p>
+                    </div>
+
+                    <div className="max-w-4xl mx-auto">
+                        <div className="grid gap-4">
+                            {services.map((service, index) => (
+                                <div 
+                                    key={index}
+                                    className="flex items-center justify-between p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all hover:-translate-y-1"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                                            <PawPrint className="w-6 h-6 text-primary" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-foreground">{service.name}</h3>
+                                            <p className="text-sm text-muted-foreground">{service.desc}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xl font-bold text-green-600">{service.earning}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* How It Works */}
+            <section id="how-it-works" className="py-24 bg-background relative overflow-hidden">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-16 max-w-3xl mx-auto">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-6">
+                            <Zap className="w-4 h-4 text-primary" />
+                            <span className="text-sm font-semibold text-primary">Quick & Easy</span>
+                        </div>
+                        <h2 className="text-4xl md:text-5xl font-display font-bold mb-6">
+                            Start in <span className="text-gradient">3 Simple Steps</span>
+                        </h2>
+                        <p className="text-xl text-muted-foreground">
+                            Getting started is quick and easy. You could have your first booking within days!
+                        </p>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-8 relative max-w-5xl mx-auto">
+                        {/* Connection line */}
+                        <div className="hidden md:block absolute top-[60px] left-[20%] right-[20%] h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-green-500 rounded-full" />
+
+                        {howItWorks.map((step, index) => (
+                            <div key={index} className="relative text-center">
+                                <div className={cn(
+                                    "w-24 h-24 mx-auto rounded-3xl flex items-center justify-center mb-6 shadow-xl bg-gradient-to-br text-white relative z-10",
+                                    step.color
+                                )}>
+                                    <step.icon className="w-12 h-12" />
+                                </div>
+                                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-10 bg-white dark:bg-gray-900 rounded-full flex items-center justify-center text-lg font-bold text-primary border-4 border-primary -mt-2 z-20">
+                                    {step.step}
+                                </div>
+                                <h3 className="text-xl font-bold text-foreground mb-3">{step.title}</h3>
+                                <p className="text-muted-foreground max-w-xs mx-auto">{step.description}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="text-center mt-12">
+                        <Button 
+                            onClick={() => navigate('/become-a-sitter/register')} 
+                            size="lg" 
+                            className="shadow-glow bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                        >
+                            Create Your Free Profile
+                            <ArrowRight className="w-5 h-5 ml-2" />
+                        </Button>
+                    </div>
+                </div>
+            </section>
+
+            {/* What You Get Section */}
+            <section className="py-24 bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="grid lg:grid-cols-2 gap-16 items-center">
+                        <div>
+                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full mb-6">
+                                <Gift className="w-4 h-4 text-primary" />
+                                <span className="text-sm font-semibold text-primary">Everything You Need</span>
+                            </div>
+                            <h2 className="text-4xl md:text-5xl font-display font-bold mb-6">
+                                We've Got Your <span className="text-gradient">Back</span>
+                            </h2>
+                            <p className="text-xl text-muted-foreground mb-8">
+                                We provide all the tools, support, and protection you need to succeed as a pet sitter.
+                            </p>
+
+                            <div className="grid sm:grid-cols-2 gap-4">
+                                {perks.map((perk, index) => (
+                                    <div key={index} className="flex items-start gap-3 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
+                                        <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <perk.icon className="w-5 h-5 text-green-600" />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-foreground text-sm">{perk.title}</h4>
+                                            <p className="text-xs text-muted-foreground mt-0.5">{perk.description}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="relative">
+                            <div className="grid grid-cols-2 gap-4">
+                                <img
+                                    src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+                                    alt="Dog playing"
+                                    className="rounded-2xl shadow-lg"
+                                />
+                                <img
+                                    src="https://images.unsplash.com/photo-1450778869180-41d0601e046e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+                                    alt="Happy dog"
+                                    className="rounded-2xl shadow-lg mt-8"
+                                />
+                            </div>
+                            <div className="absolute -bottom-6 -left-6 bg-white dark:bg-card p-6 rounded-2xl shadow-xl hidden md:block">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
+                                        <Award className="w-7 h-7 text-white" />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-foreground">You're Protected</p>
+                                        <p className="text-sm text-muted-foreground">Insurance on every booking</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Requirements Section */}
+            <section className="py-24 bg-background">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="max-w-4xl mx-auto">
+                        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800 overflow-hidden">
+                            <CardContent className="p-8 md:p-12">
+                                <div className="text-center mb-10">
+                                    <h2 className="text-3xl md:text-4xl font-display font-bold mb-4 text-foreground">
+                                        What You Need to <span className="text-green-600">Get Started</span>
+                                    </h2>
+                                    <p className="text-lg text-muted-foreground">
+                                        Simple requirements to join our community of pet sitters
+                                    </p>
+                                </div>
+
+                                <div className="flex flex-wrap justify-center gap-4">
+                                    {requirements.map((req, index) => (
+                                        <div 
+                                            key={index}
+                                            className="flex items-center gap-3 px-5 py-3 bg-white dark:bg-gray-800 rounded-full shadow-md"
+                                        >
+                                            <req.icon className="w-5 h-5 text-green-600" />
+                                            <span className="font-medium text-foreground">{req.text}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="text-center mt-10">
+                                    <Button 
+                                        onClick={() => navigate('/become-a-sitter/register')}
+                                        size="lg" 
+                                        className="shadow-glow bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+                                    >
+                                        Apply Now — It's Free
+                                        <ArrowRight className="w-5 h-5 ml-2" />
+                                    </Button>
+                                    <p className="text-sm text-muted-foreground mt-4">
+                                        Takes less than 15 minutes to complete
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            </section>
+
+            {/* Final CTA Section */}
+            <section className="py-24 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 relative overflow-hidden">
+                {/* Pattern overlay */}
+                <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                    <div className="max-w-4xl mx-auto text-center text-white">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 rounded-full mb-6">
+                            <Sparkles className="w-4 h-4" />
+                            <span className="text-sm font-semibold">Join Today</span>
+                        </div>
+                        <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-6">
+                            Ready to Start Earning?
+                        </h2>
+                        <p className="text-xl md:text-2xl text-white/90 mb-10 max-w-2xl mx-auto">
+                            Turn your love for pets into extra income. Flexible hours, great pay, and adorable clients!
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                            <Button
+                                onClick={() => navigate('/become-a-sitter/register')}
+                                size="lg"
+                                className="text-lg px-12 py-6 h-auto bg-white text-green-600 hover:bg-gray-100 shadow-2xl hover:scale-105 transition-all duration-300 group font-bold"
+                            >
+                                Create Your Free Profile
+                                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                            </Button>
+                        </div>
+                        <p className="mt-8 text-white/70 text-sm">
+                            Free to join • No monthly fees • Start earning this week
+                        </p>
+                    </div>
+                </div>
+            </section>
         </div>
-      </section>
-    </div>
-  );
+    );
 };
 
 export default BecomeSitterLandingPage;
-

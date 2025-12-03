@@ -110,13 +110,26 @@ export const searchSitters = async (req: AuthRequest, res: Response): Promise<vo
 
             // Pet Size Filter
             if (weight) {
-                const w = parseFloat(weight as string);
-                let sizeCategory = 'Small';
-                if (w > 7 && w <= 18) sizeCategory = 'Medium';
-                if (w > 18 && w <= 45) sizeCategory = 'Large';
-                if (w > 45) sizeCategory = 'Giant';
+                const weights = Array.isArray(weight) ? weight : [weight];
+                const requiredSizes = new Set<string>();
 
-                if (!sitter.preferences?.acceptedPetSizes?.includes(sizeCategory)) return false;
+                weights.forEach((wStr: any) => {
+                    const w = parseFloat(wStr as string);
+                    if (!isNaN(w)) {
+                        let sizeCategory = 'Small';
+                        if (w > 7 && w <= 18) sizeCategory = 'Medium';
+                        if (w > 18 && w <= 45) sizeCategory = 'Large';
+                        if (w > 45) sizeCategory = 'Giant';
+                        requiredSizes.add(sizeCategory);
+                    }
+                });
+
+                // Check if sitter accepts ALL required sizes
+                for (const size of requiredSizes) {
+                    if (!sitter.preferences?.acceptedPetSizes?.includes(size)) {
+                        return false;
+                    }
+                }
             }
 
             // Availability Filter (Blocked Dates)

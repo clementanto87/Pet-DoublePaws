@@ -39,7 +39,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         const rect = buttonRef.current.getBoundingClientRect();
         const popupWidth = 320;
         let left = rect.left;
-        
+
         // Keep popup within viewport
         if (left + popupWidth > window.innerWidth - 16) {
           left = window.innerWidth - popupWidth - 16;
@@ -47,15 +47,15 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         if (left < 16) left = 16;
 
         setPosition({
-          top: rect.bottom + window.scrollY + 8,
-          left: left + window.scrollX
+          top: rect.bottom + 8,
+          left: left
         });
       }
     };
 
     const handleClickOutside = (e: MouseEvent) => {
       if (
-        popupRef.current && 
+        popupRef.current &&
         !popupRef.current.contains(e.target as Node) &&
         buttonRef.current &&
         !buttonRef.current.contains(e.target as Node)
@@ -91,7 +91,11 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   };
 
   const handleDateSelect = (date: Date) => {
-    onChange(date.toISOString().split('T')[0]);
+    // Use local time to avoid timezone shifts
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    onChange(`${year}-${month}-${day}`);
     setIsOpen(false);
   };
 
@@ -105,7 +109,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   const isToday = (date: Date) => date.toDateString() === new Date().toDateString();
 
   const formatDisplayDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', { 
+    return new Date(dateStr).toLocaleDateString('en-US', {
       weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
     });
   };
