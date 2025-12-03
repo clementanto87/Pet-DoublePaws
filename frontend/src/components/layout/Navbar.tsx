@@ -31,8 +31,10 @@ const Navbar: React.FC = () => {
   const navLinks = [
     { name: 'Home', path: '/' },
     ...(isAuthenticated ? [
+      { name: 'Dashboard', path: '/dashboard' },
       { name: 'Pet Profile', path: '/pet-profile' },
       { name: 'Bookings', path: '/booking' },
+      { name: 'Sitter Dashboard', path: '/sitter-dashboard' },
     ] : []),
     { name: 'Become a Sitter', path: '/become-a-sitter' },
   ];
@@ -79,7 +81,7 @@ const Navbar: React.FC = () => {
             ))}
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
-                <span className="text-sm font-medium text-muted-foreground">Hi, {user?.name}</span>
+                <span className="text-sm font-medium text-foreground hidden md:block">Hi, {user?.firstName}</span>
                 <Button
                   variant="ghost"
                   className="text-muted-foreground hover:text-primary"

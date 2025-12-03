@@ -7,35 +7,48 @@ import { Card, CardContent } from '../components/ui/Card';
 import { Logo } from '../components/ui/Logo';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useGoogleLogin } from '@react-oauth/google';
 
 const LoginPage: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const { login } = useAuth();
+    const { login, googleLogin, error } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
-    const from = location.state?.from?.pathname || '/';
+    const from = location.state?.from?.pathname || '/dashboard';
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        // Simulate login
-        setTimeout(() => {
-            login({
-                id: '1',
-                name: 'John Doe',
-                email: 'john@example.com'
-            });
-            setIsLoading(false);
+
+        const formData = new FormData(e.target as HTMLFormElement);
+        const email = formData.get('email') as string;
+        const password = formData.get('password') as string;
+
+        try {
+            await login(email, password);
             navigate(from, { replace: true });
-        }, 1500);
+        } catch (err) {
+            console.error('Login failed', err);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const handleGoogleLogin = () => {
-        // Handle Google login
-        console.log('Google login clicked');
-    };
+    const googleLoginAction = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            try {
+                await googleLogin(tokenResponse.access_token);
+                navigate(from, { replace: true });
+            } catch (err) {
+                console.error('Google login failed', err);
+            }
+        },
+        onError: () => {
+            console.error('Google Login Failed');
+        },
+    });
 
     return (
         <div className="min-h-screen bg-background-alt dark:bg-background-alt-dark flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -59,6 +72,11 @@ const LoginPage: React.FC = () => {
             <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
                 <Card className="border-border/50 shadow-lg bg-white dark:bg-card">
                     <CardContent className="p-8">
+                        {error && (
+                            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+                                {error}
+                            </div>
+                        )}
                         <form className="space-y-6" onSubmit={handleLogin}>
                             <div>
                                 <Label htmlFor="email">Email address</Label>
@@ -137,7 +155,7 @@ const LoginPage: React.FC = () => {
                                     variant="outline"
                                     type="button"
                                     className="w-full h-11 font-medium border-border/50 hover:bg-muted/50"
-                                    onClick={handleGoogleLogin}
+                                    onClick={() => googleLoginAction()}
                                 >
                                     <svg className="h-5 w-5 mr-2" aria-hidden="true" viewBox="0 0 24 24">
                                         <path

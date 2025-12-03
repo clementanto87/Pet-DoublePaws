@@ -87,6 +87,7 @@ module.exports = {
         'slide-down': 'slideDown 0.5s ease-out',
         'scale-in': 'scaleIn 0.3s ease-out',
         'float': 'float 6s ease-in-out infinite',
+        'shake': 'shake 0.8s cubic-bezier(0.36, 0.07, 0.19, 0.97) both',
       },
       keyframes: {
         fadeIn: {
@@ -108,6 +109,11 @@ module.exports = {
         float: {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-20px)' },
+        },
+        shake: {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '10%, 30%, 50%, 70%, 90%': { transform: 'translateX(-4px)' },
+          '20%, 40%, 60%, 80%': { transform: 'translateX(4px)' },
         },
       },
       boxShadow: {

@@ -7,32 +7,47 @@ import { Card, CardContent } from '../components/ui/Card';
 import { Logo } from '../components/ui/Logo';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useGoogleLogin } from '@react-oauth/google';
 
 const SignupPage: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const { login } = useAuth();
+    const { signup, googleLogin, error } = useAuth();
     const navigate = useNavigate();
 
-    const handleSignup = (e: React.FormEvent) => {
+    const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        // Simulate signup
-        setTimeout(() => {
-            login({
-                id: '1',
-                name: 'Jane Doe',
-                email: 'jane@example.com'
-            });
-            setIsLoading(false);
+
+        const formData = new FormData(e.target as HTMLFormElement);
+        const firstName = formData.get('firstName') as string;
+        const lastName = formData.get('lastName') as string;
+        const email = formData.get('email') as string;
+        const password = formData.get('password') as string;
+
+        try {
+            await signup(firstName, lastName, email, password);
             navigate('/');
-        }, 1500);
+        } catch (err) {
+            console.error('Signup failed', err);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const handleGoogleSignup = () => {
-        // Handle Google signup
-        console.log('Google signup clicked');
-    };
+    const googleSignupAction = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            try {
+                await googleLogin(tokenResponse.access_token);
+                navigate('/');
+            } catch (err) {
+                console.error('Google signup failed', err);
+            }
+        },
+        onError: () => {
+            console.error('Google Signup Failed');
+        },
+    });
 
     return (
         <div className="min-h-screen bg-background-alt dark:bg-background-alt-dark flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -56,6 +71,11 @@ const SignupPage: React.FC = () => {
             <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
                 <Card className="border-border/50 shadow-lg bg-white dark:bg-card">
                     <CardContent className="p-8">
+                        {error && (
+                            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+                                {error}
+                            </div>
+                        )}
                         <form className="space-y-6" onSubmit={handleSignup}>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -161,7 +181,7 @@ const SignupPage: React.FC = () => {
                                     variant="outline"
                                     type="button"
                                     className="w-full h-11 font-medium border-border/50 hover:bg-muted/50"
-                                    onClick={handleGoogleSignup}
+                                    onClick={() => googleSignupAction()}
                                 >
                                     <svg className="h-5 w-5 mr-2" aria-hidden="true" viewBox="0 0 24 24">
                                         <path

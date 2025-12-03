@@ -1,0 +1,170 @@
+import { Response } from 'express';
+import { AppDataSource } from '../config/database';
+import { SitterProfile } from '../entities/SitterProfile.entity';
+import { User } from '../entities/User.entity';
+import { AuthRequest } from '../middleware/auth.middleware';
+
+export const createOrUpdateSitterProfile = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+        const userId = req.user.id;
+        const profileData = req.body;
+
+        const sitterRepository = AppDataSource.getRepository(SitterProfile);
+        const userRepository = AppDataSource.getRepository(User);
+
+        // Check if user exists
+        const user = await userRepository.findOneBy({ id: userId });
+        if (!user) {
+            res.status(404).json({ message: 'User not found' });
+            return;
+        }
+
+        // Check if profile already exists
+        let profile: SitterProfile | null = await sitterRepository.findOneBy({ userId });
+
+        if (profile) {
+            // Update existing profile
+            sitterRepository.merge(profile, profileData);
+        } else {
+            // Create new profile
+            profile = sitterRepository.create();
+            sitterRepository.merge(profile, {
+                ...profileData,
+                user,
+                userId
+            });
+        }
+
+        if (!profile) {
+            throw new Error("Failed to create or retrieve profile");
+        }
+
+        const savedProfile = await sitterRepository.save(profile);
+
+        res.status(200).json(savedProfile);
+    } catch (error) {
+        console.error('Error saving sitter profile:', error);
+        res.status(500).json({ message: 'Server error while saving profile' });
+    }
+};
+
+export const searchSitters = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+        const {
+            latitude,
+            longitude,
+            serviceType,
+            petType,
+            weight,
+            radius = 20
+        } = req.query;
+
+        const sitterRepository = AppDataSource.getRepository(SitterProfile);
+        const query = sitterRepository.createQueryBuilder('sitter')
+            .leftJoinAndSelect('sitter.user', 'user');
+
+        // 1. Geolocation Filter
+        if (latitude && longitude) {
+            const lat = parseFloat(latitude as string);
+            const lon = parseFloat(longitude as string);
+            const rad = parseFloat(radius as string);
+
+            query.addSelect(
+                `(6371 * acos(cos(radians(:lat)) * cos(radians(sitter.latitude)) * cos(radians(sitter.longitude) - radians(:lon)) + sin(radians(:lat)) * sin(radians(sitter.latitude))))`,
+                'distance'
+            )
+                .where(
+                    `(6371 * acos(cos(radians(:lat)) * cos(radians(sitter.latitude)) * cos(radians(sitter.longitude) - radians(:lon)) + sin(radians(:lat)) * sin(radians(sitter.latitude)))) <= :radius`,
+                    { lat, lon, radius: rad }
+                )
+                .orderBy('distance', 'ASC');
+        }
+
+        const sitters = await query.getMany();
+
+        // 2. In-Memory Filtering for JSON fields (Robustness)
+        const filteredSitters = sitters.filter(sitter => {
+            // Service Filter
+            if (serviceType) {
+                const type = serviceType as string;
+                // Map frontend service IDs to backend keys if necessary
+                // frontend: boarding, house-sitting, drop-in, day-care, walking
+                // backend: boarding, houseSitting, dropInVisits, doggyDayCare, dogWalking
+                let backendServiceKey = type;
+                if (type === 'house-sitting') backendServiceKey = 'houseSitting';
+                if (type === 'drop-in') backendServiceKey = 'dropInVisits';
+                if (type === 'day-care') backendServiceKey = 'doggyDayCare';
+                if (type === 'walking') backendServiceKey = 'dogWalking';
+
+                const service = sitter.services?.[backendServiceKey as keyof typeof sitter.services];
+                if (!service?.active) return false;
+            }
+
+            // Pet Type Filter
+            if (petType) {
+                // petType is 'dog' or 'cat' (from frontend counters)
+                // backend: 'Dog', 'Cat' (capitalized)
+                const type = (petType as string).charAt(0).toUpperCase() + (petType as string).slice(1);
+                if (!sitter.preferences?.acceptedPetTypes?.includes(type)) return false;
+            }
+
+            // Pet Size Filter
+            if (weight) {
+                const w = parseFloat(weight as string);
+                let sizeCategory = 'Small';
+                if (w > 7 && w <= 18) sizeCategory = 'Medium';
+                if (w > 18 && w <= 45) sizeCategory = 'Large';
+                if (w > 45) sizeCategory = 'Giant';
+
+                if (!sitter.preferences?.acceptedPetSizes?.includes(sizeCategory)) return false;
+            }
+
+            // Availability Filter (Blocked Dates)
+            // User requested to remove this filter for now (2025-12-03)
+            /*
+            if (req.query.startDate && req.query.endDate) {
+                const start = new Date(req.query.startDate as string);
+                start.setHours(0, 0, 0, 0);
+                const end = new Date(req.query.endDate as string);
+                end.setHours(0, 0, 0, 0);
+                
+                if (sitter.availability?.blockedDates && sitter.availability.blockedDates.length > 0) {
+                    const hasConflict = sitter.availability.blockedDates.some(dateStr => {
+                        const blockedDate = new Date(dateStr);
+                        blockedDate.setHours(0, 0, 0, 0);
+                        return blockedDate.getTime() >= start.getTime() && blockedDate.getTime() <= end.getTime();
+                    });
+                    
+                    if (hasConflict) return false;
+                }
+            }
+            */
+
+            return true;
+        });
+
+        res.json(filteredSitters);
+    } catch (error) {
+        console.error('Error searching sitters:', error);
+        res.status(500).json({ message: 'Server error while searching' });
+    }
+};
+
+export const getSitterProfile = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+        const userId = req.user.id;
+        const sitterRepository = AppDataSource.getRepository(SitterProfile);
+
+        const profile = await sitterRepository.findOneBy({ userId });
+
+        if (!profile) {
+            res.status(404).json({ message: 'Profile not found' });
+            return;
+        }
+
+        res.json(profile);
+    } catch (error) {
+        console.error('Error fetching sitter profile:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
