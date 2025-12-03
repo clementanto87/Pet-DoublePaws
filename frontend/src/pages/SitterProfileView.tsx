@@ -1,6 +1,5 @@
 import React from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
     ArrowLeft,
     MapPin,
@@ -16,19 +15,16 @@ import {
     Cat,
     PawPrint,
     MessageCircle,
-    Phone,
     BadgeCheck,
     Briefcase,
     Users,
     Sun,
     Baby,
-    Cigarette,
     TreeDeciduous
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import { cn } from '../lib/utils';
-import { sitterService } from '../services/sitter.service';
 
 // Service icons mapping
 const serviceIcons: Record<string, React.ElementType> = {
@@ -56,10 +52,9 @@ const serviceDescriptions: Record<string, string> = {
 };
 
 const SitterProfileView: React.FC = () => {
-    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const location = useLocation();
-    
+
     // Get sitter data from navigation state or fetch it
     const sitterFromState = location.state?.sitter;
 
@@ -82,7 +77,7 @@ const SitterProfileView: React.FC = () => {
     }
 
     // Get active services
-    const activeServices = sitter.services 
+    const activeServices = sitter.services
         ? Object.entries(sitter.services).filter(([_, service]: [string, any]) => service?.active)
         : [];
 
@@ -113,15 +108,15 @@ const SitterProfileView: React.FC = () => {
                     <div className="h-32 bg-gradient-to-r from-primary via-orange-500 to-amber-500 relative">
                         <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '20px 20px' }} />
                     </div>
-                    
+
                     <div className="px-6 pb-6">
                         {/* Avatar */}
                         <div className="relative -mt-16 mb-4">
                             <div className="w-32 h-32 rounded-2xl bg-white dark:bg-gray-800 shadow-xl overflow-hidden border-4 border-white dark:border-gray-800">
                                 {sitter.user?.profileImage ? (
-                                    <img 
-                                        src={sitter.user.profileImage} 
-                                        alt={sitter.user.firstName} 
+                                    <img
+                                        src={sitter.user.profileImage}
+                                        alt={sitter.user.firstName}
                                         className="w-full h-full object-cover"
                                     />
                                 ) : (
@@ -180,8 +175,8 @@ const SitterProfileView: React.FC = () => {
                                         <span className="text-gray-500">(0 reviews)</span>
                                     </div>
                                 </div>
-                                <Button 
-                                    size="lg" 
+                                <Button
+                                    size="lg"
                                     className="shadow-glow w-full md:w-auto"
                                     onClick={() => navigate(`/contact-sitter/${sitter.id}`, { state: { sitter } })}
                                 >
@@ -220,7 +215,7 @@ const SitterProfileView: React.FC = () => {
                                     {activeServices.map(([key, service]: [string, any]) => {
                                         const Icon = serviceIcons[key] || Briefcase;
                                         return (
-                                            <div 
+                                            <div
                                                 key={key}
                                                 className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl"
                                             >
@@ -264,7 +259,7 @@ const SitterProfileView: React.FC = () => {
                                             <h3 className="text-sm font-medium text-gray-500 mb-2">Skills</h3>
                                             <div className="flex flex-wrap gap-2">
                                                 {sitter.skills.map((skill: string, index: number) => (
-                                                    <span 
+                                                    <span
                                                         key={index}
                                                         className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium"
                                                     >
@@ -279,7 +274,7 @@ const SitterProfileView: React.FC = () => {
                                             <h3 className="text-sm font-medium text-gray-500 mb-2">Certifications</h3>
                                             <div className="flex flex-wrap gap-2">
                                                 {sitter.certifications.map((cert: string, index: number) => (
-                                                    <span 
+                                                    <span
                                                         key={index}
                                                         className="px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 rounded-full text-sm font-medium flex items-center gap-1"
                                                     >
@@ -326,11 +321,11 @@ const SitterProfileView: React.FC = () => {
                                         <h3 className="text-sm font-medium text-gray-500 mb-2">Pet Types</h3>
                                         <div className="flex flex-wrap gap-2">
                                             {sitter.preferences?.acceptedPetTypes?.map((type: string) => (
-                                                <span 
+                                                <span
                                                     key={type}
                                                     className={cn(
                                                         "px-3 py-2 rounded-xl text-sm font-medium flex items-center gap-2",
-                                                        type === 'Dog' 
+                                                        type === 'Dog'
                                                             ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400"
                                                             : "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400"
                                                     )}
@@ -345,7 +340,7 @@ const SitterProfileView: React.FC = () => {
                                         <h3 className="text-sm font-medium text-gray-500 mb-2">Pet Sizes</h3>
                                         <div className="flex flex-wrap gap-2">
                                             {sitter.preferences?.acceptedPetSizes?.map((size: string) => (
-                                                <span 
+                                                <span
                                                     key={size}
                                                     className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full text-sm font-medium"
                                                 >
@@ -414,7 +409,7 @@ const SitterProfileView: React.FC = () => {
                                         <h3 className="text-sm font-medium text-gray-500 mb-2">General Availability</h3>
                                         <div className="flex flex-wrap gap-2">
                                             {sitter.availability?.general?.map((day: string) => (
-                                                <span 
+                                                <span
                                                     key={day}
                                                     className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-sm font-medium"
                                                 >
@@ -442,15 +437,15 @@ const SitterProfileView: React.FC = () => {
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                                     Contact {sitter.user?.firstName} to discuss your pet's needs
                                 </p>
-                                <Button 
+                                <Button
                                     className="w-full shadow-glow mb-3"
                                     onClick={() => navigate(`/contact-sitter/${sitter.id}`, { state: { sitter } })}
                                 >
                                     <MessageCircle className="w-4 h-4 mr-2" />
                                     Send Message
                                 </Button>
-                                <Button 
-                                    variant="outline" 
+                                <Button
+                                    variant="outline"
                                     className="w-full"
                                     onClick={() => navigate(`/contact-sitter/${sitter.id}`, { state: { sitter } })}
                                 >

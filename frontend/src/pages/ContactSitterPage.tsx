@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
     ArrowLeft,
     Send,
-    Calendar,
     Clock,
     Dog,
     Cat,
@@ -18,11 +17,9 @@ import {
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
-import { Input } from '../components/ui/Input';
 import { Label } from '../components/ui/Label';
 import { DatePicker } from '../components/ui/DatePicker';
 import { cn } from '../lib/utils';
-import { useAuth } from '../context/AuthContext';
 
 // Service options
 const services = [
@@ -44,8 +41,7 @@ const messageTemplates = [
 const ContactSitterPage: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { user, isAuthenticated } = useAuth();
-    
+
     const sitter = location.state?.sitter;
 
     // Form state
@@ -60,12 +56,12 @@ const ContactSitterPage: React.FC = () => {
     // Handle send message
     const handleSendMessage = async () => {
         if (!message.trim()) return;
-        
+
         setIsSending(true);
-        
+
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 1500));
-        
+
         setIsSending(false);
         setIsSent(true);
     };
@@ -344,9 +340,9 @@ const ContactSitterPage: React.FC = () => {
                                 <div className="flex items-end gap-4 mb-4">
                                     <div className="w-20 h-20 rounded-2xl bg-white dark:bg-gray-800 shadow-lg overflow-hidden border-4 border-white dark:border-gray-800 flex-shrink-0">
                                         {sitter.user?.profileImage ? (
-                                            <img 
-                                                src={sitter.user.profileImage} 
-                                                alt={sitter.user.firstName} 
+                                            <img
+                                                src={sitter.user.profileImage}
+                                                alt={sitter.user.firstName}
                                                 className="w-full h-full object-cover"
                                             />
                                         ) : (

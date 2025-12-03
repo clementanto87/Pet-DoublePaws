@@ -7,7 +7,6 @@ import {
     Phone,
     Calendar,
     DollarSign,
-    Star,
     Clock,
     Edit3,
     CheckCircle,
@@ -15,17 +14,13 @@ import {
     Home,
     Briefcase,
     Heart,
-    Shield,
     Award,
     PawPrint,
     Settings,
     X,
     Save,
     ChevronRight,
-    TrendingUp,
-    Users,
-    CalendarCheck,
-    Wallet
+    Users
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';

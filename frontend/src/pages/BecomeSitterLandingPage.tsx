@@ -7,13 +7,10 @@ import {
     Clock,
     Heart,
     Shield,
-    MapPin,
     CheckCircle,
     ArrowRight,
     Sparkles,
     Users,
-    Calendar,
-    Briefcase,
     PawPrint,
     BadgeCheck,
     Wallet,
@@ -142,7 +139,7 @@ const BecomeSitterLandingPage: React.FC = () => {
                             </h1>
 
                             <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-                                Join Double Paws and turn your love for animals into flexible income. 
+                                Join Double Paws and turn your love for animals into flexible income.
                                 <span className="text-foreground font-semibold"> Set your own schedule, your own rates.</span>
                             </p>
 
@@ -298,7 +295,7 @@ const BecomeSitterLandingPage: React.FC = () => {
                     <div className="max-w-4xl mx-auto">
                         <div className="grid gap-4">
                             {services.map((service, index) => (
-                                <div 
+                                <div
                                     key={index}
                                     className="flex items-center justify-between p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all hover:-translate-y-1"
                                 >
@@ -359,9 +356,9 @@ const BecomeSitterLandingPage: React.FC = () => {
                     </div>
 
                     <div className="text-center mt-12">
-                        <Button 
-                            onClick={() => navigate('/become-a-sitter/register')} 
-                            size="lg" 
+                        <Button
+                            onClick={() => navigate('/become-a-sitter/register')}
+                            size="lg"
                             className="shadow-glow bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
                         >
                             Create Your Free Profile
@@ -448,7 +445,7 @@ const BecomeSitterLandingPage: React.FC = () => {
 
                                 <div className="flex flex-wrap justify-center gap-4">
                                     {requirements.map((req, index) => (
-                                        <div 
+                                        <div
                                             key={index}
                                             className="flex items-center gap-3 px-5 py-3 bg-white dark:bg-gray-800 rounded-full shadow-md"
                                         >
@@ -459,9 +456,9 @@ const BecomeSitterLandingPage: React.FC = () => {
                                 </div>
 
                                 <div className="text-center mt-10">
-                                    <Button 
+                                    <Button
                                         onClick={() => navigate('/become-a-sitter/register')}
-                                        size="lg" 
+                                        size="lg"
                                         className="shadow-glow bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
                                     >
                                         Apply Now — It's Free
