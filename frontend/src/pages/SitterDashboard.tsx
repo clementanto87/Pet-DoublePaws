@@ -274,7 +274,7 @@ const SitterDashboard: React.FC = () => {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm font-medium text-muted-foreground">Service Radius</p>
-                                    <p className="text-3xl font-bold text-foreground">{profile.serviceRadius || 5} mi</p>
+                                    <p className="text-3xl font-bold text-foreground">{Math.round((profile.serviceRadius || 5) * 1.60934)} km</p>
                                 </div>
                                 <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center">
                                     <MapPin className="w-6 h-6 text-blue-600" />
@@ -740,7 +740,7 @@ const SitterDashboard: React.FC = () => {
                         );
                     })}
                     <div>
-                        <Label>Service Radius (miles)</Label>
+                        <Label>Service Radius (kilometers)</Label>
                         <Input
                             type="number"
                             value={editFormData.serviceRadius || 5}

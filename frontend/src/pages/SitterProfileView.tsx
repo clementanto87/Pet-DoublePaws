@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
     ArrowLeft,
     MapPin,
@@ -54,9 +54,13 @@ const serviceDescriptions: Record<string, string> = {
 const SitterProfileView: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const [searchParams] = useSearchParams();
 
     // Get sitter data from navigation state or fetch it
     const sitterFromState = location.state?.sitter;
+    
+    // Preserve search params for contact page
+    const searchParamsString = searchParams.toString();
 
     // For now, we use the sitter from state. In production, you'd fetch by ID
     const sitter = sitterFromState;
@@ -178,7 +182,7 @@ const SitterProfileView: React.FC = () => {
                                 <Button
                                     size="lg"
                                     className="shadow-glow w-full md:w-auto"
-                                    onClick={() => navigate(`/contact-sitter/${sitter.id}`, { state: { sitter } })}
+                                    onClick={() => navigate(`/contact-sitter/${sitter.id}${searchParamsString ? `?${searchParamsString}` : ''}`, { state: { sitter } })}
                                 >
                                     <MessageCircle className="w-5 h-5 mr-2" />
                                     Contact Sitter
@@ -439,7 +443,7 @@ const SitterProfileView: React.FC = () => {
                                 </p>
                                 <Button
                                     className="w-full shadow-glow mb-3"
-                                    onClick={() => navigate(`/contact-sitter/${sitter.id}`, { state: { sitter } })}
+                                    onClick={() => navigate(`/contact-sitter/${sitter.id}${searchParamsString ? `?${searchParamsString}` : ''}`, { state: { sitter } })}
                                 >
                                     <MessageCircle className="w-4 h-4 mr-2" />
                                     Send Message
@@ -447,7 +451,7 @@ const SitterProfileView: React.FC = () => {
                                 <Button
                                     variant="outline"
                                     className="w-full"
-                                    onClick={() => navigate(`/contact-sitter/${sitter.id}`, { state: { sitter } })}
+                                    onClick={() => navigate(`/contact-sitter/${sitter.id}${searchParamsString ? `?${searchParamsString}` : ''}`, { state: { sitter } })}
                                 >
                                     <Calendar className="w-4 h-4 mr-2" />
                                     Check Availability
