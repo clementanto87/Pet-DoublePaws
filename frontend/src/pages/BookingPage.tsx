@@ -3,15 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin,
-  Home,
-  Building,
-  Sun,
-  PawPrint,
   Search,
   ArrowRight,
   CheckCircle,
-  Navigation,
-  Calendar
+  Navigation
 } from 'lucide-react';
 import { cities } from '../data/cities';
 
@@ -62,7 +57,7 @@ const BookingPage: React.FC = () => {
     const params = new URLSearchParams();
     if (selectedService) params.set('service', selectedService);
     if (location) params.set('location', location);
-      navigate(`/search?${params.toString()}`);
+    navigate(`/search?${params.toString()}`);
   };
 
   return (
@@ -146,7 +141,7 @@ const BookingPage: React.FC = () => {
                           : 'bg-gray-100 dark:bg-gray-600'
                           }`}>
                           <span className="text-2xl">{service.icon}</span>
-                      </div>
+                        </div>
                         <p className={`font-bold text-sm mb-1 ${selectedService === service.id ? 'text-white' : 'text-gray-900 dark:text-white'
                           }`}>
                           {service.label}
@@ -169,8 +164,8 @@ const BookingPage: React.FC = () => {
                       )}
                     </motion.button>
                   ))}
-                    </div>
-                  </div>
+                </div>
+              </div>
 
               {/* Location Search */}
               <div className="p-6 pt-5 overflow-visible">
@@ -186,14 +181,12 @@ const BookingPage: React.FC = () => {
                       : 'bg-gray-50 dark:bg-gray-700 hover:bg-white shadow-sm hover:shadow-md'
                       }`}>
                       {/* Location Icon */}
-                      <div className={`flex items-center justify-center w-14 h-14 rounded-l-full transition-colors ${
-                        showLocationSuggestions ? 'text-primary' : 'text-gray-400'
-                      }`}>
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                          showLocationSuggestions ? 'bg-primary/10' : 'bg-gray-100 dark:bg-gray-600'
+                      <div className={`flex items-center justify-center w-14 h-14 rounded-l-full transition-colors ${showLocationSuggestions ? 'text-primary' : 'text-gray-400'
                         }`}>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${showLocationSuggestions ? 'bg-primary/10' : 'bg-gray-100 dark:bg-gray-600'
+                          }`}>
                           <MapPin className="w-5 h-5" />
-                      </div>
+                        </div>
                       </div>
 
                       <input
@@ -224,8 +217,8 @@ const BookingPage: React.FC = () => {
                         <Navigation className="w-4 h-4 group-hover:rotate-12 transition-transform" />
                         <span className="hidden sm:inline">Near Me</span>
                       </button>
+                    </div>
                   </div>
-                </div>
 
                   {/* Search Button */}
                   <motion.button
@@ -273,9 +266,9 @@ const BookingPage: React.FC = () => {
                                 {loc.count && <p className="text-xs text-gray-500">{loc.count}</p>}
                               </div>
                               <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" />
-                      </button>
-                    ))}
-                  </div>
+                            </button>
+                          ))}
+                        </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
