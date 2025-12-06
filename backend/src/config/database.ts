@@ -3,6 +3,7 @@ import 'reflect-metadata';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
+  url: process.env.DATABASE_URL,
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432', 10),
   username: process.env.DB_USER || 'postgres',
@@ -14,6 +15,7 @@ export const AppDataSource = new DataSource({
   migrations: [__dirname + '/../migrations/*{.ts,.js}'],
   subscribers: [],
   migrationsRun: true,
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false, // Required for Railway
 });
 
 export const connectDB = async () => {
