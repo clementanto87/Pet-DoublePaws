@@ -16,7 +16,11 @@ import reviewRoutes from './routes/review.routes';
 import messageRoutes from './routes/message.routes';
 
 // Middleware
-app.use(cors());
+// Middleware
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || '*',
+  credentials: true
+}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
