@@ -32,8 +32,6 @@ const Navbar: React.FC = () => {
     { name: 'Home', path: '/' },
     ...(isAuthenticated ? [
       { name: 'Dashboard', path: '/dashboard' },
-      { name: 'Pet Profile', path: '/pet-profile' },
-      { name: 'Bookings', path: '/booking' },
       { name: 'Sitter Dashboard', path: '/sitter-dashboard' },
     ] : []),
     { name: 'Become a Sitter', path: '/become-a-sitter' },

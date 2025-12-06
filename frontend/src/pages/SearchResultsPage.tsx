@@ -5,8 +5,8 @@ import { Button } from '../components/ui/Button';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { DivIcon } from 'leaflet';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    MapPin, Star, Shield, Heart, Grid3X3, 
+import {
+    MapPin, Star, Shield, Heart, Grid3X3,
     List, Map as MapIcon, ChevronDown, X,
     Home, DollarSign, SlidersHorizontal, Sparkles,
     Award, CheckCircle2, ArrowUpDown, Search, Navigation,
@@ -21,18 +21,18 @@ const generateMonthlyAvailability = (sitterId: string, monthOffset: number = 0) 
     const targetDate = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
     const year = targetDate.getFullYear();
     const month = targetDate.getMonth();
-    
+
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
     const startDayOfWeek = firstDay.getDay();
-    
+
     const monthName = targetDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-    
+
     // Generate availability based on sitter id hash
     const hash = sitterId.charCodeAt(0) + sitterId.length;
     const availableDays: Set<number> = new Set();
-    
+
     for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(year, month, day);
         // Don't mark past dates as available
@@ -43,7 +43,7 @@ const generateMonthlyAvailability = (sitterId: string, monthOffset: number = 0) 
             }
         }
     }
-    
+
     return {
         monthName,
         year,
@@ -61,9 +61,9 @@ const createCustomIcon = (isActive: boolean, price: number) => {
         className: 'custom-marker',
         html: `
             <div class="relative flex items-center justify-center">
-                <div class="${isActive 
-                    ? 'bg-primary text-white scale-110 shadow-lg shadow-primary/30' 
-                    : 'bg-white text-gray-800 hover:scale-105'} 
+                <div class="${isActive
+                ? 'bg-primary text-white scale-110 shadow-lg shadow-primary/30'
+                : 'bg-white text-gray-800 hover:scale-105'} 
                     px-3 py-1.5 rounded-full font-bold text-sm whitespace-nowrap
                     border-2 ${isActive ? 'border-primary' : 'border-gray-200'}
                     transition-all duration-200 cursor-pointer shadow-md">
@@ -136,16 +136,16 @@ const SearchResultsPage: React.FC = () => {
     const [showFilters, setShowFilters] = useState(false);
     const [sortBy, setSortBy] = useState<SortOption>('distance');
     const [favorites, setFavorites] = useState<Set<string>>(new Set());
-    
+
     // Search modification states
     const [editLocation, setEditLocation] = useState(searchParams.get('location') || '');
     const [editService, setEditService] = useState(searchParams.get('service') || 'boarding');
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
-    
+
     // Filter states
     const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
     const [verifiedOnly, setVerifiedOnly] = useState(false);
-    
+
     // Availability week navigator state (must be before any conditional returns)
     const [weekOffset, setWeekOffset] = useState<Record<string, number>>({});
 
@@ -183,7 +183,7 @@ const SearchResultsPage: React.FC = () => {
     const mapCenter = useMemo(() => {
         const validSitters = sitters.filter(s => s.latitude && s.longitude);
         if (validSitters.length === 0) return [40.7128, -74.006] as [number, number];
-        
+
         const avgLat = validSitters.reduce((acc, s) => acc + (s.latitude || 0), 0) / validSitters.length;
         const avgLng = validSitters.reduce((acc, s) => acc + (s.longitude || 0), 0) / validSitters.length;
         return [avgLat, avgLng] as [number, number];
@@ -199,11 +199,11 @@ const SearchResultsPage: React.FC = () => {
     // Sort sitters
     const sortedSitters = useMemo(() => {
         let filtered = [...sitters];
-        
+
         if (verifiedOnly) {
             filtered = filtered.filter(s => s.isVerified);
         }
-        
+
         filtered = filtered.filter(s => {
             const price = getSitterPrice(s);
             return price >= priceRange[0] && price <= priceRange[1];
@@ -273,7 +273,7 @@ const SearchResultsPage: React.FC = () => {
         const isFavorite = favorites.has(sitter.id);
         const currentMonthOffset = weekOffset[sitter.id] || 0;
         const calendar = useMemo(() => generateMonthlyAvailability(sitter.id, currentMonthOffset), [sitter.id, currentMonthOffset]);
-        
+
         // Build calendar grid
         const calendarDays: (number | null)[] = [];
         for (let i = 0; i < calendar.startDayOfWeek; i++) {
@@ -281,17 +281,17 @@ const SearchResultsPage: React.FC = () => {
         }
         for (let day = 1; day <= calendar.daysInMonth; day++) {
             calendarDays.push(day);
-    }
+        }
 
-    return (
+        return (
             <div
                 onMouseEnter={() => setHoveredSitter(sitter.id)}
                 onMouseLeave={() => setHoveredSitter(null)}
                 className={`
                     relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden
                     border transition-colors duration-200 cursor-pointer shadow-sm
-                    ${isHovered || isSelected 
-                        ? 'border-primary/50 shadow-lg shadow-primary/5' 
+                    ${isHovered || isSelected
+                        ? 'border-primary/50 shadow-lg shadow-primary/5'
                         : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
                     }
                 `}
@@ -303,9 +303,9 @@ const SearchResultsPage: React.FC = () => {
                         <div className="relative flex-shrink-0">
                             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-100 to-amber-100 dark:from-gray-700 dark:to-gray-600 overflow-hidden">
                                 {sitter.user?.profileImage ? (
-                                    <img 
-                                        src={sitter.user.profileImage} 
-                                        alt={sitter.user.firstName} 
+                                    <img
+                                        src={sitter.user.profileImage}
+                                        alt={sitter.user.firstName}
                                         className="w-full h-full object-cover"
                                     />
                                 ) : (
@@ -327,7 +327,7 @@ const SearchResultsPage: React.FC = () => {
                         <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-1">
                                 <div className="min-w-0">
-                                    <h3 
+                                    <h3
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             navigate(`/sitter/${sitter.id}${searchParamsString ? `?${searchParamsString}` : ''}`, { state: { sitter } });
@@ -347,12 +347,11 @@ const SearchResultsPage: React.FC = () => {
                                     onClick={(e) => { e.stopPropagation(); toggleFavorite(sitter.id); }}
                                     className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
                                 >
-                                    <Heart 
-                                        className={`w-4 h-4 transition-colors ${
-                                            isFavorite 
-                                                ? 'text-red-500 fill-red-500' 
-                                                : 'text-gray-300 hover:text-red-400'
-                                        }`} 
+                                    <Heart
+                                        className={`w-4 h-4 transition-colors ${isFavorite
+                                            ? 'text-red-500 fill-red-500'
+                                            : 'text-gray-300 hover:text-red-400'
+                                            }`}
                                     />
                                 </button>
                             </div>
@@ -379,19 +378,19 @@ const SearchResultsPage: React.FC = () => {
 
                             {/* Action Buttons */}
                             <div className="flex gap-1.5 mt-3">
-                                <Button 
+                                <Button
                                     size="sm"
-                                    variant="outline"
+                                    variant="secondary"
                                     className="flex-1 h-7 text-xs px-2"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        navigate(`/sitter/${sitter.id}${searchParamsString ? `?${searchParamsString}` : ''}`, { state: { sitter } });
+                                        navigate(`/contact-sitter/${sitter.id}${searchParamsString ? `?${searchParamsString}` : ''}`, { state: { sitter } });
                                     }}
                                 >
                                     <MessageCircle className="w-3 h-3 mr-1" />
-                                    Message
+                                    Book
                                 </Button>
-                                <Button 
+                                <Button
                                     size="sm"
                                     className="flex-1 h-7 text-xs px-2"
                                     onClick={(e) => {
@@ -400,8 +399,8 @@ const SearchResultsPage: React.FC = () => {
                                     }}
                                 >
                                     View Profile
-                    </Button>
-                </div>
+                                </Button>
+                            </div>
                         </div>
                     </div>
 
@@ -466,25 +465,25 @@ const SearchResultsPage: React.FC = () => {
                                     if (day === null) {
                                         return <div key={idx} className="w-8 h-8"></div>;
                                     }
-                                    
+
                                     const isAvailable = calendar.availableDays.has(day);
                                     const today = new Date();
-                                    const isToday = day === today.getDate() && 
-                                        calendar.month === today.getMonth() && 
+                                    const isToday = day === today.getDate() &&
+                                        calendar.month === today.getMonth() &&
                                         calendar.year === today.getFullYear();
-                                    
+
                                     return (
                                         <button
                                             key={idx}
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 if (isAvailable) {
-                                                    navigate(`/contact/${sitter.id}`, { 
-                                                        state: { 
-                                                            sitter, 
+                                                    navigate(`/contact/${sitter.id}`, {
+                                                        state: {
+                                                            sitter,
                                                             selectedDate: new Date(calendar.year, calendar.month, day),
-                                                            searchParams: searchParamsString 
-                                                        } 
+                                                            searchParams: searchParamsString
+                                                        }
                                                     });
                                                 }
                                             }}
@@ -492,8 +491,8 @@ const SearchResultsPage: React.FC = () => {
                                             className={`
                                                 w-8 h-8 rounded-lg text-xs font-medium transition-colors
                                                 flex items-center justify-center
-                                                ${isAvailable 
-                                                    ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 cursor-pointer border border-emerald-200' 
+                                                ${isAvailable
+                                                    ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 cursor-pointer border border-emerald-200'
                                                     : 'text-gray-300 cursor-default bg-gray-50'
                                                 }
                                                 ${isToday ? 'ring-2 ring-primary ring-offset-1' : ''}
@@ -540,8 +539,8 @@ const SearchResultsPage: React.FC = () => {
                 className={`
                     relative bg-white dark:bg-gray-800 rounded-xl overflow-hidden
                     border transition-colors duration-200 cursor-pointer shadow-sm
-                    ${isHovered || isSelected 
-                        ? 'border-primary/50 shadow-md' 
+                    ${isHovered || isSelected
+                        ? 'border-primary/50 shadow-md'
                         : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
                     }
                 `}
@@ -550,25 +549,25 @@ const SearchResultsPage: React.FC = () => {
                     {/* Avatar with Price */}
                     <div className="relative flex-shrink-0">
                         <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-orange-100 to-amber-100 dark:from-gray-700 dark:to-gray-600 overflow-hidden">
-                                    {sitter.user?.profileImage ? (
-                                <img 
-                                    src={sitter.user.profileImage} 
-                                    alt={sitter.user.firstName} 
+                            {sitter.user?.profileImage ? (
+                                <img
+                                    src={sitter.user.profileImage}
+                                    alt={sitter.user.firstName}
                                     className="w-full h-full object-cover"
                                 />
-                                    ) : (
+                            ) : (
                                 <div className="w-full h-full flex items-center justify-center">
                                     <span className="text-3xl font-bold text-primary/30">
                                         {sitter.user?.firstName?.[0] || '?'}
                                     </span>
-                                        </div>
-                                    )}
+                                </div>
+                            )}
                         </div>
                         <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-800 px-2 py-0.5 rounded-full shadow-md border border-gray-100 dark:border-gray-700">
                             <span className="text-sm font-black text-primary">${price}</span>
                             <span className="text-[10px] text-gray-400">/night</span>
                         </div>
-                                    {sitter.isVerified && (
+                        {sitter.isVerified && (
                             <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center border-2 border-white">
                                 <Shield className="w-2.5 h-2.5 text-white" />
                             </div>
@@ -585,25 +584,25 @@ const SearchResultsPage: React.FC = () => {
                                 onClick={(e) => { e.stopPropagation(); toggleFavorite(sitter.id); }}
                                 className="p-1 flex-shrink-0"
                             >
-                                <Heart 
-                                    className={`w-4 h-4 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-300'}`} 
+                                <Heart
+                                    className={`w-4 h-4 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-300'}`}
                                 />
                             </button>
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{sitter.headline || 'Pet Sitter'}</p>
-                        
+
                         <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
                             <MapPin className="w-3 h-3" />
                             <span className="truncate">{sitter.address?.split(',').slice(-2, -1)[0]?.trim() || 'Nearby'}</span>
                         </div>
-                        
+
                         <div className="flex items-center gap-1 mt-1">
                             <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
                             <span className="text-xs font-semibold">5.0</span>
                             <span className="text-xs text-gray-400">(0)</span>
                         </div>
 
-                        <Button 
+                        <Button
                             size="sm"
                             className="w-full mt-3 h-8 text-xs"
                             onClick={(e) => {
@@ -630,11 +629,10 @@ const SearchResultsPage: React.FC = () => {
                         {/* Search Summary & Quick Edit */}
                         <div className="flex-1">
                             <motion.div
-                                className={`relative bg-gray-50 dark:bg-gray-800 rounded-2xl border-2 transition-all ${
-                                    isSearchExpanded ? 'border-primary' : 'border-transparent hover:border-gray-200'
-                                }`}
+                                className={`relative bg-gray-50 dark:bg-gray-800 rounded-2xl border-2 transition-all ${isSearchExpanded ? 'border-primary' : 'border-transparent hover:border-gray-200'
+                                    }`}
                             >
-                                <div 
+                                <div
                                     className="flex items-center gap-3 p-3 cursor-pointer"
                                     onClick={() => setIsSearchExpanded(!isSearchExpanded)}
                                 >
@@ -643,7 +641,7 @@ const SearchResultsPage: React.FC = () => {
                                         flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
                                         <span className="text-2xl">{currentService.emoji}</span>
                                     </div>
-                                    
+
                                     {/* Search Info */}
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
@@ -690,11 +688,10 @@ const SearchResultsPage: React.FC = () => {
                                                             <button
                                                                 key={service.id}
                                                                 onClick={() => setEditService(service.id)}
-                                                                className={`p-3 rounded-xl text-left transition-all ${
-                                                                    editService === service.id
-                                                                        ? 'bg-primary text-white shadow-lg shadow-primary/30 ring-2 ring-primary ring-offset-2'
-                                                                        : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:border-primary'
-                                                                }`}
+                                                                className={`p-3 rounded-xl text-left transition-all ${editService === service.id
+                                                                    ? 'bg-primary text-white shadow-lg shadow-primary/30 ring-2 ring-primary ring-offset-2'
+                                                                    : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:border-primary'
+                                                                    }`}
                                                             >
                                                                 <span className="text-xl mb-1 block">{service.emoji}</span>
                                                                 <span className={`text-sm font-semibold block ${editService === service.id ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
@@ -726,7 +723,7 @@ const SearchResultsPage: React.FC = () => {
                                                                     text-gray-900 dark:text-white"
                                                             />
                                                         </div>
-                                                        <button 
+                                                        <button
                                                             onClick={() => setEditLocation('Current Location')}
                                                             className="h-12 px-4 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary 
                                                                 font-semibold transition-colors flex items-center gap-2 whitespace-nowrap"
@@ -789,8 +786,8 @@ const SearchResultsPage: React.FC = () => {
                             <button
                                 onClick={() => setShowFilters(!showFilters)}
                                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-colors text-sm font-semibold
-                                    ${showFilters 
-                                        ? 'bg-primary text-white shadow-lg shadow-primary/30' 
+                                    ${showFilters
+                                        ? 'bg-primary text-white shadow-lg shadow-primary/30'
                                         : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
                                     }`}
                             >
@@ -809,11 +806,10 @@ const SearchResultsPage: React.FC = () => {
                                 <button
                                     key={mode}
                                     onClick={() => setViewMode(mode)}
-                                    className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 text-sm font-medium ${
-                                        viewMode === mode 
-                                            ? 'bg-white dark:bg-gray-700 shadow-sm text-primary' 
-                                            : 'text-gray-500 hover:text-gray-700'
-                                    }`}
+                                    className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 text-sm font-medium ${viewMode === mode
+                                        ? 'bg-white dark:bg-gray-700 shadow-sm text-primary'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                        }`}
                                 >
                                     <Icon className="w-4 h-4" />
                                     <span className="hidden lg:inline">{label}</span>
@@ -894,8 +890,8 @@ const SearchResultsPage: React.FC = () => {
                     <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl flex items-center gap-2">
                         <X className="w-5 h-5" />
                         {error}
-                                        </div>
-                                        </div>
+                    </div>
+                </div>
             )}
 
             {/* Main Content */}
@@ -903,13 +899,12 @@ const SearchResultsPage: React.FC = () => {
                 <div className={`flex ${viewMode === 'list' ? 'flex-col' : viewMode === 'map' ? 'flex-col' : 'flex-col lg:flex-row'}`}>
                     {/* Sitter List */}
                     {viewMode !== 'map' && (
-                        <div 
-                            className={`p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent ${
-                                viewMode === 'split' ? 'lg:w-2/5 lg:max-h-[calc(100vh-160px)]' : 'w-full max-w-5xl mx-auto'
-                            }`}
+                        <div
+                            className={`p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent ${viewMode === 'split' ? 'lg:w-2/5 lg:max-h-[calc(100vh-160px)]' : 'w-full max-w-5xl mx-auto'
+                                }`}
                         >
                             {sortedSitters.length === 0 ? (
-                                <motion.div 
+                                <motion.div
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     className="text-center py-16"
@@ -947,12 +942,11 @@ const SearchResultsPage: React.FC = () => {
 
                     {/* Map */}
                     {viewMode !== 'list' && (
-                        <div 
-                            className={`relative ${
-                                viewMode === 'split' 
-                                    ? 'lg:w-3/5 h-[400px] lg:h-[calc(100vh-160px)] lg:sticky lg:top-[160px]' 
-                                    : 'w-full h-[calc(100vh-160px)]'
-                            }`}
+                        <div
+                            className={`relative ${viewMode === 'split'
+                                ? 'lg:w-3/5 h-[400px] lg:h-[calc(100vh-160px)] lg:sticky lg:top-[160px]'
+                                : 'w-full h-[calc(100vh-160px)]'
+                                }`}
                         >
                             <MapContainer
                                 center={mapCenter}
@@ -965,13 +959,13 @@ const SearchResultsPage: React.FC = () => {
                                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                 />
                                 <MapCenterUpdater center={highlightedCenter} />
-                                
+
                                 {sortedSitters
                                     .filter(sitter => sitter.latitude && sitter.longitude)
                                     .map((sitter) => {
                                         const price = getSitterPrice(sitter);
                                         const isActive = hoveredSitter === sitter.id || selectedSitter === sitter.id;
-                                        
+
                                         return (
                                             <Marker
                                                 key={sitter.id}
@@ -1006,14 +1000,14 @@ const SearchResultsPage: React.FC = () => {
                                                                 </div>
                                                                 <span className="text-primary font-bold">${price}/night</span>
                                                             </div>
-                                    </div>
-                                    <Button 
-                                        size="sm"
+                                                        </div>
+                                                        <Button
+                                                            size="sm"
                                                             className="w-full"
                                                             onClick={() => navigate(`/sitter/${sitter.id}${searchParamsString ? `?${searchParamsString}` : ''}`, { state: { sitter } })}
-                                    >
-                                        View Profile
-                                    </Button>
+                                                        >
+                                                            View Profile
+                                                        </Button>
                                                     </div>
                                                 </Popup>
                                             </Marker>
@@ -1051,11 +1045,10 @@ const SearchResultsPage: React.FC = () => {
                         <button
                             key={mode}
                             onClick={() => setViewMode(mode)}
-                            className={`px-5 py-2.5 rounded-full flex items-center gap-2 text-sm font-semibold transition-all ${
-                                viewMode === mode 
-                                    ? 'bg-primary text-white shadow-lg shadow-primary/30' 
-                                    : 'text-gray-500'
-                            }`}
+                            className={`px-5 py-2.5 rounded-full flex items-center gap-2 text-sm font-semibold transition-all ${viewMode === mode
+                                ? 'bg-primary text-white shadow-lg shadow-primary/30'
+                                : 'text-gray-500'
+                                }`}
                         >
                             <Icon className="w-4 h-4" />
                             {label}

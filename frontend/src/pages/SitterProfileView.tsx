@@ -18,6 +18,7 @@ import {
     BadgeCheck,
     Briefcase,
     Users,
+    User,
     Sun,
     Baby,
     TreeDeciduous
@@ -25,6 +26,10 @@ import {
 import { Button } from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import { cn } from '../lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import type { Review } from '../services/review.service';
+import { reviewService } from '../services/review.service';
+import { format } from 'date-fns';
 
 // Service icons mapping
 const serviceIcons: Record<string, React.ElementType> = {
@@ -58,7 +63,7 @@ const SitterProfileView: React.FC = () => {
 
     // Get sitter data from navigation state or fetch it
     const sitterFromState = location.state?.sitter;
-    
+
     // Preserve search params for contact page
     const searchParamsString = searchParams.toString();
 
@@ -88,6 +93,17 @@ const SitterProfileView: React.FC = () => {
     // Get minimum rate
     const minRate = activeServices.length > 0
         ? Math.min(...activeServices.map(([_, service]: [string, any]) => service.rate))
+        : 0;
+
+    // Fetch reviews
+    const { data: reviews, isLoading: reviewsLoading } = useQuery({
+        queryKey: ['sitterReviews', sitter.id],
+        queryFn: () => reviewService.getSitterReviews(sitter.id),
+        enabled: !!sitter?.id
+    });
+
+    const averageRating = reviews && reviews.length > 0
+        ? reviews.reduce((acc: number, review: Review) => acc + review.rating, 0) / reviews.length
         : 0;
 
     return (
@@ -175,8 +191,8 @@ const SitterProfileView: React.FC = () => {
                                     </div>
                                     <div className="flex items-center justify-end gap-1 mt-1">
                                         <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                                        <span className="font-bold text-gray-900 dark:text-white">5.0</span>
-                                        <span className="text-gray-500">(0 reviews)</span>
+                                        <span className="font-bold text-gray-900 dark:text-white">{averageRating.toFixed(1)}</span>
+                                        <span className="text-gray-500">({reviews?.length || 0} reviews)</span>
                                     </div>
                                 </div>
                                 <Button
@@ -298,15 +314,52 @@ const SitterProfileView: React.FC = () => {
                             <CardContent className="p-6">
                                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                                     <Star className="w-5 h-5 text-primary" />
-                                    Reviews
+                                    Reviews ({reviews?.length || 0})
                                 </h2>
-                                <div className="text-center py-8">
-                                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <Star className="w-8 h-8 text-gray-400" />
+                                {reviewsLoading ? (
+                                    <div className="text-center py-8">Loading reviews...</div>
+                                ) : reviews && reviews.length > 0 ? (
+                                    <div className="space-y-6">
+                                        {reviews.map((review: Review) => (
+                                            <div key={review.id} className="border-b border-gray-100 dark:border-gray-800 last:border-0 pb-6 last:pb-0">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
+                                                            {review.owner?.profileImage ? (
+                                                                <img src={review.owner.profileImage} alt={review.owner.firstName} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <User className="w-6 h-6 text-gray-400" />
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-bold text-gray-900 dark:text-white">
+                                                                {review.owner?.firstName} {review.owner?.lastName}
+                                                            </p>
+                                                            <p className="text-xs text-gray-500">
+                                                                {format(new Date(review.createdAt), 'MMM d, yyyy')}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                                                        <span className="font-bold">{review.rating}</span>
+                                                    </div>
+                                                </div>
+                                                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                                                    {review.comment}
+                                                </p>
+                                            </div>
+                                        ))}
                                     </div>
-                                    <h3 className="font-medium text-gray-900 dark:text-white mb-1">No reviews yet</h3>
-                                    <p className="text-sm text-gray-500">Be the first to leave a review!</p>
-                                </div>
+                                ) : (
+                                    <div className="text-center py-8">
+                                        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <Star className="w-8 h-8 text-gray-400" />
+                                        </div>
+                                        <h3 className="font-medium text-gray-900 dark:text-white mb-1">No reviews yet</h3>
+                                        <p className="text-sm text-gray-500">Be the first to leave a review!</p>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     </div>

@@ -8,6 +8,7 @@ interface DatePickerProps {
   onChange: (date: string) => void;
   placeholder?: string;
   className?: string;
+  blockedDates?: string[];
 }
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -20,7 +21,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   value,
   onChange,
   placeholder = 'Select date',
-  className
+  className,
+  blockedDates = []
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -102,7 +104,11 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   const isDateDisabled = (date: Date) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return date < today;
+    if (date < today) return true;
+
+    // Check blocked dates
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    return blockedDates.includes(dateStr);
   };
 
   const isDateSelected = (date: Date) => selectedDate?.toDateString() === date.toDateString();

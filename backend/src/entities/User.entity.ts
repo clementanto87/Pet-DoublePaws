@@ -1,6 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, OneToOne } from 'typeorm';
 import { Pet } from './Pet.entity';
 import { SitterProfile } from './SitterProfile.entity';
+import { Booking } from './Booking.entity';
+import { Review } from './Review.entity';
 
 @Entity('users')
 export class User {
@@ -32,6 +34,12 @@ export class User {
 
     @OneToOne(() => SitterProfile, (profile) => profile.user)
     sitterProfile?: SitterProfile;
+
+    @OneToMany(() => Booking, (booking) => booking.owner)
+    bookings!: Booking[];
+
+    @OneToMany(() => Review, (review) => review.owner)
+    reviews!: Review[];
 
 
 }

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,8 +14,6 @@ import {
     ChevronRight,
     User,
     Shield,
-    Minus,
-    Plus,
     CheckCircle,
     PawPrint,
     MessageCircle,
@@ -25,13 +24,20 @@ import {
     Sun,
     Heart,
     Award,
-    Zap
+    Zap,
+    Plus,
+    Minus
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import { Label } from '../components/ui/Label';
 import { DatePicker } from '../components/ui/DatePicker';
+import { TimePicker } from '../components/ui/TimePicker';
 import { cn } from '../lib/utils';
+import { bookingService } from '../services/booking.service';
+import { petService, type PetData } from '../services/pet.service';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '../context/AuthContext';
 
 // Service options with icons and colors
 const services = [
@@ -41,7 +47,6 @@ const services = [
     { id: 'day-care', label: 'Doggy Day Care', icon: Dog, emoji: '🐕', color: 'from-green-500 to-emerald-500', bgColor: 'bg-green-100 dark:bg-green-900/30', textColor: 'text-green-600' },
     { id: 'walking', label: 'Dog Walking', icon: PawPrint, emoji: '🦮', color: 'from-purple-500 to-pink-500', bgColor: 'bg-purple-100 dark:bg-purple-900/30', textColor: 'text-purple-600' },
 ];
-
 // Pet size categories
 const PET_SIZES = [
     { id: 'small', label: 'Small', weight: '0-7 kg', icon: '🐕', description: 'Chihuahua, Pomeranian' },
@@ -49,6 +54,7 @@ const PET_SIZES = [
     { id: 'large', label: 'Large', weight: '18-45 kg', icon: '🦮', description: 'Labrador, German Shepherd' },
     { id: 'giant', label: 'Giant', weight: '45+ kg', icon: '🐕‍🦺', description: 'Great Dane, St. Bernard' },
 ];
+
 
 // Map service IDs between booking page and sitter profile
 const serviceIdMap: Record<string, string> = {
@@ -91,37 +97,46 @@ const messageCategories = [
 const ContactSitterPage: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    // const { id } = useParams<{ id: string }>();
     const [searchParams] = useSearchParams();
 
     const sitter = location.state?.sitter;
 
     // Get pre-filled values from search params
-    const prefilledService = searchParams.get('serviceType') || searchParams.get('service') || '';
+    const prefilledService = searchParams.get('service') || '';
     const prefilledStartDate = searchParams.get('startDate') || '';
     const prefilledEndDate = searchParams.get('endDate') || '';
-    const prefilledPetType = searchParams.get('petType') || '';
+
+    // Fetch user's pets
+    const { data: pets, isLoading: isLoadingPets } = useQuery<PetData[]>({
+        queryKey: ['myPets'],
+        queryFn: petService.getPets
+    });
 
     // Form state - initialize with prefilled values
     const [selectedService, setSelectedService] = useState(prefilledService);
     const [startDate, setStartDate] = useState(prefilledStartDate);
     const [endDate, setEndDate] = useState(prefilledEndDate);
-    const [petInfo, setPetInfo] = useState({
-        dogs: prefilledPetType === 'dog' ? 1 : 0,
-        cats: prefilledPetType === 'cat' ? 1 : 0
-    });
-    const [selectedDogSizes, setSelectedDogSizes] = useState<string[]>([]);
+    const [startTime, setStartTime] = useState('09:00');
+    const [endTime, setEndTime] = useState('17:00');
+    const [selectedPetIds, setSelectedPetIds] = useState<string[]>([]);
+
+    // Manual pet selection state
+    const [petCounts, setPetCounts] = useState({ dogs: 0, cats: 0 });
+    const [selectedPetSizes, setSelectedPetSizes] = useState<string[]>([]);
     const [message, setMessage] = useState('');
     const [isSending, setIsSending] = useState(false);
     const [isSent, setIsSent] = useState(false);
     const [activeStep, setActiveStep] = useState(1);
     const [isFavorited, setIsFavorited] = useState(false);
+    const { user } = useAuth();
 
-    // Toggle dog size selection
-    const toggleDogSize = (sizeId: string) => {
-        setSelectedDogSizes(prev => 
-            prev.includes(sizeId) 
-                ? prev.filter(id => id !== sizeId)
-                : [...prev, sizeId]
+    // Toggle pet selection
+    const togglePetSelection = (petId: string) => {
+        setSelectedPetIds(prev =>
+            prev.includes(petId)
+                ? prev.filter(id => id !== petId)
+                : [...prev, petId]
         );
     };
 
@@ -133,10 +148,8 @@ const ContactSitterPage: React.FC = () => {
         if (startDate && endDate && activeStep === 2) {
             setTimeout(() => setActiveStep(3), 300);
         }
-        if ((petInfo.dogs > 0 || petInfo.cats > 0) && activeStep === 3) {
-            setTimeout(() => setActiveStep(4), 300);
-        }
-    }, [selectedService, startDate, endDate, petInfo, activeStep]);
+        // Don't auto-advance on pet selection as user might want to select multiple
+    }, [selectedService, startDate, endDate, activeStep]);
 
     // Calculate estimated price
     const estimatedPrice = useMemo(() => {
@@ -149,12 +162,14 @@ const ContactSitterPage: React.FC = () => {
         const start = new Date(startDate);
         const end = new Date(endDate);
         const nights = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-        const totalPets = petInfo.dogs + petInfo.cats;
+        const totalPets = selectedPetIds.length + petCounts.dogs + petCounts.cats;
+        if (totalPets === 0) return null;
+
         const basePrice = serviceData.rate * nights;
         const petMultiplier = totalPets > 1 ? 1 + (totalPets - 1) * 0.5 : 1;
 
         return Math.round(basePrice * petMultiplier);
-    }, [sitter, selectedService, startDate, endDate, petInfo]);
+    }, [sitter, selectedService, startDate, endDate, selectedPetIds, petCounts]);
 
     // Calculate number of nights
     const numberOfNights = useMemo(() => {
@@ -166,12 +181,46 @@ const ContactSitterPage: React.FC = () => {
 
     // Handle send message
     const handleSendMessage = async () => {
-        if (!message.trim()) return;
+        if (!message.trim() || !sitter || !user) return;
 
         setIsSending(true);
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        setIsSending(false);
-        setIsSent(true);
+        try {
+            // Construct message with manual pet details if any
+            let finalMessage = message;
+            const manualDetails = [];
+            if (petCounts.dogs > 0) manualDetails.push(`${petCounts.dogs} Dog${petCounts.dogs > 1 ? 's' : ''} `);
+            if (petCounts.cats > 0) manualDetails.push(`${petCounts.cats} Cat${petCounts.cats > 1 ? 's' : ''} `);
+            if (selectedPetSizes.length > 0) manualDetails.push(`Sizes: ${selectedPetSizes.join(', ')} `);
+
+            if (manualDetails.length > 0) {
+                finalMessage = `${message} \n\n[Manual Pet Entry: ${manualDetails.join(', ')}]`;
+            }
+
+            // Combine date and time
+            const startDateTime = new Date(startDate);
+            const [startHour, startMinute] = startTime.split(':');
+            startDateTime.setHours(parseInt(startHour), parseInt(startMinute));
+
+            const endDateTime = new Date(endDate);
+            const [endHour, endMinute] = endTime.split(':');
+            endDateTime.setHours(parseInt(endHour), parseInt(endMinute));
+
+            await bookingService.createBooking({
+                sitterId: sitter.id,
+                serviceType: selectedService,
+                startDate: startDateTime.toISOString(),
+                endDate: endDateTime.toISOString(),
+                petIds: selectedPetIds,
+                message: finalMessage,
+                totalPrice: estimatedPrice || 0
+            });
+            setIsSent(true);
+        } catch (error) {
+            console.error('Failed to create booking:', error);
+            // Show error toast or message
+        } finally {
+            setIsSending(false);
+        }
     };
 
     // If no sitter data, show error
@@ -186,14 +235,14 @@ const ContactSitterPage: React.FC = () => {
                     <Card className="text-center p-8 shadow-2xl">
                         <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
                             <MessageCircle className="w-10 h-10 text-gray-400" />
-                    </div>
+                        </div>
                         <h2 className="text-2xl font-bold text-foreground mb-2">No Sitter Selected</h2>
-                    <p className="text-muted-foreground mb-6">Please select a sitter from the search results first.</p>
+                        <p className="text-muted-foreground mb-6">Please select a sitter from the search results first.</p>
                         <Button onClick={() => navigate('/search')} className="w-full">
                             <Sparkles className="w-4 h-4 mr-2" />
                             Find Sitters
                         </Button>
-                </Card>
+                    </Card>
                 </motion.div>
             </div>
         );
@@ -218,7 +267,7 @@ const ContactSitterPage: React.FC = () => {
                                     className="absolute w-2 h-2 rounded-full"
                                     style={{
                                         background: ['#f97316', '#22c55e', '#3b82f6', '#eab308', '#ec4899'][i % 5],
-                                        left: `${Math.random() * 100}%`,
+                                        left: `${Math.random() * 100}% `,
                                         top: '-10px',
                                     }}
                                     initial={{ y: -10, opacity: 1 }}
@@ -234,7 +283,7 @@ const ContactSitterPage: React.FC = () => {
                                     }}
                                 />
                             ))}
-                    </div>
+                        </div>
 
                         <motion.div
                             initial={{ scale: 0 }}
@@ -268,6 +317,10 @@ const ContactSitterPage: React.FC = () => {
                                         <span className="text-gray-500">Dates</span>
                                         <span className="font-medium">{numberOfNights} night{numberOfNights !== 1 ? 's' : ''}</span>
                                     </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-500">Time</span>
+                                        <span className="font-medium">{startTime} - {endTime}</span>
+                                    </div>
                                     {estimatedPrice && (
                                         <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
                                             <span className="text-gray-500">Estimated Total</span>
@@ -277,17 +330,17 @@ const ContactSitterPage: React.FC = () => {
                                 </div>
                             </div>
 
-                    <div className="space-y-3">
+                            <div className="space-y-3">
                                 <Button onClick={() => navigate('/dashboard')} className="w-full h-12 shadow-glow">
                                     <Sparkles className="w-4 h-4 mr-2" />
-                            Go to Dashboard
-                        </Button>
+                                    Go to Dashboard
+                                </Button>
                                 <Button variant="outline" onClick={() => navigate(-1)} className="w-full h-12">
-                            Back to Profile
-                        </Button>
-                    </div>
+                                    Back to Profile
+                                </Button>
+                            </div>
                         </motion.div>
-                </Card>
+                    </Card>
                 </motion.div>
             </div>
         );
@@ -316,7 +369,7 @@ const ContactSitterPage: React.FC = () => {
     const steps = [
         { number: 1, label: 'Service', completed: !!selectedService },
         { number: 2, label: 'Dates', completed: !!startDate && !!endDate },
-        { number: 3, label: 'Pets', completed: petInfo.dogs > 0 || petInfo.cats > 0 },
+        { number: 3, label: 'Pets', completed: selectedPetIds.length > 0 },
         { number: 4, label: 'Message', completed: !!message.trim() },
     ];
 
@@ -333,13 +386,13 @@ const ContactSitterPage: React.FC = () => {
             <div className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
-                    <button
-                        onClick={() => navigate(-1)}
+                        <button
+                            onClick={() => navigate(-1)}
                             className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-primary transition-colors group"
-                    >
+                        >
                             <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
                             <span className="font-medium">Back</span>
-                    </button>
+                        </button>
 
                         {/* Progress Steps - Desktop */}
                         <div className="hidden md:flex items-center gap-2">
@@ -421,7 +474,7 @@ const ContactSitterPage: React.FC = () => {
                                 "overflow-hidden transition-all duration-300",
                                 activeStep === 1 && "ring-2 ring-primary/20"
                             )}>
-                            <CardContent className="p-6">
+                                <CardContent className="p-6">
                                     <div className="flex items-center gap-3 mb-5">
                                         <div className="w-10 h-10 bg-gradient-to-br from-primary to-orange-500 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-primary/20">
                                             1
@@ -435,7 +488,7 @@ const ContactSitterPage: React.FC = () => {
                                         )}
                                     </div>
 
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                         {availableServices.map((service) => {
                                             const isSelected = selectedService === service.id;
                                             const rate = getServiceRate(service.id);
@@ -443,11 +496,11 @@ const ContactSitterPage: React.FC = () => {
 
                                             return (
                                                 <motion.button
-                                            key={service.id}
+                                                    key={service.id}
                                                     whileHover={{ scale: 1.02 }}
                                                     whileTap={{ scale: 0.98 }}
-                                            onClick={() => setSelectedService(service.id)}
-                                            className={cn(
+                                                    onClick={() => setSelectedService(service.id)}
+                                                    className={cn(
                                                         "relative p-4 rounded-2xl border-2 transition-all text-left group overflow-hidden",
                                                         isSelected
                                                             ? "border-primary bg-gradient-to-br from-primary/5 to-orange-500/5"
@@ -465,16 +518,16 @@ const ContactSitterPage: React.FC = () => {
                                                         <div className={cn(
                                                             "w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-all",
                                                             isSelected
-                                                                ? `bg-gradient-to-br ${service.color} text-white shadow-lg`
-                                                                : `${service.bgColor} ${service.textColor}`
+                                                                ? `bg - gradient - to - br ${service.color} text - white shadow - lg`
+                                                                : `${service.bgColor} ${service.textColor} `
                                                         )}>
                                                             <ServiceIcon className="w-6 h-6" />
                                                         </div>
                                                         <p className={cn(
                                                             "font-bold text-sm mb-1",
                                                             isSelected ? "text-primary" : "text-gray-900 dark:text-white"
-                                            )}>
-                                                {service.label}
+                                                        )}>
+                                                            {service.label}
                                                         </p>
                                                         {rate && (
                                                             <p className="text-xs text-gray-500">
@@ -491,9 +544,9 @@ const ContactSitterPage: React.FC = () => {
                                                 </motion.button>
                                             );
                                         })}
-                                </div>
-                            </CardContent>
-                        </Card>
+                                    </div>
+                                </CardContent>
+                            </Card>
                         </motion.div>
 
                         {/* Dates */}
@@ -506,7 +559,7 @@ const ContactSitterPage: React.FC = () => {
                                 "overflow-hidden transition-all duration-300",
                                 activeStep === 2 && "ring-2 ring-primary/20"
                             )}>
-                            <CardContent className="p-6">
+                                <CardContent className="p-6">
                                     <div className="flex items-center gap-3 mb-5">
                                         <div className={cn(
                                             "w-10 h-10 rounded-xl flex items-center justify-center font-bold shadow-lg",
@@ -525,24 +578,44 @@ const ContactSitterPage: React.FC = () => {
                                         )}
                                     </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                            <Label className="mb-2 block text-sm font-medium">Start Date</Label>
-                                        <DatePicker
-                                            value={startDate}
-                                            onChange={setStartDate}
-                                            placeholder="Select start date"
-                                        />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-4">
+                                            <div>
+                                                <Label className="mb-2 block text-sm font-medium">Start Date</Label>
+                                                <DatePicker
+                                                    value={startDate}
+                                                    onChange={setStartDate}
+                                                    placeholder="Start Date"
+                                                    blockedDates={sitter?.availability?.blockedDates}
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label className="mb-2 block text-sm font-medium">Start Time</Label>
+                                                <TimePicker
+                                                    value={startTime}
+                                                    onChange={setStartTime}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <Label className="mb-2 block text-sm font-medium">End Date</Label>
+                                                <DatePicker
+                                                    value={endDate}
+                                                    onChange={setEndDate}
+                                                    placeholder="End Date"
+                                                    blockedDates={sitter?.availability?.blockedDates}
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label className="mb-2 block text-sm font-medium">End Time</Label>
+                                                <TimePicker
+                                                    value={endTime}
+                                                    onChange={setEndTime}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div>
-                                            <Label className="mb-2 block text-sm font-medium">End Date</Label>
-                                        <DatePicker
-                                            value={endDate}
-                                            onChange={setEndDate}
-                                            placeholder="Select end date"
-                                        />
-                                    </div>
-                                </div>
 
                                     {numberOfNights > 0 && (
                                         <motion.div
@@ -556,8 +629,8 @@ const ContactSitterPage: React.FC = () => {
                                             </span>
                                         </motion.div>
                                     )}
-                            </CardContent>
-                        </Card>
+                                </CardContent>
+                            </Card>
                         </motion.div>
 
                         {/* Pet Info */}
@@ -570,11 +643,11 @@ const ContactSitterPage: React.FC = () => {
                                 "overflow-hidden transition-all duration-300",
                                 activeStep === 3 && "ring-2 ring-primary/20"
                             )}>
-                            <CardContent className="p-6">
+                                <CardContent className="p-6">
                                     <div className="flex items-center gap-3 mb-5">
                                         <div className={cn(
                                             "w-10 h-10 rounded-xl flex items-center justify-center font-bold shadow-lg",
-                                            (petInfo.dogs > 0 || petInfo.cats > 0)
+                                            (selectedPetIds.length > 0 || petCounts.dogs > 0 || petCounts.cats > 0)
                                                 ? "bg-gradient-to-br from-primary to-orange-500 text-white shadow-primary/20"
                                                 : "bg-gray-100 dark:bg-gray-800 text-gray-400"
                                         )}>
@@ -584,155 +657,188 @@ const ContactSitterPage: React.FC = () => {
                                             <h2 className="text-lg font-bold text-gray-900 dark:text-white">How many pets?</h2>
                                             <p className="text-sm text-gray-500">Tell us about your furry friends</p>
                                         </div>
-                                        {(petInfo.dogs > 0 || petInfo.cats > 0) && (
+                                        {(selectedPetIds.length > 0 || petCounts.dogs > 0 || petCounts.cats > 0) && (
                                             <CheckCircle className="w-5 h-5 text-green-500 ml-auto" />
                                         )}
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {/* Dogs */}
-                                        <div className={cn(
-                                            "p-4 rounded-2xl border-2 transition-all",
-                                            petInfo.dogs > 0
-                                                ? "border-orange-200 bg-orange-50/50 dark:border-orange-800 dark:bg-orange-900/20"
-                                                : "border-gray-200 dark:border-gray-700"
-                                        )}>
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-14 h-14 bg-gradient-to-br from-orange-400 to-amber-500 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/20">
-                                                        <Dog className="w-7 h-7 text-white" />
+                                    <div className="space-y-6">
+                                        {/* Manual Counters */}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="p-4 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                                                <div className="flex items-center gap-3 mb-3">
+                                                    <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400">
+                                                        <Dog className="w-5 h-5" />
                                                     </div>
-                                                    <div>
-                                                        <p className="font-bold text-gray-900 dark:text-white">Dogs</p>
-                                                        <p className="text-xs text-gray-500">Max 5</p>
-                                                    </div>
+                                                    <span className="font-semibold text-gray-900 dark:text-white">Dogs</span>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => setPetInfo(p => ({ ...p, dogs: Math.max(0, p.dogs - 1) }))}
-                                                        disabled={petInfo.dogs === 0}
-                                                        className={cn(
-                                                            "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
-                                                            petInfo.dogs === 0
-                                                                ? "bg-gray-100 dark:bg-gray-700 text-gray-400"
-                                                                : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-700 hover:border-primary"
-                                                        )}
+                                                <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl p-1 border border-gray-200 dark:border-gray-700">
+                                                    <button
+                                                        onClick={() => setPetCounts(prev => ({ ...prev, dogs: Math.max(0, prev.dogs - 1) }))}
+                                                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 transition-colors"
                                                     >
                                                         <Minus className="w-4 h-4" />
-                                                </button>
-                                                    <span className="w-8 text-center text-xl font-bold text-gray-900 dark:text-white">
-                                                        {petInfo.dogs}
-                                                    </span>
-                                                <button
-                                                    onClick={() => setPetInfo(p => ({ ...p, dogs: Math.min(5, p.dogs + 1) }))}
-                                                        disabled={petInfo.dogs >= 5}
-                                                        className={cn(
-                                                            "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
-                                                            petInfo.dogs >= 5
-                                                                ? "bg-gray-100 dark:bg-gray-700 text-gray-400"
-                                                                : "bg-primary text-white hover:bg-primary-600 shadow-lg shadow-primary/30"
-                                                        )}
+                                                    </button>
+                                                    <span className="font-bold text-gray-900 dark:text-white">{petCounts.dogs}</span>
+                                                    <button
+                                                        onClick={() => setPetCounts(prev => ({ ...prev, dogs: prev.dogs + 1 }))}
+                                                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 transition-colors"
                                                     >
                                                         <Plus className="w-4 h-4" />
-                                                </button>
+                                                    </button>
                                                 </div>
-                                        </div>
-                                    </div>
+                                            </div>
 
-                                    {/* Cats */}
-                                        <div className={cn(
-                                            "p-4 rounded-2xl border-2 transition-all",
-                                            petInfo.cats > 0
-                                                ? "border-purple-200 bg-purple-50/50 dark:border-purple-800 dark:bg-purple-900/20"
-                                                : "border-gray-200 dark:border-gray-700"
-                                        )}>
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-14 h-14 bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/20">
-                                                        <Cat className="w-7 h-7 text-white" />
-                                        </div>
-                                        <div>
-                                                        <p className="font-bold text-gray-900 dark:text-white">Cats</p>
-                                                        <p className="text-xs text-gray-500">Max 5</p>
+                                            <div className="p-4 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                                                <div className="flex items-center gap-3 mb-3">
+                                                    <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400">
+                                                        <Cat className="w-5 h-5" />
                                                     </div>
+                                                    <span className="font-semibold text-gray-900 dark:text-white">Cats</span>
                                                 </div>
-                                                <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => setPetInfo(p => ({ ...p, cats: Math.max(0, p.cats - 1) }))}
-                                                        disabled={petInfo.cats === 0}
-                                                        className={cn(
-                                                            "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
-                                                            petInfo.cats === 0
-                                                                ? "bg-gray-100 dark:bg-gray-700 text-gray-400"
-                                                                : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-700 hover:border-primary"
-                                                        )}
+                                                <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl p-1 border border-gray-200 dark:border-gray-700">
+                                                    <button
+                                                        onClick={() => setPetCounts(prev => ({ ...prev, cats: Math.max(0, prev.cats - 1) }))}
+                                                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 transition-colors"
                                                     >
                                                         <Minus className="w-4 h-4" />
-                                                </button>
-                                                    <span className="w-8 text-center text-xl font-bold text-gray-900 dark:text-white">
-                                                        {petInfo.cats}
-                                                    </span>
-                                                <button
-                                                    onClick={() => setPetInfo(p => ({ ...p, cats: Math.min(5, p.cats + 1) }))}
-                                                        disabled={petInfo.cats >= 5}
-                                                        className={cn(
-                                                            "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
-                                                            petInfo.cats >= 5
-                                                                ? "bg-gray-100 dark:bg-gray-700 text-gray-400"
-                                                                : "bg-primary text-white hover:bg-primary-600 shadow-lg shadow-primary/30"
-                                                        )}
+                                                    </button>
+                                                    <span className="font-bold text-gray-900 dark:text-white">{petCounts.cats}</span>
+                                                    <button
+                                                        onClick={() => setPetCounts(prev => ({ ...prev, cats: prev.cats + 1 }))}
+                                                        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 transition-colors"
                                                     >
                                                         <Plus className="w-4 h-4" />
-                                                </button>
+                                                    </button>
                                                 </div>
+                                            </div>
                                         </div>
-                                        </div>
-                                    </div>
 
-                                    {/* Dog Size Selection */}
-                                    {petInfo.dogs > 0 && (
-                                        <motion.div
-                                            initial={{ opacity: 0, height: 0 }}
-                                            animate={{ opacity: 1, height: 'auto' }}
-                                            transition={{ delay: 0.1 }}
-                                            className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700"
-                                        >
-                                            <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4">
-                                                What size is your dog?
-                                            </h3>
-                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                                {PET_SIZES.map((size) => {
-                                                    const isSelected = selectedDogSizes.includes(size.id);
+                                        {/* Pet Size Selection (Only if dogs > 0) */}
+                                        <AnimatePresence>
+                                            {petCounts.dogs > 0 && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, height: 0 }}
+                                                    animate={{ opacity: 1, height: 'auto' }}
+                                                    exit={{ opacity: 0, height: 0 }}
+                                                    className="overflow-hidden"
+                                                >
+                                                    <Label className="mb-3 block">Dog Size</Label>
+                                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                                        {PET_SIZES.map((size) => {
+                                                            const isSelected = selectedPetSizes.includes(size.id);
+                                                            return (
+                                                                <button
+                                                                    key={size.id}
+                                                                    onClick={() => {
+                                                                        setSelectedPetSizes(prev =>
+                                                                            isSelected
+                                                                                ? prev.filter(id => id !== size.id)
+                                                                                : [...prev, size.id]
+                                                                        );
+                                                                    }}
+                                                                    className={cn(
+                                                                        "p-3 rounded-xl border-2 text-left transition-all",
+                                                                        isSelected
+                                                                            ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                                                                            : "border-gray-200 dark:border-gray-700 hover:border-primary/50"
+                                                                    )}
+                                                                >
+                                                                    <div className="text-2xl mb-1">{size.icon}</div>
+                                                                    <div className="font-semibold text-sm text-gray-900 dark:text-white">{size.label}</div>
+                                                                    <div className="text-xs text-gray-500">{size.weight}</div>
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+
+                                        {/* Divider */}
+                                        <div className="relative py-2">
+                                            <div className="absolute inset-0 flex items-center">
+                                                <span className="w-full border-t border-gray-200 dark:border-gray-700" />
+                                            </div>
+                                            <div className="relative flex justify-center text-xs uppercase">
+                                                <span className="bg-white dark:bg-gray-800 px-2 text-gray-500">
+                                                    Or select from your profile (Optional)
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* Profile Pets */}
+                                        {isLoadingPets ? (
+                                            <div className="text-center py-8 text-gray-500">Loading your pets...</div>
+                                        ) : !pets || pets.length === 0 ? (
+                                            <div className="text-center py-8">
+                                                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                    <PawPrint className="w-8 h-8 text-gray-400" />
+                                                </div>
+                                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No pets found</h3>
+                                                <p className="text-gray-500 mb-6">You need to create a pet profile before booking.</p>
+                                                <Button onClick={() => navigate('/pet-profile', { state: { returnUrl: location.pathname + location.search } })} variant="outline">
+                                                    <Plus className="w-4 h-4 mr-2" />
+                                                    Add Pet
+                                                </Button>
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                {pets.map((pet: any) => {
+                                                    const isSelected = selectedPetIds.includes(pet.id);
                                                     return (
-                                                        <button
-                                                            key={size.id}
-                                                            onClick={() => toggleDogSize(size.id)}
+                                                        <div
+                                                            key={pet.id}
+                                                            onClick={() => togglePetSelection(pet.id)}
                                                             className={cn(
-                                                                "p-4 rounded-2xl border-2 transition-all duration-300 text-center group",
+                                                                "relative p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center gap-4",
                                                                 isSelected
-                                                                    ? "border-primary bg-primary/5 dark:bg-primary/10 shadow-md"
-                                                                    : "border-gray-200 dark:border-gray-700 hover:border-primary/50 bg-white dark:bg-gray-800/50"
+                                                                    ? "border-primary bg-primary/5 dark:bg-primary/10"
+                                                                    : "border-gray-200 dark:border-gray-700 hover:border-primary/50 bg-white dark:bg-gray-800"
                                                             )}
                                                         >
-                                                            <div className="text-3xl mb-2">{size.icon}</div>
-                                                            <p className={cn(
-                                                                "font-bold text-sm mb-0.5",
-                                                                isSelected ? "text-primary" : "text-gray-900 dark:text-white"
+                                                            <div className={cn(
+                                                                "w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0",
+                                                                pet.species?.toLowerCase() === 'dog'
+                                                                    ? "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400"
+                                                                    : "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
                                                             )}>
-                                                                {size.label}
-                                                            </p>
-                                                            <p className="text-xs text-gray-500">{size.weight}</p>
-                                                            {isSelected && (
-                                                                <div className="mt-2 flex items-center justify-center">
-                                                                    <CheckCircle className="w-4 h-4 text-primary" />
-                                                                </div>
-                                                            )}
-                                                        </button>
+                                                                {pet.imageUrl ? (
+                                                                    <img src={pet.imageUrl} alt={pet.name} className="w-full h-full object-cover rounded-xl" />
+                                                                ) : (
+                                                                    pet.species?.toLowerCase() === 'dog' ? <Dog className="w-6 h-6" /> : <Cat className="w-6 h-6" />
+                                                                )}
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <h3 className="font-bold text-gray-900 dark:text-white">{pet.name}</h3>
+                                                                <p className="text-xs text-gray-500">{pet.breed} • {pet.age} yrs</p>
+                                                            </div>
+                                                            <div className={cn(
+                                                                "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all",
+                                                                isSelected
+                                                                    ? "bg-primary border-primary"
+                                                                    : "border-gray-300 dark:border-gray-600"
+                                                            )}>
+                                                                {isSelected && <CheckCircle className="w-4 h-4 text-white" />}
+                                                            </div>
+                                                        </div>
                                                     );
                                                 })}
                                             </div>
-                                        </motion.div>
-                                    )}
+                                        )}
+
+                                        {(selectedPetIds.length > 0 || petCounts.dogs > 0 || petCounts.cats > 0) && (
+                                            <div className="flex justify-end pt-4">
+                                                <Button
+                                                    onClick={() => setActiveStep(4)}
+                                                    className="shadow-glow"
+                                                >
+                                                    Continue
+                                                    <ChevronRight className="w-4 h-4 ml-2" />
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
                                 </CardContent>
                             </Card>
                         </motion.div>
@@ -747,7 +853,7 @@ const ContactSitterPage: React.FC = () => {
                                 "overflow-hidden transition-all duration-300",
                                 activeStep === 4 && "ring-2 ring-primary/20"
                             )}>
-                            <CardContent className="p-6">
+                                <CardContent className="p-6">
                                     <div className="flex items-center gap-3 mb-5">
                                         <div className={cn(
                                             "w-10 h-10 rounded-xl flex items-center justify-center font-bold shadow-lg",
@@ -766,15 +872,15 @@ const ContactSitterPage: React.FC = () => {
                                         )}
                                     </div>
 
-                                {/* Quick Templates */}
-                                <div className="mb-4">
+                                    {/* Quick Templates */}
+                                    <div className="mb-4">
                                         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Quick Templates</p>
-                                    <div className="flex flex-wrap gap-2">
+                                        <div className="flex flex-wrap gap-2">
                                             {messageCategories.map((cat) => (
                                                 <div key={cat.label} className="flex flex-wrap gap-2">
                                                     {cat.templates.map((template, index) => (
-                                            <button
-                                                key={index}
+                                                        <button
+                                                            key={index}
                                                             onClick={() => setMessage(template.text)}
                                                             className={cn(
                                                                 "px-3 py-2 text-xs font-medium rounded-xl transition-all flex items-center gap-1.5",
@@ -785,73 +891,73 @@ const ContactSitterPage: React.FC = () => {
                                                         >
                                                             <span>{template.icon}</span>
                                                             <span className="truncate max-w-[150px]">{template.text.substring(0, 25)}...</span>
-                                            </button>
-                                        ))}
+                                                        </button>
+                                                    ))}
                                                 </div>
                                             ))}
                                         </div>
-                                </div>
+                                    </div>
 
                                     <div className="relative">
-                                <textarea
-                                    value={message}
-                                    onChange={(e) => setMessage(e.target.value)}
-                                    placeholder={`Hi ${sitter.user?.firstName}! I'm looking for someone to care for my pet...`}
+                                        <textarea
+                                            value={message}
+                                            onChange={(e) => setMessage(e.target.value)}
+                                            placeholder={`Hi ${sitter.user?.firstName} !I'm looking for someone to care for my pet...`}
                                             className="w-full h-40 px-4 py-3 rounded-2xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900/50 text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 resize-none transition-all"
                                         />
                                         <div className="absolute bottom-3 right-3 text-xs text-gray-400">
                                             {message.length} characters
                                         </div>
-                                    </div>
+                                    </div >
 
                                     <div className="flex items-start gap-3 mt-4 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-2xl border border-blue-100 dark:border-blue-800">
                                         <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
                                             <Info className="w-4 h-4 text-white" />
                                         </div>
                                         <p className="text-sm text-blue-700 dark:text-blue-300">
-                                        Include details about your pet's personality, any special needs, and your expectations to help {sitter.user?.firstName} understand your requirements.
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                        </motion.div>
+                                            Include details about your pet's personality, any special needs, and your expectations to help {sitter.user?.firstName} understand your requirements.
+                                        </p>
+                                    </div>
+                                </CardContent >
+                            </Card >
+                        </motion.div >
 
                         {/* Send Button */}
-                        <motion.div
+                        < motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.5 }}
                         >
-                        <Button
-                            onClick={handleSendMessage}
-                            disabled={!message.trim() || isSending}
+                            <Button
+                                onClick={handleSendMessage}
+                                disabled={!message.trim() || isSending}
                                 className={cn(
                                     "w-full h-16 text-lg font-bold rounded-2xl transition-all group",
                                     message.trim()
                                         ? "bg-gradient-to-r from-primary to-orange-500 hover:from-primary-600 hover:to-orange-600 shadow-xl shadow-primary/30 hover:shadow-2xl hover:scale-[1.01]"
                                         : ""
                                 )}
-                        >
-                            {isSending ? (
-                                <div className="flex items-center gap-3">
+                            >
+                                {isSending ? (
+                                    <div className="flex items-center gap-3">
                                         <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
                                         Sending your message...
-                                </div>
-                            ) : (
+                                    </div>
+                                ) : (
                                     <div className="flex items-center gap-3">
                                         <Send className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                         Send Message to {sitter.user?.firstName}
                                         <Sparkles className="w-5 h-5 opacity-50" />
-                                </div>
-                            )}
-                        </Button>
-                        </motion.div>
-                    </div>
+                                    </div>
+                                )}
+                            </Button>
+                        </motion.div >
+                    </div >
 
                     {/* Sidebar */}
-                    <div className="space-y-6">
+                    < div className="space-y-6" >
                         {/* Sitter Card */}
-                        <motion.div
+                        < motion.div
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.2 }}
@@ -875,37 +981,37 @@ const ContactSitterPage: React.FC = () => {
 
                                 <CardContent className="p-6 -mt-12 relative">
                                     {/* Avatar */}
-                                <div className="flex items-end gap-4 mb-4">
+                                    <div className="flex items-end gap-4 mb-4">
                                         <div className="w-24 h-24 rounded-2xl bg-white dark:bg-gray-800 shadow-xl overflow-hidden border-4 border-white dark:border-gray-800 flex-shrink-0">
-                                        {sitter.user?.profileImage ? (
-                                            <img
-                                                src={sitter.user.profileImage}
-                                                alt={sitter.user.firstName}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-orange-400/20 flex items-center justify-center">
+                                            {sitter.user?.profileImage ? (
+                                                <img
+                                                    src={sitter.user.profileImage}
+                                                    alt={sitter.user.firstName}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full bg-gradient-to-br from-primary/20 to-orange-400/20 flex items-center justify-center">
                                                     <span className="text-2xl font-bold text-primary">
-                                                    {sitter.user?.firstName?.[0]}{sitter.user?.lastName?.[0]}
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="pb-1">
+                                                        {sitter.user?.firstName?.[0]}{sitter.user?.lastName?.[0]}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="pb-1">
                                             <h3 className="font-bold text-gray-900 dark:text-white text-xl">
-                                            {sitter.user?.firstName} {sitter.user?.lastName?.[0]}.
-                                        </h3>
+                                                {sitter.user?.firstName} {sitter.user?.lastName?.[0]}.
+                                            </h3>
                                             <div className="flex items-center gap-1 text-sm mt-1">
-                                            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                                                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                                                 <span className="font-bold">5.0</span>
-                                            <span className="text-gray-400">(0 reviews)</span>
+                                                <span className="text-gray-400">(0 reviews)</span>
                                             </div>
+                                        </div>
                                     </div>
-                                </div>
 
                                     {/* Badges */}
                                     <div className="flex flex-wrap gap-2 mb-4">
-                                {sitter.isVerified && (
+                                        {sitter.isVerified && (
                                             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
                                                 <Shield className="w-4 h-4 text-emerald-600" />
                                                 <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Verified Sitter</span>
@@ -923,21 +1029,21 @@ const ContactSitterPage: React.FC = () => {
                                     <div className="space-y-3 text-sm border-t border-gray-100 dark:border-gray-800 pt-4">
                                         <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
                                             <div className="w-8 h-8 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
-                                        <MapPin className="w-4 h-4" />
+                                                <MapPin className="w-4 h-4" />
                                             </div>
-                                        <span>{sitter.address?.split(',')[0]}</span>
-                                    </div>
+                                            <span>{sitter.address?.split(',')[0]}</span>
+                                        </div>
                                         <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
                                             <div className="w-8 h-8 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
-                                        <PawPrint className="w-4 h-4" />
+                                                <PawPrint className="w-4 h-4" />
                                             </div>
-                                        <span>{sitter.yearsExperience || 0}+ years experience</span>
+                                            <span>{sitter.yearsExperience || 0}+ years experience</span>
+                                        </div>
                                     </div>
-                                </div>
 
                                     {/* Price */}
-                                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
-                                    <div className="flex items-center justify-between">
+                                    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+                                        <div className="flex items-center justify-between">
                                             <span className="text-gray-500 text-sm">Starting from</span>
                                             <div className="text-right">
                                                 <span className="text-3xl font-black text-primary">${minRate}</span>
@@ -947,87 +1053,89 @@ const ContactSitterPage: React.FC = () => {
                                     </div>
                                 </CardContent>
                             </Card>
-                        </motion.div>
+                        </motion.div >
 
                         {/* Price Estimate */}
                         <AnimatePresence>
-                            {estimatedPrice && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20, height: 0 }}
-                                    animate={{ opacity: 1, y: 0, height: 'auto' }}
-                                    exit={{ opacity: 0, y: -20, height: 0 }}
-                                >
-                                    <Card className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800 overflow-hidden">
-                                        <CardContent className="p-5">
-                                            <div className="flex items-center gap-3 mb-4">
-                                                <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center">
-                                                    <DollarSign className="w-5 h-5 text-white" />
-                                                </div>
-                                                <div>
-                                                    <h3 className="font-bold text-green-800 dark:text-green-300">Price Estimate</h3>
-                                                    <p className="text-xs text-green-600 dark:text-green-400">Based on your selections</p>
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-2 text-sm">
-                                                <div className="flex justify-between text-green-700 dark:text-green-300">
-                                                    <span>{services.find(s => s.id === selectedService)?.label}</span>
-                                                    <span>${getServiceRate(selectedService)}/night</span>
-                                                </div>
-                                                <div className="flex justify-between text-green-700 dark:text-green-300">
-                                                    <span>Duration</span>
-                                                    <span>{numberOfNights} night{numberOfNights !== 1 ? 's' : ''}</span>
-                                                </div>
-                                                {(petInfo.dogs + petInfo.cats) > 1 && (
-                                                    <div className="flex justify-between text-green-700 dark:text-green-300">
-                                                        <span>Additional pets</span>
-                                                        <span>+{((petInfo.dogs + petInfo.cats) - 1) * 50}%</span>
+                            {
+                                estimatedPrice && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20, height: 0 }}
+                                        animate={{ opacity: 1, y: 0, height: 'auto' }}
+                                        exit={{ opacity: 0, y: -20, height: 0 }}
+                                    >
+                                        <Card className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800 overflow-hidden">
+                                            <CardContent className="p-5">
+                                                <div className="flex items-center gap-3 mb-4">
+                                                    <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center">
+                                                        <DollarSign className="w-5 h-5 text-white" />
                                                     </div>
-                                                )}
-                                                <div className="flex justify-between pt-3 border-t border-green-200 dark:border-green-700 font-bold text-green-800 dark:text-green-200 text-lg">
-                                                    <span>Estimated Total</span>
-                                                    <span>${estimatedPrice}</span>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                                                    <div>
+                                                        <h3 className="font-bold text-green-800 dark:text-green-300">Price Estimate</h3>
+                                                        <p className="text-xs text-green-600 dark:text-green-400">Based on your selections</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2 text-sm">
+                                                    <div className="flex justify-between text-green-700 dark:text-green-300">
+                                                        <span>{services.find(s => s.id === selectedService)?.label}</span>
+                                                        <span>${getServiceRate(selectedService)}/night</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-green-700 dark:text-green-300">
+                                                        <span>Duration</span>
+                                                        <span>{numberOfNights} night{numberOfNights !== 1 ? 's' : ''}</span>
+                                                    </div>
+                                                    {selectedPetIds.length > 1 && (
+                                                        <div className="flex justify-between text-green-700 dark:text-green-300">
+                                                            <span>Additional pets</span>
+                                                            <span>+{(selectedPetIds.length - 1) * 50}%</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex justify-between pt-3 border-t border-green-200 dark:border-green-700 font-bold text-green-800 dark:text-green-200 text-lg">
+                                                        <span>Estimated Total</span>
+                                                        <span>${estimatedPrice}</span>
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </motion.div>
+                                )
+                            }
+                        </AnimatePresence >
 
                         {/* Response Time */}
-                        <motion.div
+                        < motion.div
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.3 }}
                         >
-                        <Card>
+                            <Card>
                                 <CardContent className="p-5">
-                                <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-3">
                                         <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
                                             <Zap className="w-6 h-6 text-white" />
-                                    </div>
-                                    <div>
+                                        </div>
+                                        <div>
                                             <p className="font-bold text-gray-900 dark:text-white">Quick Response</p>
-                                        <p className="text-sm text-gray-500">Usually responds within a few hours</p>
+                                            <p className="text-sm text-gray-500">Usually responds within a few hours</p>
+                                        </div>
                                     </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                        </motion.div>
+                                </CardContent>
+                            </Card>
+                        </motion.div >
 
                         {/* Tips */}
-                        <motion.div
+                        < motion.div
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.4 }}
                         >
-                        <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-amber-200 dark:border-amber-800">
+                            <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-amber-200 dark:border-amber-800">
                                 <CardContent className="p-5">
                                     <div className="flex items-center gap-2 mb-4">
-                                    <Sparkles className="w-5 h-5 text-amber-600" />
-                                    <h3 className="font-bold text-amber-900 dark:text-amber-300">Tips for a great intro</h3>
-                                </div>
+                                        <Sparkles className="w-5 h-5 text-amber-600" />
+                                        <h3 className="font-bold text-amber-900 dark:text-amber-300">Tips for a great intro</h3>
+                                    </div>
                                     <ul className="space-y-3">
                                         {[
                                             { icon: Heart, text: "Share your pet's name and personality" },
@@ -1040,16 +1148,16 @@ const ContactSitterPage: React.FC = () => {
                                                     <tip.icon className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
                                                 </div>
                                                 <span className="text-sm text-amber-800 dark:text-amber-300">{tip.text}</span>
-                                    </li>
+                                            </li>
                                         ))}
-                                </ul>
-                            </CardContent>
-                        </Card>
-                        </motion.div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                                    </ul>
+                                </CardContent>
+                            </Card>
+                        </motion.div >
+                    </div >
+                </div >
+            </div >
+        </div >
     );
 };
 

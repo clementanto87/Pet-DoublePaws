@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     User,
@@ -20,7 +20,9 @@ import {
     X,
     Save,
     ChevronRight,
-    Users
+    Users,
+    MessageSquare,
+    ArrowRight
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
@@ -29,6 +31,12 @@ import { Label } from '../components/ui/Label';
 import { sitterService, type SitterProfile } from '../services/sitter.service';
 import { useAuth } from '../context/AuthContext';
 import { cn } from '../lib/utils';
+import type { Booking } from '../services/booking.service';
+import { bookingService, BookingStatus } from '../services/booking.service';
+import { format } from 'date-fns';
+import { messageService } from '../services/message.service';
+import { useToast } from '../components/ui/Toast';
+import { AvailabilityCalendar } from '../components/sitter/AvailabilityCalendar';
 
 // Service name mapping
 const serviceNames: Record<string, string> = {
@@ -89,6 +97,7 @@ const SitterDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const queryClient = useQueryClient();
+    const { showToast } = useToast();
 
     // Fetch sitter profile
     const { data: profile, isLoading, error } = useQuery({
@@ -106,6 +115,40 @@ const SitterDashboard: React.FC = () => {
         }
     });
 
+    // Fetch bookings
+    const { data: bookings, isLoading: bookingsLoading } = useQuery({
+        queryKey: ['sitterBookings'],
+        queryFn: () => bookingService.getBookings('sitter'),
+        enabled: !!profile
+    });
+
+    // Fetch conversations for unread count
+    const { data: conversations } = useQuery({
+        queryKey: ['conversations'],
+        queryFn: messageService.getConversations,
+        refetchInterval: 30000, // Refetch every 30 seconds
+    });
+
+    // Calculate total unread messages
+    const totalUnreadCount = conversations?.reduce((sum, conv) => sum + conv.unreadCount, 0) || 0;
+
+    // Update booking status mutation
+    const updateBookingStatusMutation = useMutation({
+        mutationFn: ({ id, status }: { id: string; status: BookingStatus }) =>
+            bookingService.updateStatus(id, status),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['sitterBookings'] });
+            if (variables.status === BookingStatus.ACCEPTED) {
+                showToast('Booking accepted successfully!', 'success');
+            } else if (variables.status === BookingStatus.REJECTED) {
+                showToast('Booking rejected', 'info');
+            }
+        },
+        onError: () => {
+            showToast('Failed to update booking status', 'error');
+        }
+    });
+
     // Edit modal state
     const [editModal, setEditModal] = useState<{ isOpen: boolean; section: string }>({
         isOpen: false,
@@ -114,6 +157,9 @@ const SitterDashboard: React.FC = () => {
 
     // Form data state for editing
     const [editFormData, setEditFormData] = useState<Partial<SitterProfile>>({});
+
+    // Tab state for bookings
+    const [activeTab, setActiveTab] = useState<'upcoming' | 'history'>('upcoming');
 
     // Open edit modal
     const openEditModal = (section: string) => {
@@ -124,6 +170,23 @@ const SitterDashboard: React.FC = () => {
     // Handle save
     const handleSave = () => {
         updateMutation.mutate(editFormData as any);
+    };
+
+    // Handle availability toggle
+    const handleToggleDate = (date: string) => {
+        if (!profile) return;
+
+        const currentBlocked = profile.availability?.blockedDates || [];
+        const newBlocked = currentBlocked.includes(date)
+            ? currentBlocked.filter(d => d !== date)
+            : [...currentBlocked, date];
+
+        updateMutation.mutate({
+            availability: {
+                general: profile.availability?.general || [],
+                blockedDates: newBlocked
+            }
+        } as any);
     };
 
     // Loading state
@@ -179,6 +242,19 @@ const SitterDashboard: React.FC = () => {
     const maxRate = profile.services
         ? Math.max(...Object.values(profile.services).filter(s => s?.active).map(s => s?.rate || 0))
         : 0;
+
+    // Filter bookings based on active tab
+    const upcomingBookings = bookings?.filter((booking: Booking) =>
+        booking.status === BookingStatus.PENDING || booking.status === BookingStatus.ACCEPTED
+    ) || [];
+
+    const historicalBookings = bookings?.filter((booking: Booking) =>
+        booking.status === BookingStatus.COMPLETED ||
+        booking.status === BookingStatus.REJECTED ||
+        booking.status === BookingStatus.CANCELLED
+    ) || [];
+
+    const displayedBookings = activeTab === 'upcoming' ? upcomingBookings : historicalBookings;
 
     return (
         <div className="min-h-screen bg-gray-50/50 dark:bg-background-alt-dark pt-8 pb-12 px-4 sm:px-6 lg:px-8">
@@ -411,8 +487,8 @@ const SitterDashboard: React.FC = () => {
                     </Card>
                 </div>
 
-                {/* Second Row */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Second Row - 3 Columns */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                     {/* Pet Preferences */}
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
@@ -511,47 +587,10 @@ const SitterDashboard: React.FC = () => {
                             </div>
                         </CardContent>
                     </Card>
-                </div>
 
-                {/* Third Row */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Availability */}
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Calendar className="w-5 h-5 text-primary" />
-                                    Availability
-                                </CardTitle>
-                                <CardDescription>When you're available for bookings</CardDescription>
-                            </div>
-                            <Button variant="ghost" size="sm" onClick={() => openEditModal('availability')}>
-                                <Edit3 className="w-4 h-4" />
-                            </Button>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div>
-                                <p className="text-sm font-medium text-muted-foreground mb-2">General Availability</p>
-                                <div className="flex flex-wrap gap-2">
-                                    {profile.availability?.general?.map((day) => (
-                                        <span key={day} className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-sm font-medium">
-                                            {day}
-                                        </span>
-                                    )) || <span className="text-muted-foreground text-sm">Not specified</span>}
-                                </div>
-                            </div>
-                            <div>
-                                <p className="text-sm font-medium text-muted-foreground mb-2">Notice Period</p>
-                                <p className="text-foreground font-medium">{profile.noticePeriod || 'Not specified'}</p>
-                            </div>
-                            {profile.availability?.blockedDates && profile.availability.blockedDates.length > 0 && (
-                                <div>
-                                    <p className="text-sm font-medium text-muted-foreground mb-2">Blocked Dates</p>
-                                    <p className="text-sm text-foreground">{profile.availability.blockedDates.length} dates blocked</p>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+
+                    {/* Third Row */}
+
 
                     {/* Skills & Experience */}
                     <Card>
@@ -594,6 +633,346 @@ const SitterDashboard: React.FC = () => {
                         </CardContent>
                     </Card>
                 </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                    {/* Booking Requests - Spans 2 columns */}
+                    <Card className="lg:col-span-2">
+                        <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle>Booking Requests</CardTitle>
+                                    <CardDescription>Manage your incoming and past booking requests</CardDescription>
+                                </div>
+                            </div>
+
+                            {/* Tabs */}
+                            <div className="flex gap-2 mt-4 border-b border-gray-200 dark:border-gray-700">
+                                <button
+                                    onClick={() => setActiveTab('upcoming')}
+                                    className={cn(
+                                        "px-4 py-2 text-sm font-semibold transition-all relative",
+                                        activeTab === 'upcoming'
+                                            ? "text-primary border-b-2 border-primary"
+                                            : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                    )}
+                                >
+                                    Upcoming & In-Progress
+                                    {upcomingBookings.length > 0 && (
+                                        <span className={cn(
+                                            "ml-2 px-2 py-0.5 rounded-full text-xs font-bold",
+                                            activeTab === 'upcoming'
+                                                ? "bg-primary/20 text-primary"
+                                                : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+                                        )}>
+                                            {upcomingBookings.length}
+                                        </span>
+                                    )}
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('history')}
+                                    className={cn(
+                                        "px-4 py-2 text-sm font-semibold transition-all relative",
+                                        activeTab === 'history'
+                                            ? "text-primary border-b-2 border-primary"
+                                            : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                    )}
+                                >
+                                    History
+                                    {historicalBookings.length > 0 && (
+                                        <span className={cn(
+                                            "ml-2 px-2 py-0.5 rounded-full text-xs font-bold",
+                                            activeTab === 'history'
+                                                ? "bg-primary/20 text-primary"
+                                                : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+                                        )}>
+                                            {historicalBookings.length}
+                                        </span>
+                                    )}
+                                </button>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="pt-6">
+                            {bookingsLoading ? (
+                                <div className="text-center py-8">Loading bookings...</div>
+                            ) : displayedBookings.length === 0 ? (
+                                <div className="text-center py-12">
+                                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <Calendar className="w-8 h-8 text-gray-400" />
+                                    </div>
+                                    <p className="text-muted-foreground font-medium mb-1">
+                                        {activeTab === 'upcoming'
+                                            ? 'No upcoming bookings'
+                                            : 'No historical bookings'}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {activeTab === 'upcoming'
+                                            ? 'You\'ll see pending and accepted bookings here'
+                                            : 'Completed, rejected, and cancelled bookings will appear here'}
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {displayedBookings.map((booking: Booking) => (
+                                        <div key={booking.id} className="flex flex-col md:flex-row justify-between gap-4 p-4 border rounded-lg bg-card hover:shadow-md transition-shadow">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className={cn(
+                                                        "px-2.5 py-1 rounded-full text-xs font-bold",
+                                                        booking.status === BookingStatus.PENDING ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
+                                                            booking.status === BookingStatus.ACCEPTED ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                                                                booking.status === BookingStatus.REJECTED ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
+                                                                    booking.status === BookingStatus.COMPLETED ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                                                                        "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                                                    )}>
+                                                        {booking.status}
+                                                    </span>
+                                                    <span className="text-sm text-muted-foreground">
+                                                        {format(new Date(booking.createdAt), 'MMM d, yyyy')}
+                                                    </span>
+                                                </div>
+                                                <h4 className="font-bold text-lg mb-1 text-foreground">
+                                                    {booking.serviceType.replace(/([A-Z])/g, ' $1').trim()}
+                                                </h4>
+                                                <div className="text-sm space-y-1 text-muted-foreground">
+                                                    <p className="flex items-center gap-2">
+                                                        <User className="w-4 h-4" />
+                                                        {booking.owner?.firstName} {booking.owner?.lastName}
+                                                    </p>
+                                                    <p className="flex items-center gap-2">
+                                                        <Calendar className="w-4 h-4" />
+                                                        {format(new Date(booking.startDate), 'MMM d')} - {format(new Date(booking.endDate), 'MMM d, yyyy')}
+                                                    </p>
+                                                    <p className="flex items-center gap-2">
+                                                        <DollarSign className="w-4 h-4" />
+                                                        ${booking.totalPrice}
+                                                    </p>
+                                                </div>
+
+                                                {/* Selected Pets Display */}
+                                                {booking.petIds && booking.petIds.length > 0 && (
+                                                    <div className="flex flex-wrap gap-2 mt-3 mb-1">
+                                                        {booking.petIds.map(petId => {
+                                                            const pet = booking.owner?.pets?.find((p: any) => p.id === petId);
+                                                            if (!pet) return null;
+                                                            return (
+                                                                <div key={pet.id} className="group relative flex items-center gap-1.5 bg-secondary/10 px-2.5 py-1 rounded-md text-xs border border-secondary/20 cursor-help transition-colors hover:bg-secondary/20">
+                                                                    <PawPrint className="w-3 h-3 text-secondary" />
+                                                                    <span className="font-medium text-foreground">{pet.name}</span>
+                                                                    <span className="text-muted-foreground">({pet.breed})</span>
+
+                                                                    {/* Tooltip */}
+                                                                    <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block w-56 p-3 bg-white dark:bg-card text-foreground rounded-lg shadow-xl border border-border z-50 animate-in fade-in zoom-in-95 duration-200">
+                                                                        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border">
+                                                                            {pet.imageUrl ? (
+                                                                                <img src={pet.imageUrl} alt={pet.name} className="w-8 h-8 rounded-full object-cover" />
+                                                                            ) : (
+                                                                                <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center">
+                                                                                    <PawPrint className="w-4 h-4 text-secondary" />
+                                                                                </div>
+                                                                            )}
+                                                                            <div>
+                                                                                <p className="font-bold text-sm">{pet.name}</p>
+                                                                                <p className="text-xs text-muted-foreground">{pet.breed}</p>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="space-y-1 text-xs">
+                                                                            <div className="flex justify-between">
+                                                                                <span className="text-muted-foreground">Type:</span>
+                                                                                <span className="font-medium">{pet.species}</span>
+                                                                            </div>
+                                                                            <div className="flex justify-between">
+                                                                                <span className="text-muted-foreground">Age:</span>
+                                                                                <span className="font-medium">{pet.age} yrs</span>
+                                                                            </div>
+                                                                            <div className="flex justify-between">
+                                                                                <span className="text-muted-foreground">Weight:</span>
+                                                                                <span className="font-medium">{pet.weight} kg</span>
+                                                                            </div>
+                                                                            {pet.specialNeeds && (
+                                                                                <div className="mt-2 pt-2 border-t border-border">
+                                                                                    <span className="text-muted-foreground block mb-1">Special Needs:</span>
+                                                                                    <span className="font-medium text-red-600 dark:text-red-400 block leading-tight">{pet.specialNeeds}</span>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                        {/* Arrow */}
+                                                                        <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-white dark:border-t-card" />
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                                {booking.message && (
+                                                    <div className="mt-2 p-2 bg-muted/50 rounded text-sm italic border-l-2 border-primary/30">
+                                                        "{booking.message}"
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {booking.status === BookingStatus.PENDING && activeTab === 'upcoming' && (
+                                                <div className="flex flex-row md:flex-col gap-2 justify-center">
+                                                    <Button
+                                                        size="sm"
+                                                        className="bg-green-600 hover:bg-green-700"
+                                                        onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: BookingStatus.ACCEPTED })}
+                                                        disabled={updateBookingStatusMutation.isPending}
+                                                    >
+                                                        Accept
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="text-red-600 border-red-200 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20"
+                                                        onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: BookingStatus.REJECTED })}
+                                                        disabled={updateBookingStatusMutation.isPending}
+                                                    >
+                                                        Reject
+                                                    </Button>
+
+                                                </div>
+                                            )}
+
+                                            {/* Chat Button for Upcoming/In-Progress */}
+                                            {(booking.status === BookingStatus.ACCEPTED || booking.status === BookingStatus.PENDING) && activeTab === 'upcoming' && (
+                                                <div className="flex justify-end mt-2 md:mt-0 md:self-start">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="gap-2"
+                                                        onClick={() => navigate('/sitter-messages', { state: { userId: booking.ownerId } })}
+                                                    >
+                                                        <MessageSquare className="w-4 h-4" />
+                                                        Chat
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Availability - Spans 1 column */}
+                    <Card className="lg:col-span-1">
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Calendar className="w-5 h-5 text-primary" />
+                                    Availability
+                                </CardTitle>
+                                <CardDescription>When you're available for bookings</CardDescription>
+                            </div>
+                            <Button variant="ghost" size="sm" onClick={() => openEditModal('availability')}>
+                                <Edit3 className="w-4 h-4" />
+                            </Button>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground mb-2">General Availability</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {profile.availability?.general?.map((day) => (
+                                        <span key={day} className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-sm font-medium">
+                                            {day}
+                                        </span>
+                                    )) || <span className="text-muted-foreground text-sm">Not specified</span>}
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-muted-foreground mb-2">Notice Period</p>
+                                <p className="text-foreground font-medium">{profile.noticePeriod || 'Not specified'}</p>
+                            </div>
+                            {profile.availability?.blockedDates && profile.availability.blockedDates.length > 0 && (
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground mb-2">Blocked Dates</p>
+                                    <p className="text-sm text-foreground">{profile.availability.blockedDates.length} dates blocked</p>
+                                </div>
+                            )}
+
+                            <div className="pt-4 border-t border-border">
+                                <p className="text-sm font-medium text-muted-foreground mb-4">Availability Calendar</p>
+                                <AvailabilityCalendar
+                                    blockedDates={profile.availability?.blockedDates || []}
+                                    bookings={bookings || []}
+                                    onToggleDate={handleToggleDate}
+                                    className="w-full"
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+
+
+                {/* Messages Section */}
+                <div className="mb-10">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center relative">
+                                <MessageSquare className="w-5 h-5 text-blue-600" />
+                                {totalUnreadCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold border-2 border-white shadow-sm">
+                                        {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
+                                    </span>
+                                )}
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Messages</h2>
+                                    {totalUnreadCount > 0 && (
+                                        <span className="px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full">
+                                            {totalUnreadCount} new
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="text-sm text-gray-500">Chat with pet owners</p>
+                            </div>
+                        </div>
+                        <Link to="/sitter-messages">
+                            <Button variant="outline" size="sm" className="relative">
+                                View All
+                                {totalUnreadCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold border-2 border-white">
+                                        {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
+                                    </span>
+                                )}
+                                <ArrowRight className="w-4 h-4 ml-2" />
+                            </Button>
+                        </Link>
+                    </div>
+                    <Link to="/sitter-messages">
+                        <Card className="border-0 shadow-md hover:shadow-lg transition-all cursor-pointer group">
+                            <CardContent className="p-6">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg relative">
+                                            <MessageSquare className="w-7 h-7 text-white" />
+                                            {totalUnreadCount > 0 && (
+                                                <span className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold border-2 border-white shadow-lg">
+                                                    {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                                                Chat with Pet Owners
+                                            </h3>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                {totalUnreadCount > 0
+                                                    ? `${totalUnreadCount} unread message${totalUnreadCount > 1 ? 's' : ''}`
+                                                    : 'View and manage your conversations'
+                                                }
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                </div>
+
+
 
                 {/* Quick Actions */}
                 <Card>
@@ -655,100 +1034,101 @@ const SitterDashboard: React.FC = () => {
                         </div>
                     </CardContent>
                 </Card>
-            </div>
 
-            {/* Edit Modals */}
-            <EditModal
-                isOpen={editModal.isOpen && editModal.section === 'profile'}
-                onClose={() => setEditModal({ isOpen: false, section: '' })}
-                title="Edit Profile"
-                onSave={handleSave}
-                isSaving={updateMutation.isPending}
-            >
-                <div className="space-y-4">
-                    <div>
-                        <Label>Phone Number</Label>
-                        <Input
-                            value={editFormData.phone || ''}
-                            onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
-                            placeholder="Your phone number"
-                        />
-                    </div>
-                    <div>
-                        <Label>Headline</Label>
-                        <Input
-                            value={editFormData.headline || ''}
-                            onChange={(e) => setEditFormData({ ...editFormData, headline: e.target.value })}
-                            placeholder="A catchy headline for your profile"
-                        />
-                    </div>
-                    <div>
-                        <Label>Bio</Label>
-                        <textarea
-                            className="w-full min-h-[100px] px-3 py-2 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                            value={editFormData.bio || ''}
-                            onChange={(e) => setEditFormData({ ...editFormData, bio: e.target.value })}
-                            placeholder="Tell pet parents about yourself..."
-                        />
-                    </div>
-                </div>
-            </EditModal>
 
-            <EditModal
-                isOpen={editModal.isOpen && editModal.section === 'services'}
-                onClose={() => setEditModal({ isOpen: false, section: '' })}
-                title="Edit Services & Rates"
-                onSave={handleSave}
-                isSaving={updateMutation.isPending}
-            >
-                <div className="space-y-4">
-                    {editFormData.services && Object.entries(editFormData.services).map(([key, service]) => {
-                        if (!service) return null;
-                        return (
-                            <div key={key} className="flex items-center justify-between p-4 border border-border rounded-lg">
-                                <div className="flex items-center gap-3">
-                                    <input
-                                        type="checkbox"
-                                        checked={service.active}
-                                        onChange={(e) => setEditFormData({
-                                            ...editFormData,
-                                            services: {
-                                                ...editFormData.services,
-                                                [key]: { ...service, active: e.target.checked }
-                                            }
-                                        })}
-                                        className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                    />
-                                    <span className="font-medium">{serviceNames[key]}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-muted-foreground">$</span>
-                                    <Input
-                                        type="number"
-                                        value={service.rate}
-                                        onChange={(e) => setEditFormData({
-                                            ...editFormData,
-                                            services: {
-                                                ...editFormData.services,
-                                                [key]: { ...service, rate: parseFloat(e.target.value) || 0 }
-                                            }
-                                        })}
-                                        className="w-20"
-                                    />
-                                </div>
-                            </div>
-                        );
-                    })}
-                    <div>
-                        <Label>Service Radius (kilometers)</Label>
-                        <Input
-                            type="number"
-                            value={editFormData.serviceRadius || 5}
-                            onChange={(e) => setEditFormData({ ...editFormData, serviceRadius: parseInt(e.target.value) || 5 })}
-                        />
+                {/* Edit Modals */}
+                <EditModal
+                    isOpen={editModal.isOpen && editModal.section === 'profile'}
+                    onClose={() => setEditModal({ isOpen: false, section: '' })}
+                    title="Edit Profile"
+                    onSave={handleSave}
+                    isSaving={updateMutation.isPending}
+                >
+                    <div className="space-y-4">
+                        <div>
+                            <Label>Phone Number</Label>
+                            <Input
+                                value={editFormData.phone || ''}
+                                onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                                placeholder="Your phone number"
+                            />
+                        </div>
+                        <div>
+                            <Label>Headline</Label>
+                            <Input
+                                value={editFormData.headline || ''}
+                                onChange={(e) => setEditFormData({ ...editFormData, headline: e.target.value })}
+                                placeholder="A catchy headline for your profile"
+                            />
+                        </div>
+                        <div>
+                            <Label>Bio</Label>
+                            <textarea
+                                className="w-full min-h-[100px] px-3 py-2 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                                value={editFormData.bio || ''}
+                                onChange={(e) => setEditFormData({ ...editFormData, bio: e.target.value })}
+                                placeholder="Tell pet parents about yourself..."
+                            />
+                        </div>
                     </div>
-                </div>
-            </EditModal>
+                </EditModal>
+
+                <EditModal
+                    isOpen={editModal.isOpen && editModal.section === 'services'}
+                    onClose={() => setEditModal({ isOpen: false, section: '' })}
+                    title="Edit Services & Rates"
+                    onSave={handleSave}
+                    isSaving={updateMutation.isPending}
+                >
+                    <div className="space-y-4">
+                        {editFormData.services && Object.entries(editFormData.services).map(([key, service]) => {
+                            if (!service) return null;
+                            return (
+                                <div key={key} className="flex items-center justify-between p-4 border border-border rounded-lg">
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={service.active}
+                                            onChange={(e) => setEditFormData({
+                                                ...editFormData,
+                                                services: {
+                                                    ...editFormData.services,
+                                                    [key]: { ...service, active: e.target.checked }
+                                                }
+                                            })}
+                                            className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                        <span className="font-medium">{serviceNames[key]}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-muted-foreground">$</span>
+                                        <Input
+                                            type="number"
+                                            value={service.rate}
+                                            onChange={(e) => setEditFormData({
+                                                ...editFormData,
+                                                services: {
+                                                    ...editFormData.services,
+                                                    [key]: { ...service, rate: parseFloat(e.target.value) || 0 }
+                                                }
+                                            })}
+                                            className="w-20"
+                                        />
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        <div>
+                            <Label>Service Radius (kilometers)</Label>
+                            <Input
+                                type="number"
+                                value={editFormData.serviceRadius || 5}
+                                onChange={(e) => setEditFormData({ ...editFormData, serviceRadius: parseInt(e.target.value) || 5 })}
+                            />
+                        </div>
+                    </div>
+                </EditModal>
+            </div >
         </div>
     );
 };

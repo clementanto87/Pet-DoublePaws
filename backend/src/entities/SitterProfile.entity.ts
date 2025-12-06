@@ -1,5 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 import { User } from './User.entity';
+import { Booking } from './Booking.entity';
+import { Review } from './Review.entity';
 
 @Entity('sitter_profiles')
 export class SitterProfile {
@@ -102,4 +104,10 @@ export class SitterProfile {
 
     @UpdateDateColumn()
     updatedAt!: Date;
+
+    @OneToMany(() => Booking, (booking) => booking.sitter)
+    bookings!: Booking[];
+
+    @OneToMany(() => Review, (review) => review.sitter)
+    reviews!: Review[];
 }

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
@@ -10,6 +10,7 @@ import { petService } from '../services/pet.service';
 
 const PetProfileCreation: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -74,7 +75,8 @@ const PetProfileCreation: React.FC = () => {
         imageUrl: formData.imageUrl
       });
 
-      navigate('/dashboard');
+      const returnUrl = (location.state as any)?.returnUrl || '/dashboard';
+      navigate(returnUrl);
     } catch (err) {
       console.error('Failed to create pet profile:', err);
       setError('Failed to create pet profile. Please try again.');
