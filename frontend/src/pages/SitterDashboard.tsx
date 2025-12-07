@@ -167,6 +167,39 @@ const SitterDashboard: React.FC = () => {
         setEditModal({ isOpen: true, section });
     };
 
+    // Address Autocomplete State
+    const [suggestions, setSuggestions] = useState<any[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+
+    const handleAddressChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setEditFormData({ ...editFormData, address: value });
+
+        if (value.length > 2) {
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(value)}&limit=5`);
+                const results = await response.json();
+                setSuggestions(results);
+                setShowSuggestions(true);
+            } catch (error) {
+                console.error("Error fetching location:", error);
+            }
+        } else {
+            setSuggestions([]);
+            setShowSuggestions(false);
+        }
+    };
+
+    const selectAddress = (place: any) => {
+        setEditFormData({
+            ...editFormData,
+            address: place.display_name,
+            latitude: place.lat ? parseFloat(place.lat) : editFormData.latitude,
+            longitude: place.lon ? parseFloat(place.lon) : editFormData.longitude
+        });
+        setShowSuggestions(false);
+    };
+
     // Handle save
     const handleSave = () => {
         updateMutation.mutate(editFormData as any);
@@ -335,7 +368,7 @@ const SitterDashboard: React.FC = () => {
                                 <div>
                                     <p className="text-sm font-medium text-muted-foreground">Rate Range</p>
                                     <p className="text-3xl font-bold text-foreground">
-                                        ${minRate}-${maxRate}
+                                        €{minRate} - €{maxRate}
                                     </p>
                                 </div>
                                 <div className="w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-xl flex items-center justify-center">
@@ -1053,6 +1086,42 @@ const SitterDashboard: React.FC = () => {
                                 placeholder="Your phone number"
                             />
                         </div>
+                        <div className="relative">
+                            <Label>Address</Label>
+                            <div className="relative">
+                                <Input
+                                    value={editFormData.address || ''}
+                                    onChange={handleAddressChange}
+                                    placeholder="Start typing your address..."
+                                    className="pl-10"
+                                    onFocus={() => (editFormData.address?.length || 0) > 2 && setShowSuggestions(true)}
+                                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                                />
+                                <div className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground">
+                                    <MapPin className="w-4 h-4" />
+                                </div>
+                            </div>
+
+                            {showSuggestions && suggestions.length > 0 && (
+                                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-card rounded-lg shadow-xl border border-border z-50 max-h-60 overflow-y-auto">
+                                    {suggestions.map((place, index) => (
+                                        <button
+                                            key={index}
+                                            className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors border-b border-border last:border-0 flex items-start gap-3"
+                                            onClick={() => selectAddress(place)}
+                                        >
+                                            <MapPin className="w-4 h-4 text-primary mt-1 flex-shrink-0" />
+                                            <div>
+                                                <p className="font-medium text-sm text-foreground">
+                                                    {place.display_name.split(',')[0]}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground line-clamp-1">{place.display_name}</p>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                         <div>
                             <Label>Headline</Label>
                             <Input
@@ -1125,6 +1194,285 @@ const SitterDashboard: React.FC = () => {
                                 value={editFormData.serviceRadius || 5}
                                 onChange={(e) => setEditFormData({ ...editFormData, serviceRadius: parseInt(e.target.value) || 5 })}
                             />
+                        </div>
+                    </div>
+                </EditModal>
+
+                {/* Preferences Modal */}
+                <EditModal
+                    isOpen={editModal.isOpen && editModal.section === 'preferences'}
+                    onClose={() => setEditModal({ isOpen: false, section: '' })}
+                    title="Edit Pet Preferences"
+                    onSave={handleSave}
+                    isSaving={updateMutation.isPending}
+                >
+                    <div className="space-y-6">
+                        <div>
+                            <Label className="mb-2 block">Accepted Pet Types</Label>
+                            <div className="flex flex-wrap gap-2">
+                                {['Dog', 'Cat', 'Bird', 'Small Animal', 'Reptile'].map(type => (
+                                    <label key={type} className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-muted/50">
+                                        <input
+                                            type="checkbox"
+                                            checked={editFormData.preferences?.acceptedPetTypes?.includes(type) || false}
+                                            onChange={(e) => {
+                                                const current = editFormData.preferences?.acceptedPetTypes || [];
+                                                const updated = e.target.checked
+                                                    ? [...current, type]
+                                                    : current.filter(t => t !== type);
+                                                setEditFormData({
+                                                    ...editFormData,
+                                                    preferences: { ...(editFormData.preferences || { acceptedPetTypes: [], acceptedPetSizes: [], isNeuteredOnly: false, behavioralRestrictions: [] }), acceptedPetTypes: updated }
+                                                });
+                                            }}
+                                            className="rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                        <span className="text-sm">{type}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div>
+                            <Label className="mb-2 block">Accepted Pet Sizes</Label>
+                            <div className="flex flex-wrap gap-2">
+                                {['Small', 'Medium', 'Large', 'Giant'].map(size => (
+                                    <label key={size} className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-muted/50">
+                                        <input
+                                            type="checkbox"
+                                            checked={editFormData.preferences?.acceptedPetSizes?.includes(size) || false}
+                                            onChange={(e) => {
+                                                const current = editFormData.preferences?.acceptedPetSizes || [];
+                                                const updated = e.target.checked
+                                                    ? [...current, size]
+                                                    : current.filter(s => s !== size);
+                                                setEditFormData({
+                                                    ...editFormData,
+                                                    preferences: { ...(editFormData.preferences || { acceptedPetTypes: [], acceptedPetSizes: [], isNeuteredOnly: false, behavioralRestrictions: [] }), acceptedPetSizes: updated }
+                                                });
+                                            }}
+                                            className="rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                        <span className="text-sm">{size}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                id="neutered"
+                                checked={editFormData.preferences?.isNeuteredOnly || false}
+                                onChange={(e) => setEditFormData({
+                                    ...editFormData,
+                                    preferences: { ...(editFormData.preferences || { acceptedPetTypes: [], acceptedPetSizes: [], isNeuteredOnly: false, behavioralRestrictions: [] }), isNeuteredOnly: e.target.checked }
+                                })}
+                                className="rounded border-gray-300 text-primary focus:ring-primary"
+                            />
+                            <Label htmlFor="neutered">Only accept spayed/neutered pets</Label>
+                        </div>
+                    </div>
+                </EditModal>
+
+                {/* Housing Modal */}
+                <EditModal
+                    isOpen={editModal.isOpen && editModal.section === 'housing'}
+                    onClose={() => setEditModal({ isOpen: false, section: '' })}
+                    title="Edit Housing Details"
+                    onSave={handleSave}
+                    isSaving={updateMutation.isPending}
+                >
+                    <div className="space-y-4">
+                        <div>
+                            <Label>Home Type</Label>
+                            <select
+                                className="w-full px-3 py-2 rounded-lg border border-input bg-background"
+                                value={editFormData.housing?.homeType || ''}
+                                onChange={(e) => setEditFormData({
+                                    ...editFormData,
+                                    housing: { ...(editFormData.housing || { homeType: '', outdoorSpace: '', hasChildren: false, hasOtherPets: false, isNonSmoking: false }), homeType: e.target.value }
+                                })}
+                            >
+                                <option value="">Select home type</option>
+                                <option value="House">House</option>
+                                <option value="Apartment">Apartment</option>
+                                <option value="Farm">Farm</option>
+                            </select>
+                        </div>
+                        <div>
+                            <Label>Outdoor Space</Label>
+                            <select
+                                className="w-full px-3 py-2 rounded-lg border border-input bg-background"
+                                value={editFormData.housing?.outdoorSpace || ''}
+                                onChange={(e) => setEditFormData({
+                                    ...editFormData,
+                                    housing: { ...(editFormData.housing || { homeType: '', outdoorSpace: '', hasChildren: false, hasOtherPets: false, isNonSmoking: false }), outdoorSpace: e.target.value }
+                                })}
+                            >
+                                <option value="">Select outdoor space</option>
+                                <option value="Fenced Yard">Fenced Yard</option>
+                                <option value="Unfenced Yard">Unfenced Yard</option>
+                                <option value="No Yard">No Yard</option>
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    checked={editFormData.housing?.hasChildren || false}
+                                    onChange={(e) => setEditFormData({
+                                        ...editFormData,
+                                        housing: { ...(editFormData.housing || { homeType: '', outdoorSpace: '', hasChildren: false, hasOtherPets: false, isNonSmoking: false }), hasChildren: e.target.checked }
+                                    })}
+                                    className="rounded border-gray-300 text-primary focus:ring-primary"
+                                />
+                                <span className="text-sm">Has Children</span>
+                            </label>
+                            <label className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    checked={editFormData.housing?.hasOtherPets || false}
+                                    onChange={(e) => setEditFormData({
+                                        ...editFormData,
+                                        housing: { ...(editFormData.housing || { homeType: '', outdoorSpace: '', hasChildren: false, hasOtherPets: false, isNonSmoking: false }), hasOtherPets: e.target.checked }
+                                    })}
+                                    className="rounded border-gray-300 text-primary focus:ring-primary"
+                                />
+                                <span className="text-sm">Has Other Pets</span>
+                            </label>
+                            <label className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    checked={editFormData.housing?.isNonSmoking || false}
+                                    onChange={(e) => setEditFormData({
+                                        ...editFormData,
+                                        housing: { ...(editFormData.housing || { homeType: '', outdoorSpace: '', hasChildren: false, hasOtherPets: false, isNonSmoking: false }), isNonSmoking: e.target.checked }
+                                    })}
+                                    className="rounded border-gray-300 text-primary focus:ring-primary"
+                                />
+                                <span className="text-sm">Non-Smoking Household</span>
+                            </label>
+                        </div>
+                    </div>
+                </EditModal>
+
+                {/* Experience Modal */}
+                <EditModal
+                    isOpen={editModal.isOpen && editModal.section === 'experience'}
+                    onClose={() => setEditModal({ isOpen: false, section: '' })}
+                    title="Edit Experience & Skills"
+                    onSave={handleSave}
+                    isSaving={updateMutation.isPending}
+                >
+                    <div className="space-y-4">
+                        <div>
+                            <Label>Years of Experience</Label>
+                            <Input
+                                type="number"
+                                min="0"
+                                value={editFormData.yearsExperience || 0}
+                                onChange={(e) => setEditFormData({ ...editFormData, yearsExperience: parseInt(e.target.value) || 0 })}
+                            />
+                        </div>
+                        <div>
+                            <Label className="mb-2 block">Skills</Label>
+                            <div className="grid grid-cols-2 gap-2">
+                                {['Oral Medication', 'Injected Medication', 'Senior Dog Experience', 'Puppy Training', 'Special Needs Care'].map(skill => (
+                                    <label key={skill} className="flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={editFormData.skills?.includes(skill) || false}
+                                            onChange={(e) => {
+                                                const current = editFormData.skills || [];
+                                                const updated = e.target.checked
+                                                    ? [...current, skill]
+                                                    : current.filter(s => s !== skill);
+                                                setEditFormData({ ...editFormData, skills: updated });
+                                            }}
+                                            className="rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                        <span className="text-sm">{skill}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <Label className="mb-2 block">Certifications</Label>
+                            <div className="grid grid-cols-2 gap-2">
+                                {['Pet CPR', 'First Aid', 'Professional Dog Trainer', 'Vet Tech'].map(cert => (
+                                    <label key={cert} className="flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={editFormData.certifications?.includes(cert) || false}
+                                            onChange={(e) => {
+                                                const current = editFormData.certifications || [];
+                                                const updated = e.target.checked
+                                                    ? [...current, cert]
+                                                    : current.filter(c => c !== cert);
+                                                setEditFormData({ ...editFormData, certifications: updated });
+                                            }}
+                                            className="rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                        <span className="text-sm">{cert}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </EditModal>
+
+                {/* Availability Modal */}
+                <EditModal
+                    isOpen={editModal.isOpen && editModal.section === 'availability'}
+                    onClose={() => setEditModal({ isOpen: false, section: '' })}
+                    title="Edit Availability"
+                    onSave={handleSave}
+                    isSaving={updateMutation.isPending}
+                >
+                    <div className="space-y-4">
+                        <div>
+                            <Label className="mb-2 block">General Availability</Label>
+                            <div className="flex flex-wrap gap-2">
+                                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Weekdays', 'Weekends', 'Holidays', 'Full-Time'].map(day => (
+                                    <label key={day} className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-muted/50">
+                                        <input
+                                            type="checkbox"
+                                            checked={editFormData.availability?.general?.includes(day) || false}
+                                            onChange={(e) => {
+                                                const current = editFormData.availability?.general || [];
+                                                const updated = e.target.checked
+                                                    ? [...current, day]
+                                                    : current.filter(d => d !== day);
+                                                setEditFormData({
+                                                    ...editFormData,
+                                                    availability: { ...(editFormData.availability || { general: [], blockedDates: [] }), general: updated }
+                                                });
+                                            }}
+                                            className="rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                        <span className="text-sm">{day}</span>
+                                    </label>
+                                ))}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-2">
+                                Tip: Select "Weekdays" or "Weekends" to quickly show your preference. Use the calendar on the dashboard to block specific dates.
+                            </p>
+                        </div>
+                        <div>
+                            <Label>Notice Period</Label>
+                            <select
+                                className="w-full px-3 py-2 rounded-lg border border-input bg-background"
+                                value={editFormData.noticePeriod || ''}
+                                onChange={(e) => setEditFormData({ ...editFormData, noticePeriod: e.target.value })}
+                            >
+                                <option value="">Select notice period</option>
+                                <option value="Same Day">Same Day</option>
+                                <option value="1 Day">1 Day</option>
+                                <option value="2 Days">2 Days</option>
+                                <option value="3 Days">3 Days</option>
+                                <option value="1 Week">1 Week</option>
+                            </select>
                         </div>
                     </div>
                 </EditModal>
