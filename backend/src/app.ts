@@ -18,7 +18,7 @@ import messageRoutes from './routes/message.routes';
 // Middleware
 // Middleware
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
+  origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.replace(/\/$/, '') : '*',
   credentials: true
 }));
 app.use(express.json({ limit: '50mb' }));
