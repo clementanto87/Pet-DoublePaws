@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { sitterService } from '../services/sitter.service';
-import { bookingService } from '../services/booking.service';
 import { Button } from '../components/ui/Button';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { DivIcon } from 'leaflet';
@@ -13,9 +12,8 @@ import {
     Award, CheckCircle2, ArrowUpDown, Search, Navigation,
     Calendar, PawPrint, Sun, Building2, ArrowRight,
     ChevronLeft, ChevronRight, MessageCircle, Filter,
-    TrendingUp, Clock, Users, XCircle, Loader2, AlertCircle
+    XCircle, Loader2, AlertCircle
 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import 'leaflet/dist/leaflet.css';
 import { AddressAutocomplete } from '../components/ui/AddressAutocomplete';
 import { getCurrentPosition, reverseGeocode } from '../utils/geocoding';
@@ -233,14 +231,12 @@ const serviceOptions = [
 const SearchResultsPage: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
-    const { t } = useTranslation();
     const [sitters, setSitters] = useState<SitterData[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [hoveredSitter, setHoveredSitter] = useState<string | null>(null);
     const [selectedSitter, setSelectedSitter] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('list');
-    const [showFilters, setShowFilters] = useState(false);
     const [showSidebarFilters, setShowSidebarFilters] = useState(true); // Always show on desktop
     const [sortBy, setSortBy] = useState<SortOption>('distance');
     const [favorites, setFavorites] = useState<Set<string>>(new Set());
@@ -291,7 +287,7 @@ const SearchResultsPage: React.FC = () => {
     const [weekOffset, setWeekOffset] = useState<Record<string, number>>({});
 
     // Bookings state for each sitter
-    const [sitterBookings, setSitterBookings] = useState<Record<string, any[]>>({});
+    const sitterBookings = useRef<Record<string, any[]>>({});
 
     // Preserve search params for navigation (used in JSX)
     const searchParamsString = searchParams.toString();
@@ -487,7 +483,7 @@ const SearchResultsPage: React.FC = () => {
         setEditLocationError('');
         try {
             const position = await getCurrentPosition();
-            const address = await reverseGeocode(position.latitude, position.longitude);
+            const address = await reverseGeocode(position.lat, position.lng);
             setEditLocation(address.display_name.split(',').slice(0, 2).join(','));
             setSelectedEditAddress(address);
         } catch (error: any) {
@@ -631,7 +627,7 @@ const SearchResultsPage: React.FC = () => {
         const isSelected = selectedSitter === sitter.id;
         const isFavorite = favorites.has(sitter.id);
         const currentMonthOffset = weekOffset[sitter.id] || 0;
-        const bookings = sitterBookings[sitter.id] || [];
+        const bookings = sitterBookings.current[sitter.id] || [];
         const calendar = useMemo(() => getMonthlyAvailability(sitter, currentMonthOffset, bookings), [sitter, currentMonthOffset, bookings]);
 
         // Build calendar grid
@@ -1210,7 +1206,7 @@ const SearchResultsPage: React.FC = () => {
 
                     {/* Filter Panel */}
                     <AnimatePresence>
-                        {showFilters && (
+                        {showSidebarFilters && (
                             <motion.div
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: 'auto', opacity: 1 }}

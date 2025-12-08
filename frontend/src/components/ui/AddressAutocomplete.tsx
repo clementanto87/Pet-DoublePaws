@@ -24,7 +24,7 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
     const [suggestions, setSuggestions] = useState<Address[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const debounceTimer = useRef<NodeJS.Timeout>();
+    const debounceTimer = useRef<NodeJS.Timeout | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const isSelectingRef = useRef(false);
 
