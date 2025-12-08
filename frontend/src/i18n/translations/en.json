@@ -9,39 +9,470 @@
     "edit": "Edit",
     "back": "Back",
     "next": "Next",
-    "previous": "Previous"
+    "previous": "Previous",
+    "search": "Search",
+    "close": "Close",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK",
+    "apply": "Apply",
+    "reset": "Reset",
+    "filter": "Filter",
+    "sort": "Sort",
+    "view": "View",
+    "select": "Select",
+    "all": "All",
+    "none": "None",
+    "optional": "Optional",
+    "required": "Required"
   },
   "language": {
     "en": "English",
-    "de": "German"
-  },
-  "header": {
-    "title": "Pet Daycare"
+    "de": "German",
+    "switch": "Switch Language"
   },
   "navigation": {
     "home": "Home",
+    "dashboard": "Dashboard",
+    "sitterDashboard": "Sitter Dashboard",
+    "becomeSitter": "Become a Sitter",
+    "login": "Log in",
+    "logout": "Log out",
+    "signup": "Sign up",
+    "profile": "Profile",
+    "messages": "Messages",
+    "bookings": "Bookings",
     "services": "Services",
     "about": "About Us",
     "contact": "Contact",
-    "login": "Login",
-    "register": "Register",
-    "profile": "Profile",
-    "logout": "Logout"
+    "hi": "Hi"
   },
   "auth": {
-    "loginTitle": "Login to your account",
-    "registerTitle": "Create an account",
-    "email": "Email",
+    "loginTitle": "Welcome back",
+    "loginSubtitle": "Or",
+    "createAccount": "create a new account",
+    "signupTitle": "Create your account",
+    "signupSubtitle": "Already have an account?",
+    "email": "Email address",
     "password": "Password",
     "confirmPassword": "Confirm Password",
-    "forgotPassword": "Forgot password?",
-    "noAccount": "Don't have an account?",
-    "hasAccount": "Already have an account?"
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "forgotPassword": "Forgot your password?",
+    "signingIn": "Signing in...",
+    "signIn": "Sign in",
+    "signingUp": "Creating account...",
+    "signUp": "Sign up",
+    "signInWithGoogle": "Sign in with Google",
+    "signUpWithGoogle": "Sign up with Google",
+    "orContinueWith": "Or continue with",
+    "passwordMinLength": "Must be at least 8 characters long.",
+    "emailPlaceholder": "you@example.com",
+    "passwordPlaceholder": "••••••••"
   },
   "validation": {
     "required": "This field is required",
     "email": "Please enter a valid email address",
     "passwordLength": "Password must be at least 6 characters",
     "passwordsDontMatch": "Passwords don't match"
+  },
+  "landing": {
+    "tagline": "Trusted Pet Care, Made Simple",
+    "heroTitle": "Find Your Pet's",
+    "heroTitleHighlight": "Perfect Sitter",
+    "heroSubtitle": "Connect with verified pet sitters in your area. Every booking is fully insured.",
+    "whatServiceNeeded": "What service does your pet need?",
+    "whereNeedCare": "Where do you need pet care?",
+    "searchSitters": "Search Sitters",
+    "nearMe": "Near Me",
+    "popularLocations": "Popular locations",
+    "suggestions": "Suggestions",
+    "enterCity": "Enter your city or neighborhood...",
+    "tryLocation": "Try \"New York, NY\"...",
+    "wherePetCare": "Where does your pet need care?",
+    "searchByZip": "Search by zip code or address...",
+    "useCurrentLocation": "Use current location",
+    "services": {
+      "boarding": {
+        "label": "Boarding",
+        "desc": "Your pet stays at the sitter's home"
+      },
+      "houseSitting": {
+        "label": "House Sitting",
+        "desc": "Sitter stays at your home"
+      },
+      "dropInVisits": {
+        "label": "Drop-In Visits",
+        "desc": "30-60 min check-ins at your home"
+      },
+      "dayCare": {
+        "label": "Doggy Day Care",
+        "desc": "Daytime care at sitter's home"
+      },
+      "walking": {
+        "label": "Dog Walking",
+        "desc": "Regular walks in your neighborhood"
+      }
+    },
+    "trustFeatures": {
+      "verifiedSitters": "Verified Sitters",
+      "petInsurance": "Pet Insurance",
+      "support24": "24/7 Support",
+      "securePayments": "Secure Payments"
+    },
+    "howItWorks": {
+      "title": "How It Works",
+      "step1": {
+        "title": "Search & Compare",
+        "desc": "Find trusted pet sitters in your area. Compare profiles, services, and reviews."
+      },
+      "step2": {
+        "title": "Connect & Book",
+        "desc": "Message sitters, ask questions, and book with confidence through our secure platform."
+      },
+      "step3": {
+        "title": "Relax & Enjoy",
+        "desc": "Your pet gets amazing care while you get peace of mind with photo updates."
+      }
+    },
+    "safetyFeatures": {
+      "verifiedSitters": {
+        "title": "Verified Sitters",
+        "desc": "Every sitter passes identity verification and background checks"
+      },
+      "petInsurance": {
+        "title": "Pet Insurance",
+        "desc": "Every booking includes comprehensive pet insurance coverage"
+      },
+      "support24": {
+        "title": "24/7 Support",
+        "desc": "Our dedicated team is always here when you need us"
+      },
+      "securePayments": {
+        "title": "Secure Payments",
+        "desc": "Your payments are protected with bank-level security"
+      }
+    },
+    "features": {
+      "photoUpdates": "Photo & video updates",
+      "gpsTracking": "GPS tracking on walks",
+      "vetCare": "Vet care coordination",
+      "onlinePayments": "Easy online payments",
+      "reviews": "Honest reviews",
+      "flexibleScheduling": "Flexible scheduling"
+    }
+  },
+  "booking": {
+    "title": "Find Your Pet's",
+    "titleHighlight": "Perfect Sitter",
+    "subtitle": "Connect with verified pet sitters in your area. Every booking is fully insured.",
+    "whatServiceNeeded": "What service does your pet need?",
+    "whereNeedCare": "Where do you need pet care?",
+    "searchSitters": "Search Sitters",
+    "nearMe": "Near Me",
+    "popularLocations": "Popular locations",
+    "suggestions": "Suggestions",
+    "enterCity": "Enter your city or neighborhood...",
+    "tryLocation": "Try \"New York, NY\"...",
+    "wherePetCare": "Where does your pet need care?",
+    "searchByZip": "Search by zip code or address..."
+  },
+  "search": {
+    "results": "Search Results",
+    "noResults": "No sitters found",
+    "tryDifferent": "Try different search criteria",
+    "listView": "List",
+    "mapView": "Map",
+    "sortBy": "Sort by",
+    "price": "Price",
+    "rating": "Rating",
+    "distance": "Distance",
+    "availability": "Availability",
+    "viewProfile": "View Profile",
+    "contact": "Contact",
+    "available": "Available",
+    "unavailable": "Unavailable",
+    "lastUpdated": "Updated",
+    "daysAgo": "days ago",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "filters": "Filters",
+    "priceRange": "Price Range",
+    "maxDistance": "Max Distance",
+    "km": "km",
+    "applyFilters": "Apply Filters",
+    "clearFilters": "Clear Filters",
+    "sitterCount": "{{count}} sitter found",
+    "sitterCount_plural": "{{count}} sitters found"
+  },
+  "dashboard": {
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
+    "welcome": "Welcome to your pet care dashboard",
+    "petsInCare": "You have {{count}} adorable pet in your care",
+    "petsInCare_plural": "You have {{count}} adorable pets in your care",
+    "bookNow": "Book Now",
+    "stats": {
+      "myPets": "My Pets",
+      "upcoming": "Upcoming",
+      "completed": "Completed"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "bookSitter": {
+        "title": "Book a Sitter",
+        "desc": "Find trusted pet sitters"
+      },
+      "addPet": {
+        "title": "Add Pet",
+        "desc": "Create pet profile"
+      },
+      "messages": {
+        "title": "Messages",
+        "desc": "Chat with sitters",
+        "unread": "{{count}} unread",
+        "unread_plural": "{{count}} unread"
+      }
+    },
+    "bookings": {
+      "title": "Your Bookings",
+      "upcoming": "Upcoming",
+      "past": "Past",
+      "history": "History",
+      "noUpcoming": "No upcoming bookings",
+      "noPast": "No past bookings",
+      "review": "Review",
+      "status": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "rejected": "Rejected",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "cancel": "Cancel",
+      "cancelConfirm": "Are you sure you want to cancel this booking?",
+      "viewDetails": "View Details",
+      "leaveReview": "Leave Review",
+      "reviewSubmitted": "Review submitted successfully!",
+      "reviewFailed": "Failed to submit review. You may have already reviewed this booking.",
+      "cancelledSuccess": "Booking cancelled successfully",
+      "cancelledFailed": "Failed to cancel booking"
+    },
+    "pets": {
+      "title": "Your Pets",
+      "noPets": "You haven't added any pets yet",
+      "addFirst": "Add your first pet"
+    },
+    "loading": "Loading your dashboard...",
+    "error": {
+      "title": "Oops! Something went wrong",
+      "message": "We couldn't load your dashboard. Please try again.",
+      "refresh": "Refresh Page"
+    }
+  },
+  "sitterDashboard": {
+    "title": "Sitter Dashboard",
+    "noProfile": {
+      "title": "No Sitter Profile Found",
+      "message": "You haven't created a sitter profile yet. Start earning by becoming a pet sitter today!",
+      "button": "Become a Sitter"
+    },
+    "profile": {
+      "overview": "Profile Overview",
+      "edit": "Edit",
+      "availability": "Availability",
+      "services": "Active Services",
+      "rates": "Rates",
+      "from": "from",
+      "perNight": "per night",
+      "perVisit": "per visit",
+      "perDay": "per day",
+      "perWalk": "per walk"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "messages": {
+        "title": "Messages",
+        "desc": "Chat with customers",
+        "unread": "{{count}} unread",
+        "unread_plural": "{{count}} unread"
+      },
+      "editProfile": {
+        "title": "Edit Profile",
+        "desc": "Update your information"
+      }
+    },
+    "bookings": {
+      "title": "Booking Requests",
+      "upcoming": "Upcoming & In-Progress",
+      "history": "History",
+      "noUpcoming": "No upcoming bookings",
+      "noHistory": "No booking history",
+      "accept": "Accept",
+      "reject": "Reject",
+      "accepted": "Booking accepted successfully!",
+      "rejected": "Booking rejected",
+      "updateFailed": "Failed to update booking status",
+      "status": {
+        "pending": "Pending",
+        "accepted": "Accepted",
+        "rejected": "Rejected",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "petDetails": "Pet Details",
+      "bookingDetails": "Booking Details"
+    },
+    "stats": {
+      "activeServices": "Active Services",
+      "rateRange": "Rate Range",
+      "totalBookings": "Total Bookings"
+    }
+  },
+  "messages": {
+    "title": "Messages",
+    "subtitle": "Chat with your sitters",
+    "backToDashboard": "Back to Dashboard",
+    "searchConversations": "Search conversations...",
+    "noConversations": "No conversations yet",
+    "startChatting": "Start chatting with sitters",
+    "typeMessage": "Type a message...",
+    "send": "Send",
+    "noMessages": "No messages yet",
+    "startConversation": "Start the conversation",
+    "loading": "Loading messages...",
+    "selectConversation": "Select a conversation to view messages"
+  },
+  "sitterMessages": {
+    "title": "Messages",
+    "subtitle": "Chat with your customers",
+    "backToDashboard": "Back to Dashboard"
+  },
+  "footer": {
+    "description": "Premium pet care services designed to make your furry friends feel right at home. Safe, fun, and loving environment.",
+    "quickLinks": {
+      "title": "Quick Links",
+      "home": "Home",
+      "about": "About Us",
+      "services": "Services",
+      "pricing": "Pricing",
+      "contact": "Contact"
+    },
+    "services": {
+      "title": "Services",
+      "daycare": "Daycare",
+      "boarding": "Boarding",
+      "grooming": "Grooming",
+      "training": "Training",
+      "veterinary": "Veterinary"
+    },
+    "newsletter": {
+      "title": "Newsletter",
+      "description": "Subscribe to get special offers, free giveaways, and once-in-a-lifetime deals.",
+      "placeholder": "Enter your email"
+    },
+    "copyright": "© {{year}} Double Paws. All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "cookies": "Cookie Policy"
+  },
+  "becomeSitter": {
+    "hero": {
+      "title": "Turn Your Love for Pets",
+      "titleHighlight": "Into Income",
+      "subtitle": "Join thousands of pet sitters earning $1,500+ per month doing what they love",
+      "getStarted": "Get Started",
+      "learnMore": "Learn More"
+    },
+    "benefits": {
+      "earnIncome": {
+        "title": "Earn Great Income",
+        "desc": "Set your own rates and earn up to $1,500+ per month caring for pets you love.",
+        "highlight": "$1,500+/mo"
+      },
+      "flexibleSchedule": {
+        "title": "Flexible Schedule",
+        "desc": "Work when you want. You control your availability—part-time or full-time.",
+        "highlight": "Your Hours"
+      },
+      "doWhatYouLove": {
+        "title": "Do What You Love",
+        "desc": "Spend your days with adorable pets. Turn your passion into a rewarding career.",
+        "highlight": "Dream Job"
+      },
+      "workFromHome": {
+        "title": "Work From Home",
+        "desc": "Provide boarding and daycare from the comfort of your own home.",
+        "highlight": "Home-Based"
+      }
+    },
+    "howItWorks": {
+      "title": "How It Works",
+      "step1": {
+        "title": "Create Your Profile",
+        "desc": "Share your experience, set your services, and showcase what makes you special."
+      },
+      "step2": {
+        "title": "Get Verified",
+        "desc": "Complete our quick verification to build trust with pet parents."
+      },
+      "step3": {
+        "title": "Accept Bookings",
+        "desc": "Receive booking requests and choose the ones that fit your schedule."
+      },
+      "step4": {
+        "title": "Get Paid",
+        "desc": "Earn money doing what you love. Payments are secure and automatic."
+      }
+    },
+    "earnings": {
+      "title": "See How Much You Can Earn",
+      "partTime": "Part-Time",
+      "fullTime": "Full-Time",
+      "perMonth": "per month",
+      "boarding": "Boarding",
+      "walking": "Dog Walking",
+      "daycare": "Day Care",
+      "total": "Total"
+    },
+    "faq": {
+      "title": "Frequently Asked Questions"
+    }
+  },
+  "sitterRegistration": {
+    "title": "Become a Pet Sitter",
+    "steps": {
+      "serviceProfile": "Service Profile",
+      "experience": "Experience",
+      "housing": "Housing",
+      "availability": "Availability",
+      "preferences": "Preferences",
+      "identity": "Identity",
+      "banking": "Banking"
+    }
+  },
+  "petProfile": {
+    "title": "Create Pet Profile",
+    "name": "Pet Name",
+    "type": "Pet Type",
+    "breed": "Breed",
+    "age": "Age",
+    "size": "Size",
+    "description": "Description"
+  },
+  "serviceProfile": {
+    "title": "Service Profile",
+    "setRates": "Set Your Rates",
+    "standardRate": "Standard Rate",
+    "holidayRate": "Holiday Rate",
+    "customerPays": "Customer pays",
+    "youEarn": "You earn (85%)",
+    "distance": "Service Distance",
+    "km": "km"
   }
 }

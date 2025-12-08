@@ -79,6 +79,15 @@
   .text-gradient-alt {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-secondary to-primary;
   }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
 }
 
 /* Material Icons */

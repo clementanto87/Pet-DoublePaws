@@ -8,12 +8,14 @@ import { Logo } from '../components/ui/Logo';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useGoogleLogin } from '@react-oauth/google';
+import { useTranslation } from 'react-i18next';
 
 const SignupPage: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const { signup, googleLogin, error } = useAuth();
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -58,12 +60,12 @@ const SignupPage: React.FC = () => {
                     </Link>
                 </div>
                 <h2 className="mt-6 text-center text-3xl font-display font-bold tracking-tight text-foreground">
-                    Create your account
+                    {t('auth.signupTitle')}
                 </h2>
                 <p className="mt-2 text-center text-sm text-muted-foreground">
-                    Already have an account?{' '}
+                    {t('auth.signupSubtitle')}{' '}
                     <Link to="/login" className="font-medium text-primary hover:text-primary/90 hover:underline">
-                        Log in
+                        {t('navigation.login')}
                     </Link>
                 </p>
             </div>
@@ -79,7 +81,7 @@ const SignupPage: React.FC = () => {
                         <form className="space-y-6" onSubmit={handleSignup}>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <Label htmlFor="firstName">First Name</Label>
+                                    <Label htmlFor="firstName">{t('auth.firstName')}</Label>
                                     <div className="mt-1">
                                         <Input
                                             id="firstName"
@@ -93,7 +95,7 @@ const SignupPage: React.FC = () => {
                                     </div>
                                 </div>
                                 <div>
-                                    <Label htmlFor="lastName">Last Name</Label>
+                                    <Label htmlFor="lastName">{t('auth.lastName')}</Label>
                                     <div className="mt-1">
                                         <Input
                                             id="lastName"
@@ -109,7 +111,7 @@ const SignupPage: React.FC = () => {
                             </div>
 
                             <div>
-                                <Label htmlFor="email">Email address</Label>
+                                <Label htmlFor="email">{t('auth.email')}</Label>
                                 <div className="mt-1">
                                     <Input
                                         id="email"
@@ -117,14 +119,14 @@ const SignupPage: React.FC = () => {
                                         type="email"
                                         autoComplete="email"
                                         required
-                                        placeholder="you@example.com"
+                                        placeholder={t('auth.emailPlaceholder')}
                                         className="h-11"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <Label htmlFor="password">Password</Label>
+                                <Label htmlFor="password">{t('auth.password')}</Label>
                                 <div className="mt-1 relative">
                                     <Input
                                         id="password"
@@ -133,7 +135,7 @@ const SignupPage: React.FC = () => {
                                         autoComplete="new-password"
                                         required
                                         className="h-11 pr-10"
-                                        placeholder="••••••••"
+                                        placeholder={t('auth.passwordPlaceholder')}
                                     />
                                     <button
                                         type="button"
@@ -148,7 +150,7 @@ const SignupPage: React.FC = () => {
                                     </button>
                                 </div>
                                 <p className="mt-2 text-xs text-muted-foreground">
-                                    Must be at least 8 characters long.
+                                    {t('auth.passwordMinLength')}
                                 </p>
                             </div>
 
@@ -158,7 +160,7 @@ const SignupPage: React.FC = () => {
                                     className="w-full h-11 text-base shadow-glow"
                                     disabled={isLoading}
                                 >
-                                    {isLoading ? 'Creating account...' : 'Sign up'}
+                                    {isLoading ? t('auth.signingUp') : t('auth.signUp')}
                                     {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
                                 </Button>
                             </div>
@@ -171,7 +173,7 @@ const SignupPage: React.FC = () => {
                                 </div>
                                 <div className="relative flex justify-center text-sm">
                                     <span className="px-2 bg-white dark:bg-card text-muted-foreground">
-                                        Or continue with
+                                        {t('auth.orContinueWith')}
                                     </span>
                                 </div>
                             </div>
@@ -201,7 +203,7 @@ const SignupPage: React.FC = () => {
                                             fill="#EA4335"
                                         />
                                     </svg>
-                                    Sign up with Google
+                                    {t('auth.signUpWithGoogle')}
                                 </Button>
                             </div>
                         </div>

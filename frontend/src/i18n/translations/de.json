@@ -2,46 +2,477 @@
   "common": {
     "loading": "Wird geladen...",
     "error": "Ein Fehler ist aufgetreten",
-    "success": "Erfolg!",
+    "success": "Erfolgreich!",
     "save": "Speichern",
     "cancel": "Abbrechen",
     "delete": "Löschen",
     "edit": "Bearbeiten",
     "back": "Zurück",
     "next": "Weiter",
-    "previous": "Zurück"
+    "previous": "Zurück",
+    "search": "Suchen",
+    "close": "Schließen",
+    "submit": "Absenden",
+    "confirm": "Bestätigen",
+    "yes": "Ja",
+    "no": "Nein",
+    "ok": "OK",
+    "apply": "Anwenden",
+    "reset": "Zurücksetzen",
+    "filter": "Filter",
+    "sort": "Sortieren",
+    "view": "Anzeigen",
+    "select": "Auswählen",
+    "all": "Alle",
+    "none": "Keine",
+    "optional": "Optional",
+    "required": "Erforderlich"
   },
   "language": {
     "en": "Englisch",
-    "de": "Deutsch"
-  },
-  "header": {
-    "title": "Tierpension"
+    "de": "Deutsch",
+    "switch": "Sprache wechseln"
   },
   "navigation": {
     "home": "Startseite",
+    "dashboard": "Dashboard",
+    "sitterDashboard": "Sitter-Dashboard",
+    "becomeSitter": "Sitter werden",
+    "login": "Anmelden",
+    "logout": "Abmelden",
+    "signup": "Registrieren",
+    "profile": "Profil",
+    "messages": "Nachrichten",
+    "bookings": "Buchungen",
     "services": "Dienstleistungen",
     "about": "Über uns",
     "contact": "Kontakt",
-    "login": "Anmelden",
-    "register": "Registrieren",
-    "profile": "Profil",
-    "logout": "Abmelden"
+    "hi": "Hallo"
   },
   "auth": {
-    "loginTitle": "Anmelden",
-    "registerTitle": "Konto erstellen",
-    "email": "E-Mail",
+    "loginTitle": "Willkommen zurück",
+    "loginSubtitle": "Oder",
+    "createAccount": "ein neues Konto erstellen",
+    "signupTitle": "Erstellen Sie Ihr Konto",
+    "signupSubtitle": "Haben Sie bereits ein Konto?",
+    "email": "E-Mail-Adresse",
     "password": "Passwort",
     "confirmPassword": "Passwort bestätigen",
+    "firstName": "Vorname",
+    "lastName": "Nachname",
     "forgotPassword": "Passwort vergessen?",
-    "noAccount": "Noch kein Konto?",
-    "hasAccount": "Bereits ein Konto?"
+    "signingIn": "Wird angemeldet...",
+    "signIn": "Anmelden",
+    "signingUp": "Konto wird erstellt...",
+    "signUp": "Registrieren",
+    "signInWithGoogle": "Mit Google anmelden",
+    "signUpWithGoogle": "Mit Google registrieren",
+    "orContinueWith": "Oder fortfahren mit",
+    "passwordMinLength": "Muss mindestens 8 Zeichen lang sein.",
+    "emailPlaceholder": "sie@beispiel.de",
+    "passwordPlaceholder": "••••••••"
   },
   "validation": {
     "required": "Dieses Feld ist erforderlich",
     "email": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
     "passwordLength": "Das Passwort muss mindestens 6 Zeichen lang sein",
     "passwordsDontMatch": "Die Passwörter stimmen nicht überein"
+  },
+  "landing": {
+    "tagline": "Vertrauensvolle Tierbetreuung, einfach gemacht",
+    "heroTitle": "Finden Sie den",
+    "heroTitleHighlight": "perfekten Sitter",
+    "heroSubtitle": "Verbinden Sie sich mit verifizierten Tiersittern in Ihrer Nähe. Jede Buchung ist vollständig versichert.",
+    "whatServiceNeeded": "Welche Dienstleistung benötigt Ihr Haustier?",
+    "whereNeedCare": "Wo benötigen Sie Tierbetreuung?",
+    "searchSitters": "Sitter suchen",
+    "nearMe": "In meiner Nähe",
+    "popularLocations": "Beliebte Standorte",
+    "suggestions": "Vorschläge",
+    "enterCity": "Geben Sie Ihre Stadt oder Nachbarschaft ein...",
+    "tryLocation": "Versuchen Sie \"Berlin\"...",
+    "wherePetCare": "Wo benötigt Ihr Haustier Betreuung?",
+    "searchByZip": "Suche nach Postleitzahl oder Adresse...",
+    "useCurrentLocation": "Aktuellen Standort verwenden",
+    "services": {
+      "boarding": {
+        "label": "Pension",
+        "desc": "Ihr Haustier bleibt im Zuhause des Sitters"
+      },
+      "houseSitting": {
+        "label": "Hausbetreuung",
+        "desc": "Der Sitter bleibt in Ihrem Zuhause"
+      },
+      "dropInVisits": {
+        "label": "Besuche",
+        "desc": "30-60 min Besuche in Ihrem Zuhause"
+      },
+      "dayCare": {
+        "label": "Tagesbetreuung",
+        "desc": "Tagesbetreuung im Zuhause des Sitters"
+      },
+      "walking": {
+        "label": "Hundespaziergänge",
+        "desc": "Regelmäßige Spaziergänge in Ihrer Nachbarschaft"
+      }
+    },
+    "trustFeatures": {
+      "verifiedSitters": "Verifizierte Sitter",
+      "petInsurance": "Tierversicherung",
+      "support24": "24/7 Support",
+      "securePayments": "Sichere Zahlungen"
+    },
+    "howItWorks": {
+      "title": "So funktioniert's",
+      "step1": {
+        "title": "Suchen & Vergleichen",
+        "desc": "Finden Sie vertrauenswürdige Tiersitter in Ihrer Nähe. Vergleichen Sie Profile, Dienstleistungen und Bewertungen."
+      },
+      "step2": {
+        "title": "Verbinden & Buchen",
+        "desc": "Nachrichten Sie Sitter, stellen Sie Fragen und buchen Sie mit Vertrauen über unsere sichere Plattform."
+      },
+      "step3": {
+        "title": "Entspannen & Genießen",
+        "desc": "Ihr Haustier erhält großartige Betreuung, während Sie mit Foto-Updates beruhigt sind."
+      }
+    },
+    "safetyFeatures": {
+      "verifiedSitters": {
+        "title": "Verifizierte Sitter",
+        "desc": "Jeder Sitter durchläuft Identitätsprüfung und Hintergrundüberprüfungen"
+      },
+      "petInsurance": {
+        "title": "Tierversicherung",
+        "desc": "Jede Buchung umfasst umfassende Tierversicherungsdeckung"
+      },
+      "support24": {
+        "title": "24/7 Support",
+        "desc": "Unser engagiertes Team ist immer für Sie da, wenn Sie uns brauchen"
+      },
+      "securePayments": {
+        "title": "Sichere Zahlungen",
+        "desc": "Ihre Zahlungen sind mit Bank-Level-Sicherheit geschützt"
+      }
+    },
+    "features": {
+      "photoUpdates": "Foto- und Video-Updates",
+      "gpsTracking": "GPS-Tracking bei Spaziergängen",
+      "vetCare": "Tierarzt-Koordination",
+      "onlinePayments": "Einfache Online-Zahlungen",
+      "reviews": "Ehrliche Bewertungen",
+      "flexibleScheduling": "Flexible Terminplanung"
+    }
+  },
+  "booking": {
+    "title": "Finden Sie den",
+    "titleHighlight": "perfekten Sitter",
+    "subtitle": "Verbinden Sie sich mit verifizierten Tiersittern in Ihrer Nähe. Jede Buchung ist vollständig versichert.",
+    "whatServiceNeeded": "Welche Dienstleistung benötigt Ihr Haustier?",
+    "whereNeedCare": "Wo benötigen Sie Tierbetreuung?",
+    "searchSitters": "Sitter suchen",
+    "nearMe": "In meiner Nähe",
+    "popularLocations": "Beliebte Standorte",
+    "suggestions": "Vorschläge",
+    "enterCity": "Geben Sie Ihre Stadt oder Nachbarschaft ein...",
+    "tryLocation": "Versuchen Sie \"Berlin\"...",
+    "wherePetCare": "Wo benötigt Ihr Haustier Betreuung?",
+    "searchByZip": "Suche nach Postleitzahl oder Adresse..."
+  },
+  "search": {
+    "results": "Suchergebnisse",
+    "noResults": "Keine Sitter gefunden",
+    "tryDifferent": "Versuchen Sie andere Suchkriterien",
+    "listView": "Liste",
+    "mapView": "Karte",
+    "sortBy": "Sortieren nach",
+    "price": "Preis",
+    "rating": "Bewertung",
+    "distance": "Entfernung",
+    "availability": "Verfügbarkeit",
+    "viewProfile": "Profil anzeigen",
+    "contact": "Kontakt",
+    "available": "Verfügbar",
+    "unavailable": "Nicht verfügbar",
+    "lastUpdated": "Aktualisiert",
+    "daysAgo": "Tage zuvor",
+    "today": "Heute",
+    "yesterday": "Gestern",
+    "filters": "Filter",
+    "priceRange": "Preisspanne",
+    "maxDistance": "Maximale Entfernung",
+    "km": "km",
+    "applyFilters": "Filter anwenden",
+    "clearFilters": "Filter zurücksetzen",
+    "sitterCount": "{{count}} Sitter gefunden",
+    "sitterCount_plural": "{{count}} Sitter gefunden"
+  },
+  "dashboard": {
+    "greeting": {
+      "morning": "Guten Morgen",
+      "afternoon": "Guten Tag",
+      "evening": "Guten Abend"
+    },
+    "welcome": "Willkommen in Ihrem Tierbetreuungs-Dashboard",
+    "petsInCare": "Sie haben {{count}} liebenswertes Haustier in Ihrer Obhut",
+    "petsInCare_plural": "Sie haben {{count}} liebenswerte Haustiere in Ihrer Obhut",
+    "bookNow": "Jetzt buchen",
+    "stats": {
+      "myPets": "Meine Haustiere",
+      "upcoming": "Bevorstehend",
+      "completed": "Abgeschlossen"
+    },
+    "quickActions": {
+      "title": "Schnellaktionen",
+      "bookSitter": {
+        "title": "Sitter buchen",
+        "desc": "Finden Sie vertrauenswürdige Tiersitter"
+      },
+      "addPet": {
+        "title": "Haustier hinzufügen",
+        "desc": "Haustierprofil erstellen"
+      },
+      "messages": {
+        "title": "Nachrichten",
+        "desc": "Mit Sitters chatten",
+        "unread": "{{count}} ungelesen",
+        "unread_plural": "{{count}} ungelesen"
+      }
+    },
+    "bookings": {
+      "title": "Ihre Buchungen",
+      "upcoming": "Bevorstehend",
+      "past": "Vergangen",
+      "history": "Verlauf",
+      "noUpcoming": "Keine bevorstehenden Buchungen",
+      "noPast": "Keine vergangenen Buchungen",
+      "review": "Bewerten",
+      "status": {
+        "pending": "Ausstehend",
+        "accepted": "Akzeptiert",
+        "rejected": "Abgelehnt",
+        "completed": "Abgeschlossen",
+        "cancelled": "Storniert"
+      },
+      "cancel": "Stornieren",
+      "cancelConfirm": "Möchten Sie diese Buchung wirklich stornieren?",
+      "viewDetails": "Details anzeigen",
+      "leaveReview": "Bewertung abgeben",
+      "reviewSubmitted": "Bewertung erfolgreich abgegeben!",
+      "reviewFailed": "Bewertung konnte nicht abgegeben werden. Sie haben diese Buchung möglicherweise bereits bewertet.",
+      "cancelledSuccess": "Buchung erfolgreich storniert",
+      "cancelledFailed": "Buchung konnte nicht storniert werden"
+    },
+    "pets": {
+      "title": "Ihre Haustiere",
+      "noPets": "Sie haben noch keine Haustiere hinzugefügt",
+      "addFirst": "Fügen Sie Ihr erstes Haustier hinzu"
+    },
+    "loading": "Ihr Dashboard wird geladen...",
+    "error": {
+      "title": "Ups! Etwas ist schief gelaufen",
+      "message": "Wir konnten Ihr Dashboard nicht laden. Bitte versuchen Sie es erneut.",
+      "refresh": "Seite aktualisieren"
+    }
+  },
+  "sitterDashboard": {
+    "title": "Sitter-Dashboard",
+    "noProfile": {
+      "title": "Kein Sitter-Profil gefunden",
+      "message": "Sie haben noch kein Sitter-Profil erstellt. Beginnen Sie zu verdienen, indem Sie heute Tiersitter werden!",
+      "button": "Sitter werden"
+    },
+    "profile": {
+      "overview": "Profilübersicht",
+      "edit": "Bearbeiten",
+      "availability": "Verfügbarkeit",
+      "services": "Aktive Dienstleistungen",
+      "rates": "Preise",
+      "from": "ab",
+      "perNight": "pro Nacht",
+      "perVisit": "pro Besuch",
+      "perDay": "pro Tag",
+      "perWalk": "pro Spaziergang"
+    },
+    "quickActions": {
+      "title": "Schnellaktionen",
+      "messages": {
+        "title": "Nachrichten",
+        "desc": "Mit Kunden chatten",
+        "unread": "{{count}} ungelesen",
+        "unread_plural": "{{count}} ungelesen"
+      },
+      "editProfile": {
+        "title": "Profil bearbeiten",
+        "desc": "Aktualisieren Sie Ihre Informationen"
+      }
+    },
+    "bookings": {
+      "title": "Buchungsanfragen",
+      "upcoming": "Bevorstehend & In Bearbeitung",
+      "history": "Verlauf",
+      "noUpcoming": "Keine bevorstehenden Buchungen",
+      "noHistory": "Keine Buchungshistorie",
+      "accept": "Akzeptieren",
+      "reject": "Ablehnen",
+      "accepted": "Buchung erfolgreich akzeptiert!",
+      "rejected": "Buchung abgelehnt",
+      "updateFailed": "Buchungsstatus konnte nicht aktualisiert werden",
+      "status": {
+        "pending": "Ausstehend",
+        "accepted": "Akzeptiert",
+        "rejected": "Abgelehnt",
+        "completed": "Abgeschlossen",
+        "cancelled": "Storniert"
+      },
+      "petDetails": "Haustierdetails",
+      "bookingDetails": "Buchungsdetails"
+    },
+    "stats": {
+      "activeServices": "Aktive Dienstleistungen",
+      "rateRange": "Preisspanne",
+      "totalBookings": "Gesamtbuchungen"
+    }
+  },
+  "messages": {
+    "title": "Nachrichten",
+    "subtitle": "Chatten Sie mit Ihren Sitters",
+    "backToDashboard": "Zurück zum Dashboard",
+    "searchConversations": "Konversationen durchsuchen...",
+    "noConversations": "Noch keine Konversationen",
+    "startChatting": "Beginnen Sie mit Sitters zu chatten",
+    "typeMessage": "Nachricht eingeben...",
+    "send": "Senden",
+    "noMessages": "Noch keine Nachrichten",
+    "startConversation": "Konversation beginnen",
+    "loading": "Nachrichten werden geladen...",
+    "selectConversation": "Wählen Sie eine Konversation aus, um Nachrichten anzuzeigen"
+  },
+  "sitterMessages": {
+    "title": "Nachrichten",
+    "subtitle": "Chatten Sie mit Ihren Kunden",
+    "backToDashboard": "Zurück zum Dashboard"
+  },
+  "footer": {
+    "description": "Premium-Tierbetreuungsdienste, die Ihre pelzigen Freunde wie zu Hause fühlen lassen. Sichere, lustige und liebevolle Umgebung.",
+    "quickLinks": {
+      "title": "Schnelllinks",
+      "home": "Startseite",
+      "about": "Über uns",
+      "services": "Dienstleistungen",
+      "pricing": "Preise",
+      "contact": "Kontakt"
+    },
+    "services": {
+      "title": "Dienstleistungen",
+      "daycare": "Tagesbetreuung",
+      "boarding": "Pension",
+      "grooming": "Pflege",
+      "training": "Training",
+      "veterinary": "Tierarzt"
+    },
+    "newsletter": {
+      "title": "Newsletter",
+      "description": "Abonnieren Sie, um Sonderangebote, kostenlose Geschenke und einmalige Angebote zu erhalten.",
+      "placeholder": "E-Mail eingeben"
+    },
+    "copyright": "© {{year}} Double Paws. Alle Rechte vorbehalten.",
+    "privacy": "Datenschutzrichtlinie",
+    "terms": "Nutzungsbedingungen",
+    "cookies": "Cookie-Richtlinie"
+  },
+  "becomeSitter": {
+    "hero": {
+      "title": "Verwandeln Sie Ihre Liebe zu Tieren",
+      "titleHighlight": "In Einkommen",
+      "subtitle": "Schließen Sie sich Tausenden von Tiersittern an, die mehr als 1.500 € pro Monat verdienen, indem sie das tun, was sie lieben",
+      "getStarted": "Loslegen",
+      "learnMore": "Mehr erfahren"
+    },
+    "benefits": {
+      "earnIncome": {
+        "title": "Gutes Einkommen verdienen",
+        "desc": "Legen Sie Ihre eigenen Preise fest und verdienen Sie bis zu 1.500 €+ pro Monat, indem Sie sich um Tiere kümmern, die Sie lieben.",
+        "highlight": "1.500 €+/Monat"
+      },
+      "flexibleSchedule": {
+        "title": "Flexibler Zeitplan",
+        "desc": "Arbeiten Sie, wann Sie wollen. Sie kontrollieren Ihre Verfügbarkeit—Teilzeit oder Vollzeit.",
+        "highlight": "Ihre Stunden"
+      },
+      "doWhatYouLove": {
+        "title": "Tun Sie, was Sie lieben",
+        "desc": "Verbringen Sie Ihre Tage mit entzückenden Tieren. Machen Sie Ihre Leidenschaft zu einer lohnenden Karriere.",
+        "highlight": "Traumjob"
+      },
+      "workFromHome": {
+        "title": "Von zu Hause arbeiten",
+        "desc": "Bieten Sie Pension und Tagesbetreuung bequem von zu Hause aus an.",
+        "highlight": "Von zu Hause"
+      }
+    },
+    "howItWorks": {
+      "title": "So funktioniert's",
+      "step1": {
+        "title": "Erstellen Sie Ihr Profil",
+        "desc": "Teilen Sie Ihre Erfahrung, legen Sie Ihre Dienstleistungen fest und zeigen Sie, was Sie besonders macht."
+      },
+      "step2": {
+        "title": "Werden Sie verifiziert",
+        "desc": "Vervollständigen Sie unsere schnelle Verifizierung, um Vertrauen bei Tiereltern aufzubauen."
+      },
+      "step3": {
+        "title": "Buchungen akzeptieren",
+        "desc": "Erhalten Sie Buchungsanfragen und wählen Sie die aus, die zu Ihrem Zeitplan passen."
+      },
+      "step4": {
+        "title": "Werden Sie bezahlt",
+        "desc": "Verdienen Sie Geld, indem Sie das tun, was Sie lieben. Zahlungen sind sicher und automatisch."
+      }
+    },
+    "earnings": {
+      "title": "Sehen Sie, wie viel Sie verdienen können",
+      "partTime": "Teilzeit",
+      "fullTime": "Vollzeit",
+      "perMonth": "pro Monat",
+      "boarding": "Pension",
+      "walking": "Hundespaziergänge",
+      "daycare": "Tagesbetreuung",
+      "total": "Gesamt"
+    },
+    "faq": {
+      "title": "Häufig gestellte Fragen"
+    }
+  },
+  "sitterRegistration": {
+    "title": "Tiersitter werden",
+    "steps": {
+      "serviceProfile": "Dienstleistungsprofil",
+      "experience": "Erfahrung",
+      "housing": "Wohnung",
+      "availability": "Verfügbarkeit",
+      "preferences": "Präferenzen",
+      "identity": "Identität",
+      "banking": "Banking"
+    }
+  },
+  "petProfile": {
+    "title": "Haustierprofil erstellen",
+    "name": "Haustiername",
+    "type": "Haustiertyp",
+    "breed": "Rasse",
+    "age": "Alter",
+    "size": "Größe",
+    "description": "Beschreibung"
+  },
+  "serviceProfile": {
+    "title": "Dienstleistungsprofil",
+    "setRates": "Legen Sie Ihre Preise fest",
+    "standardRate": "Standardpreis",
+    "holidayRate": "Feiertagspreis",
+    "customerPays": "Kunde zahlt",
+    "youEarn": "Sie verdienen (85%)",
+    "distance": "Service-Entfernung",
+    "km": "km"
   }
 }

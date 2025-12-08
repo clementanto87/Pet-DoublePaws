@@ -1,11 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-
+import { useTranslation } from 'react-i18next';
 import { ArrowRight, Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
-
 import { Logo } from '../ui/Logo';
 
 const Footer: React.FC = () => {
+    const { t } = useTranslation();
     return (
         <footer className="bg-background-alt dark:bg-background-alt-dark border-t border-border pt-16 pb-8">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -16,7 +16,7 @@ const Footer: React.FC = () => {
                             <span className="text-xl font-display font-bold text-gradient">Double Paws</span>
                         </Link>
                         <p className="text-muted-foreground mb-6">
-                            Premium pet care services designed to make your furry friends feel right at home. Safe, fun, and loving environment.
+                            {t('footer.description')}
                         </p>
                         <div className="flex gap-4">
                             {[
@@ -38,9 +38,9 @@ const Footer: React.FC = () => {
                     </div>
 
                     <div>
-                        <h3 className="font-display font-bold text-lg mb-6">Quick Links</h3>
+                        <h3 className="font-display font-bold text-lg mb-6">{t('footer.quickLinks.title')}</h3>
                         <ul className="space-y-4">
-                            {['Home', 'About Us', 'Services', 'Pricing', 'Contact'].map((item) => (
+                            {[t('footer.quickLinks.home'), t('footer.quickLinks.about'), t('footer.quickLinks.services'), t('footer.quickLinks.pricing'), t('footer.quickLinks.contact')].map((item) => (
                                 <li key={item}>
                                     <Link to="/" className="text-muted-foreground hover:text-primary transition-colors">
                                         {item}
@@ -51,9 +51,9 @@ const Footer: React.FC = () => {
                     </div>
 
                     <div>
-                        <h3 className="font-display font-bold text-lg mb-6">Services</h3>
+                        <h3 className="font-display font-bold text-lg mb-6">{t('footer.services.title')}</h3>
                         <ul className="space-y-4">
-                            {['Daycare', 'Boarding', 'Grooming', 'Training', 'Veterinary'].map((item) => (
+                            {[t('footer.services.daycare'), t('footer.services.boarding'), t('footer.services.grooming'), t('footer.services.training'), t('footer.services.veterinary')].map((item) => (
                                 <li key={item}>
                                     <Link to="/" className="text-muted-foreground hover:text-primary transition-colors">
                                         {item}
@@ -64,15 +64,15 @@ const Footer: React.FC = () => {
                     </div>
 
                     <div>
-                        <h3 className="font-display font-bold text-lg mb-6">Newsletter</h3>
+                        <h3 className="font-display font-bold text-lg mb-6">{t('footer.newsletter.title')}</h3>
                         <p className="text-muted-foreground mb-4">
-                            Subscribe to get special offers, free giveaways, and once-in-a-lifetime deals.
+                            {t('footer.newsletter.description')}
                         </p>
                         <form className="space-y-4">
                             <div className="relative">
                                 <input
                                     type="email"
-                                    placeholder="Enter your email"
+                                    placeholder={t('footer.newsletter.placeholder')}
                                     className="w-full px-4 py-3 rounded-xl bg-white dark:bg-white/5 border border-input focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                                 />
                                 <button
@@ -88,12 +88,12 @@ const Footer: React.FC = () => {
 
                 <div className="border-t border-border pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
                     <p className="text-sm text-muted-foreground text-center md:text-left">
-                        © {new Date().getFullYear()} Double Paws. All rights reserved.
+                        {t('footer.copyright', { year: new Date().getFullYear() })}
                     </p>
                     <div className="flex gap-6 text-sm text-muted-foreground">
-                        <Link to="/" className="hover:text-primary transition-colors">Privacy Policy</Link>
-                        <Link to="/" className="hover:text-primary transition-colors">Terms of Service</Link>
-                        <Link to="/" className="hover:text-primary transition-colors">Cookie Policy</Link>
+                        <Link to="/" className="hover:text-primary transition-colors">{t('footer.privacy')}</Link>
+                        <Link to="/" className="hover:text-primary transition-colors">{t('footer.terms')}</Link>
+                        <Link to="/" className="hover:text-primary transition-colors">{t('footer.cookies')}</Link>
                     </div>
                 </div>
             </div>

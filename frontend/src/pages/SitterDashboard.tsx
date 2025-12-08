@@ -1441,9 +1441,106 @@ const SitterDashboard: React.FC = () => {
                                             checked={editFormData.availability?.general?.includes(day) || false}
                                             onChange={(e) => {
                                                 const current = editFormData.availability?.general || [];
-                                                const updated = e.target.checked
-                                                    ? [...current, day]
-                                                    : current.filter(d => d !== day);
+                                                let updated: string[];
+                                                
+                                                const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+                                                const weekends = ['Sat', 'Sun'];
+                                                const allDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                                                
+                                                if (e.target.checked) {
+                                                    // Adding a day/option
+                                                    updated = [...current, day];
+                                                    
+                                                    // If checking "Weekdays", add all weekdays
+                                                    if (day === 'Weekdays') {
+                                                        weekdays.forEach(d => {
+                                                            if (!updated.includes(d)) updated.push(d);
+                                                        });
+                                                    }
+                                                    // If checking "Weekends", add all weekends
+                                                    else if (day === 'Weekends') {
+                                                        weekends.forEach(d => {
+                                                            if (!updated.includes(d)) updated.push(d);
+                                                        });
+                                                    }
+                                                    // If checking "Full-Time", add all days
+                                                    else if (day === 'Full-Time') {
+                                                        allDays.forEach(d => {
+                                                            if (!updated.includes(d)) updated.push(d);
+                                                        });
+                                                        // Also add Weekdays and Weekends
+                                                        if (!updated.includes('Weekdays')) updated.push('Weekdays');
+                                                        if (!updated.includes('Weekends')) updated.push('Weekends');
+                                                    }
+                                                    // If checking an individual weekday, check if all weekdays are now selected
+                                                    else if (weekdays.includes(day)) {
+                                                        const allWeekdaysSelected = weekdays.every(d => updated.includes(d));
+                                                        if (allWeekdaysSelected && !updated.includes('Weekdays')) {
+                                                            updated.push('Weekdays');
+                                                        }
+                                                        // Check if all days are selected for Full-Time
+                                                        const allDaysSelected = allDays.every(d => updated.includes(d));
+                                                        if (allDaysSelected && !updated.includes('Full-Time')) {
+                                                            updated.push('Full-Time');
+                                                            if (!updated.includes('Weekends')) updated.push('Weekends');
+                                                        }
+                                                    }
+                                                    // If checking an individual weekend day, check if all weekends are now selected
+                                                    else if (weekends.includes(day)) {
+                                                        const allWeekendsSelected = weekends.every(d => updated.includes(d));
+                                                        if (allWeekendsSelected && !updated.includes('Weekends')) {
+                                                            updated.push('Weekends');
+                                                        }
+                                                        // Check if all days are selected for Full-Time
+                                                        const allDaysSelected = allDays.every(d => updated.includes(d));
+                                                        if (allDaysSelected && !updated.includes('Full-Time')) {
+                                                            updated.push('Full-Time');
+                                                            if (!updated.includes('Weekdays')) updated.push('Weekdays');
+                                                        }
+                                                    }
+                                                } else {
+                                                    // Removing a day/option
+                                                    updated = current.filter(d => d !== day);
+                                                    
+                                                    // If unchecking "Weekdays", remove all weekdays
+                                                    if (day === 'Weekdays') {
+                                                        updated = updated.filter(d => !weekdays.includes(d));
+                                                        // Also remove Full-Time if it was selected
+                                                        updated = updated.filter(d => d !== 'Full-Time');
+                                                    }
+                                                    // If unchecking "Weekends", remove all weekends
+                                                    else if (day === 'Weekends') {
+                                                        updated = updated.filter(d => !weekends.includes(d));
+                                                        // Also remove Full-Time if it was selected
+                                                        updated = updated.filter(d => d !== 'Full-Time');
+                                                    }
+                                                    // If unchecking "Full-Time", remove all days and group options
+                                                    else if (day === 'Full-Time') {
+                                                        updated = updated.filter(d => !allDays.includes(d));
+                                                        updated = updated.filter(d => d !== 'Weekdays' && d !== 'Weekends');
+                                                    }
+                                                    // If unchecking an individual weekday, uncheck "Weekdays" and "Full-Time"
+                                                    else if (weekdays.includes(day)) {
+                                                        updated = updated.filter(d => d !== 'Weekdays');
+                                                        updated = updated.filter(d => d !== 'Full-Time');
+                                                        // Also uncheck Weekends if all weekends aren't selected
+                                                        const allWeekendsSelected = weekends.every(d => updated.includes(d));
+                                                        if (!allWeekendsSelected) {
+                                                            updated = updated.filter(d => d !== 'Weekends');
+                                                        }
+                                                    }
+                                                    // If unchecking an individual weekend day, uncheck "Weekends" and "Full-Time"
+                                                    else if (weekends.includes(day)) {
+                                                        updated = updated.filter(d => d !== 'Weekends');
+                                                        updated = updated.filter(d => d !== 'Full-Time');
+                                                        // Also uncheck Weekdays if all weekdays aren't selected
+                                                        const allWeekdaysSelected = weekdays.every(d => updated.includes(d));
+                                                        if (!allWeekdaysSelected) {
+                                                            updated = updated.filter(d => d !== 'Weekdays');
+                                                        }
+                                                    }
+                                                }
+                                                
                                                 setEditFormData({
                                                     ...editFormData,
                                                     availability: { ...(editFormData.availability || { general: [], blockedDates: [] }), general: updated }

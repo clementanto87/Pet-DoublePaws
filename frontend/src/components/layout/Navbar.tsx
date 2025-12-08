@@ -5,12 +5,18 @@ import { cn } from '../../lib/utils';
 import { Menu, X } from 'lucide-react';
 import { Logo } from '../ui/Logo';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { isAuthenticated, logout, user } = useAuth();
   const location = useLocation();
+  const { t, i18n } = useTranslation();
+  
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -29,12 +35,12 @@ const Navbar: React.FC = () => {
   };
 
   const navLinks = [
-    { name: 'Home', path: '/' },
+    { name: t('navigation.home'), path: '/' },
     ...(isAuthenticated ? [
-      { name: 'Dashboard', path: '/dashboard' },
-      { name: 'Sitter Dashboard', path: '/sitter-dashboard' },
+      { name: t('navigation.dashboard'), path: '/dashboard' },
+      { name: t('navigation.sitterDashboard'), path: '/sitter-dashboard' },
     ] : []),
-    { name: 'Become a Sitter', path: '/become-a-sitter' },
+    { name: t('navigation.becomeSitter'), path: '/become-a-sitter' },
   ];
 
   return (
@@ -77,28 +83,80 @@ const Navbar: React.FC = () => {
                 </Link>
               )
             ))}
+            {/* Language Switcher */}
+            <div className="flex items-center gap-2 mr-4">
+              <button
+                onClick={() => changeLanguage('en')}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
+                  i18n.language === 'en'
+                    ? "bg-primary text-white"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                )}
+              >
+                EN
+              </button>
+              <button
+                onClick={() => changeLanguage('de')}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
+                  i18n.language === 'de'
+                    ? "bg-primary text-white"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+                )}
+              >
+                DE
+              </button>
+            </div>
+            
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
-                <span className="text-sm font-medium text-foreground hidden md:block">Hi, {user?.firstName}</span>
+                <span className="text-sm font-medium text-foreground hidden md:block">{t('navigation.hi')}, {user?.firstName}</span>
                 <Button
                   variant="ghost"
                   className="text-muted-foreground hover:text-primary"
                   onClick={logout}
                 >
-                  Log out
+                  {t('navigation.logout')}
                 </Button>
               </div>
             ) : (
               <Link to="/login">
                 <Button variant="secondary" className="shadow-glow">
-                  Log in
+                  {t('navigation.login')}
                 </Button>
               </Link>
             )}
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
+          <div className="md:hidden flex items-center gap-2">
+            {/* Language Switcher - Mobile */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => changeLanguage('en')}
+                className={cn(
+                  "px-2 py-1 rounded text-xs font-medium transition-colors",
+                  i18n.language === 'en'
+                    ? "bg-primary text-white"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                )}
+              >
+                EN
+              </button>
+              <button
+                onClick={() => changeLanguage('de')}
+                className={cn(
+                  "px-2 py-1 rounded text-xs font-medium transition-colors",
+                  i18n.language === 'de'
+                    ? "bg-primary text-white"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                )}
+              >
+                DE
+              </button>
+            </div>
+            
             {isAuthenticated ? (
               <Button
                 variant="ghost"
@@ -106,12 +164,12 @@ const Navbar: React.FC = () => {
                 className="mr-2 text-muted-foreground hover:text-primary"
                 onClick={logout}
               >
-                Log out
+                {t('navigation.logout')}
               </Button>
             ) : (
               <Link to="/login" className="mr-2">
                 <Button variant="secondary" size="sm" className="shadow-glow">
-                  Log in
+                  {t('navigation.login')}
                 </Button>
               </Link>
             )}

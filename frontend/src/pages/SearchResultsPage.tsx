@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { sitterService } from '../services/sitter.service';
+import { bookingService } from '../services/booking.service';
 import { Button } from '../components/ui/Button';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { DivIcon } from 'leaflet';
@@ -11,12 +12,17 @@ import {
     Home, DollarSign, SlidersHorizontal, Sparkles,
     Award, CheckCircle2, ArrowUpDown, Search, Navigation,
     Calendar, PawPrint, Sun, Building2, ArrowRight,
-    ChevronLeft, ChevronRight, MessageCircle
+    ChevronLeft, ChevronRight, MessageCircle, Filter,
+    TrendingUp, Clock, Users, XCircle, Loader2, AlertCircle
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import 'leaflet/dist/leaflet.css';
+import { AddressAutocomplete } from '../components/ui/AddressAutocomplete';
+import { getCurrentPosition, reverseGeocode } from '../utils/geocoding';
+import type { Address } from '../utils/geocoding';
 
-// Generate monthly calendar availability for demo
-const generateMonthlyAvailability = (sitterId: string, monthOffset: number = 0) => {
+// Get monthly calendar availability from real backend data
+const getMonthlyAvailability = (sitter: SitterData, monthOffset: number = 0, bookings: any[] = []) => {
     const today = new Date();
     const targetDate = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
     const year = targetDate.getFullYear();
@@ -29,20 +35,113 @@ const generateMonthlyAvailability = (sitterId: string, monthOffset: number = 0) 
 
     const monthName = targetDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-    // Generate availability based on sitter id hash
-    const hash = sitterId.charCodeAt(0) + sitterId.length;
-    const availableDays: Set<number> = new Set();
+    // Get blocked dates from sitter's availability
+    const blockedDates = sitter.availability?.blockedDates || [];
+    const blockedSet = new Set<number>();
 
-    for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(year, month, day);
-        // Don't mark past dates as available
-        if (date >= new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
-            // Random availability based on hash
-            if ((hash + day) % 4 !== 0 && (hash * day) % 5 !== 0) {
-                availableDays.add(day);
+    // Convert blocked date strings to day numbers for this month
+    blockedDates.forEach((dateStr) => {
+        const date = new Date(dateStr);
+        if (date.getFullYear() === year && date.getMonth() === month) {
+            blockedSet.add(date.getDate());
+        }
+    });
+
+    // Parse general availability settings
+    const generalAvailability = sitter.availability?.general || [];
+    const hasWeekdays = generalAvailability.includes('Weekdays');
+    const hasWeekends = generalAvailability.includes('Weekends');
+    const hasFullTime = generalAvailability.includes('Full-Time');
+    
+    // Map day names to day numbers (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+    const dayNameToNumber: Record<string, number> = {
+        'Sun': 0, 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6
+    };
+    
+    // Get specific days selected
+    const specificDays = new Set<number>();
+    generalAvailability.forEach((item: string) => {
+        if (dayNameToNumber[item] !== undefined) {
+            specificDays.add(dayNameToNumber[item]);
+        }
+    });
+    
+    // Helper function to check if a date matches general availability
+    const isDayAvailable = (date: Date): boolean => {
+        // If Full-Time is selected, all days are available (unless specifically blocked)
+        if (hasFullTime) return true;
+        
+        const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
+        
+        // Check if specific day is selected
+        if (specificDays.has(dayOfWeek)) return true;
+        
+        // Check weekday/weekend rules
+        const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5; // Monday to Friday
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // Saturday or Sunday
+        
+        if (hasWeekdays && isWeekday) return true;
+        if (hasWeekends && isWeekend) return true;
+        
+        // If no general availability is set, default to all days available
+        if (generalAvailability.length === 0) return true;
+        
+        // Otherwise, day is not available
+        return false;
+    };
+
+    // Get booked dates from bookings (ACCEPTED and PENDING)
+    const bookedSet = new Set<number>();
+    bookings.forEach((booking) => {
+        const startDate = new Date(booking.startDate);
+        const endDate = new Date(booking.endDate);
+        
+        // Check if booking overlaps with this month
+        if (startDate.getFullYear() === year && startDate.getMonth() === month) {
+            // Booking starts this month
+            const startDay = startDate.getDate();
+            const endDay = endDate.getFullYear() === year && endDate.getMonth() === month
+                ? endDate.getDate()
+                : daysInMonth;
+            
+            for (let day = startDay; day <= endDay; day++) {
+                bookedSet.add(day);
+            }
+        } else if (endDate.getFullYear() === year && endDate.getMonth() === month) {
+            // Booking ends this month
+            const endDay = endDate.getDate();
+            for (let day = 1; day <= endDay; day++) {
+                bookedSet.add(day);
+            }
+        } else if (
+            startDate < new Date(year, month, 1) &&
+            endDate > new Date(year, month + 1, 0)
+        ) {
+            // Booking spans the entire month
+            for (let day = 1; day <= daysInMonth; day++) {
+                bookedSet.add(day);
             }
         }
+    });
+
+    // Calculate available days (all days except blocked, booked, past, and not in general availability)
+    const availableDays = new Set<number>();
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const isPast = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const isBlocked = blockedSet.has(day);
+        const isBooked = bookedSet.has(day);
+        const matchesGeneralAvailability = isDayAvailable(date);
+
+        if (!isPast && !isBlocked && !isBooked && matchesGeneralAvailability) {
+            availableDays.add(day);
+        }
     }
+
+    // Calculate days since last update
+    const lastUpdated = sitter.updatedAt
+        ? Math.floor((Date.now() - new Date(sitter.updatedAt).getTime()) / (1000 * 60 * 60 * 24))
+        : 0;
 
     return {
         monthName,
@@ -51,7 +150,8 @@ const generateMonthlyAvailability = (sitterId: string, monthOffset: number = 0) 
         daysInMonth,
         startDayOfWeek,
         availableDays,
-        lastUpdated: Math.floor(Math.random() * 5) + 1
+        bookedDays: bookedSet,
+        lastUpdated
     };
 };
 
@@ -127,6 +227,7 @@ const serviceOptions = [
 const SearchResultsPage: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const [sitters, setSitters] = useState<SitterData[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -134,6 +235,7 @@ const SearchResultsPage: React.FC = () => {
     const [selectedSitter, setSelectedSitter] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('list');
     const [showFilters, setShowFilters] = useState(false);
+    const [showSidebarFilters, setShowSidebarFilters] = useState(true); // Always show on desktop
     const [sortBy, setSortBy] = useState<SortOption>('distance');
     const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
@@ -141,13 +243,24 @@ const SearchResultsPage: React.FC = () => {
     const [editLocation, setEditLocation] = useState(searchParams.get('location') || '');
     const [editService, setEditService] = useState(searchParams.get('service') || 'boarding');
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+    const [selectedEditAddress, setSelectedEditAddress] = useState<Address | null>(null);
+    const [isGettingEditLocation, setIsGettingEditLocation] = useState(false);
+    const [editLocationError, setEditLocationError] = useState('');
 
     // Filter states
     const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
     const [verifiedOnly, setVerifiedOnly] = useState(false);
+    const [minRating, setMinRating] = useState(0);
+    const [maxDistance, setMaxDistance] = useState(50);
+    const [minExperience, setMinExperience] = useState(0);
+    const [hasReviews, setHasReviews] = useState(false);
+    const [selectedServiceTypes, setSelectedServiceTypes] = useState<Set<string>>(new Set());
 
     // Availability week navigator state (must be before any conditional returns)
     const [weekOffset, setWeekOffset] = useState<Record<string, number>>({});
+    
+    // Bookings state for each sitter
+    const [sitterBookings, setSitterBookings] = useState<Record<string, any[]>>({});
 
     // Preserve search params for navigation
     const searchParamsString = searchParams.toString();
@@ -155,10 +268,58 @@ const SearchResultsPage: React.FC = () => {
     useEffect(() => {
         const fetchSitters = async () => {
             setLoading(true);
+            setError('');
             try {
-                const params = Object.fromEntries(searchParams.entries());
-                const data = await sitterService.searchSitters(params);
-                setSitters(data);
+                // Map URL params to API params
+                const apiParams: any = {};
+
+                // Get coordinates from URL
+                const latitude = searchParams.get('latitude');
+                const longitude = searchParams.get('longitude');
+                if (latitude && longitude) {
+                    apiParams.latitude = latitude;
+                    apiParams.longitude = longitude;
+                    apiParams.radius = 50; // Default 50km radius
+                }
+
+                // Map service type
+                const service = searchParams.get('service');
+                if (service) {
+                    // Map frontend service IDs to backend format
+                    const serviceMap: Record<string, string> = {
+                        'boarding': 'boarding',
+                        'housesitting': 'houseSitting',
+                        'visits': 'dropInVisits',
+                        'daycare': 'doggyDayCare',
+                        'walking': 'dogWalking',
+                    };
+                    apiParams.serviceType = serviceMap[service] || service;
+                }
+
+                console.log('Fetching sitters with params:', apiParams);
+                const data = await sitterService.searchSitters(apiParams);
+                console.log('Received sitters:', data);
+
+                // Transform backend response to frontend format
+                const transformedData: SitterData[] = data.map((profile: any) => ({
+                    id: profile.id,
+                    user: profile.user,
+                    headline: profile.headline,
+                    bio: profile.bio,
+                    address: profile.address,
+                    latitude: profile.latitude,
+                    longitude: profile.longitude,
+                    isVerified: profile.isVerified || false,
+                    services: profile.services,
+                    skills: profile.skills,
+                    yearsExperience: profile.yearsExperience,
+                    housing: profile.housing,
+                    distance: profile.distance, // Backend calculates this
+                    availability: profile.availability,
+                    updatedAt: profile.updatedAt,
+                }));
+
+                setSitters(transformedData);
             } catch (err) {
                 console.error('Failed to fetch sitters:', err);
                 setError('Failed to load sitters. Please try again.');
@@ -170,11 +331,42 @@ const SearchResultsPage: React.FC = () => {
         fetchSitters();
     }, [searchParams]);
 
+    // Handle Near Me for search modification
+    const handleEditNearMe = async () => {
+        setIsGettingEditLocation(true);
+        setEditLocationError('');
+        try {
+            const position = await getCurrentPosition();
+            const address = await reverseGeocode(position.latitude, position.longitude);
+            setEditLocation(address.display_name.split(',').slice(0, 2).join(','));
+            setSelectedEditAddress(address);
+        } catch (error: any) {
+            setEditLocationError(error.message || 'Failed to get location');
+        } finally {
+            setIsGettingEditLocation(false);
+        }
+    };
+
+    // Handle location change from autocomplete
+    const handleEditLocationChange = (value: string, address?: Address) => {
+        setEditLocation(value);
+        if (address) {
+            setSelectedEditAddress(address);
+        } else {
+            setSelectedEditAddress(null);
+        }
+    };
+
     // Handle search update
     const handleSearchUpdate = () => {
         const newParams = new URLSearchParams();
         if (editService) newParams.set('service', editService);
         if (editLocation) newParams.set('location', editLocation);
+        // Add coordinates if available
+        if (selectedEditAddress?.coordinates) {
+            newParams.set('latitude', selectedEditAddress.coordinates.lat.toString());
+            newParams.set('longitude', selectedEditAddress.coordinates.lng.toString());
+        }
         setSearchParams(newParams);
         setIsSearchExpanded(false);
     };
@@ -209,6 +401,39 @@ const SearchResultsPage: React.FC = () => {
             return price >= priceRange[0] && price <= priceRange[1];
         });
 
+        // Additional filters
+        if (minRating > 0) {
+            // Assuming all have 5.0 for now, but filter by actual rating if available
+            filtered = filtered.filter(s => {
+                // In real app, use actual rating from sitter data
+                return true; // Placeholder
+            });
+        }
+
+        if (maxDistance < 50) {
+            filtered = filtered.filter(s => {
+                return (s.distance || 0) <= maxDistance;
+            });
+        }
+
+        if (minExperience > 0) {
+            filtered = filtered.filter(s => {
+                return (s.yearsExperience || 0) >= minExperience;
+            });
+        }
+
+        if (hasReviews) {
+            // Filter sitters with reviews (assuming review count > 0)
+            // In real app, check actual review count
+        }
+
+        if (selectedServiceTypes.size > 0) {
+            filtered = filtered.filter(s => {
+                const services = s.services || {};
+                return Array.from(selectedServiceTypes).some(type => services[type]?.active);
+            });
+        }
+
         switch (sortBy) {
             case 'distance':
                 return filtered.sort((a, b) => (a.distance || 0) - (b.distance || 0));
@@ -221,7 +446,29 @@ const SearchResultsPage: React.FC = () => {
             default:
                 return filtered;
         }
-    }, [sitters, sortBy, verifiedOnly, priceRange, getSitterPrice]);
+    }, [sitters, sortBy, verifiedOnly, priceRange, minRating, maxDistance, minExperience, hasReviews, selectedServiceTypes, getSitterPrice]);
+
+    const activeFilterCount = useMemo(() => {
+        let count = 0;
+        if (verifiedOnly) count++;
+        if (minRating > 0) count++;
+        if (maxDistance < 50) count++;
+        if (minExperience > 0) count++;
+        if (hasReviews) count++;
+        if (selectedServiceTypes.size > 0) count++;
+        if (priceRange[0] > 0 || priceRange[1] < 100) count++;
+        return count;
+    }, [verifiedOnly, minRating, maxDistance, minExperience, hasReviews, selectedServiceTypes, priceRange]);
+
+    const clearAllFilters = () => {
+        setPriceRange([0, 100]);
+        setVerifiedOnly(false);
+        setMinRating(0);
+        setMaxDistance(50);
+        setMinExperience(0);
+        setHasReviews(false);
+        setSelectedServiceTypes(new Set());
+    };
 
     const toggleFavorite = (id: string) => {
         setFavorites(prev => {
@@ -272,7 +519,8 @@ const SearchResultsPage: React.FC = () => {
         const isSelected = selectedSitter === sitter.id;
         const isFavorite = favorites.has(sitter.id);
         const currentMonthOffset = weekOffset[sitter.id] || 0;
-        const calendar = useMemo(() => generateMonthlyAvailability(sitter.id, currentMonthOffset), [sitter.id, currentMonthOffset]);
+        const bookings = sitterBookings[sitter.id] || [];
+        const calendar = useMemo(() => getMonthlyAvailability(sitter, currentMonthOffset, bookings), [sitter, currentMonthOffset, bookings]);
 
         // Build calendar grid
         const calendarDays: (number | null)[] = [];
@@ -437,10 +685,14 @@ const SearchResultsPage: React.FC = () => {
                             </div>
 
                             {/* Legend */}
-                            <div className="flex items-center gap-4 mb-3 text-xs text-gray-500">
+                            <div className="flex items-center gap-3 mb-3 text-xs text-gray-500 flex-wrap">
                                 <div className="flex items-center gap-1.5">
                                     <div className="w-3.5 h-3.5 rounded bg-emerald-100 border border-emerald-200"></div>
                                     <span>Available</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-3.5 h-3.5 rounded bg-amber-50 border border-amber-200"></div>
+                                    <span>Booked</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <div className="w-3.5 h-3.5 rounded bg-gray-100 border border-gray-200" style={{
@@ -467,6 +719,7 @@ const SearchResultsPage: React.FC = () => {
                                     }
 
                                     const isAvailable = calendar.availableDays.has(day);
+                                    const isBooked = calendar.bookedDays?.has(day) || false;
                                     const today = new Date();
                                     const isToday = day === today.getDate() &&
                                         calendar.month === today.getMonth() &&
@@ -493,13 +746,16 @@ const SearchResultsPage: React.FC = () => {
                                                 flex items-center justify-center
                                                 ${isAvailable
                                                     ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 cursor-pointer border border-emerald-200'
-                                                    : 'text-gray-300 cursor-default bg-gray-50'
+                                                    : isBooked
+                                                        ? 'bg-amber-50 text-amber-700 cursor-default border border-amber-200'
+                                                        : 'text-gray-300 cursor-default bg-gray-50'
                                                 }
                                                 ${isToday ? 'ring-2 ring-primary ring-offset-1' : ''}
                                             `}
-                                            style={!isAvailable ? {
+                                            style={!isAvailable && !isBooked ? {
                                                 backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 1px, rgba(156,163,175,0.15) 1px, rgba(156,163,175,0.15) 2px)'
                                             } : {}}
+                                            title={isBooked ? 'Booked' : !isAvailable ? 'Not available' : 'Available'}
                                         >
                                             {day}
                                         </button>
@@ -622,14 +878,14 @@ const SearchResultsPage: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
             {/* Clean Search Header */}
-            <div className="sticky top-0 z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-                <div className="max-w-7xl mx-auto px-4 py-3">
+            <div className="sticky top-0 z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 overflow-visible">
+                <div className="max-w-7xl mx-auto px-4 py-3 overflow-visible">
                     {/* Main Search Bar - Always Visible */}
                     <div className="flex items-center gap-4">
                         {/* Search Summary & Quick Edit */}
                         <div className="flex-1">
                             <motion.div
-                                className={`relative bg-gray-50 dark:bg-gray-800 rounded-2xl border-2 transition-all ${isSearchExpanded ? 'border-primary' : 'border-transparent hover:border-gray-200'
+                                className={`relative bg-gray-50 dark:bg-gray-800 rounded-2xl border-2 transition-all overflow-visible ${isSearchExpanded ? 'border-primary' : 'border-transparent hover:border-gray-200'
                                     }`}
                             >
                                 <div
@@ -675,9 +931,9 @@ const SearchResultsPage: React.FC = () => {
                                             initial={{ height: 0, opacity: 0 }}
                                             animate={{ height: 'auto', opacity: 1 }}
                                             exit={{ height: 0, opacity: 0 }}
-                                            className="overflow-hidden border-t border-gray-200 dark:border-gray-700"
+                                            className="overflow-visible border-t border-gray-200 dark:border-gray-700 relative z-50"
                                         >
-                                            <div className="p-4 space-y-4">
+                                            <div className="p-4 space-y-4 overflow-visible">
                                                 {/* Service Selection */}
                                                 <div>
                                                     <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">
@@ -706,32 +962,49 @@ const SearchResultsPage: React.FC = () => {
                                                 </div>
 
                                                 {/* Location Input */}
-                                                <div>
+                                                <div className="relative overflow-visible z-50">
                                                     <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">
                                                         📍 Location
                                                     </label>
-                                                    <div className="flex gap-3">
-                                                        <div className="flex-1 relative">
-                                                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
-                                                            <input
-                                                                type="text"
-                                                                value={editLocation}
-                                                                onChange={(e) => setEditLocation(e.target.value)}
-                                                                placeholder="Enter city or zip code..."
-                                                                className="w-full pl-12 pr-4 h-12 rounded-xl border-2 border-gray-200 dark:border-gray-600
-                                                                    bg-white dark:bg-gray-700 focus:border-primary focus:ring-0 transition-colors
-                                                                    text-gray-900 dark:text-white"
-                                                            />
-                                                        </div>
+                                                    <div className="flex gap-3 relative overflow-visible">
+                                                        <AddressAutocomplete
+                                                            value={editLocation}
+                                                            onChange={handleEditLocationChange}
+                                                            placeholder="Search by zip code or address..."
+                                                            className="w-full pl-12 pr-4 h-12 rounded-xl border-2 border-gray-200 dark:border-gray-600
+                                                                bg-white dark:bg-gray-700 focus:border-primary focus:ring-0 transition-colors
+                                                                text-gray-900 dark:text-white"
+                                                        />
                                                         <button
-                                                            onClick={() => setEditLocation('Current Location')}
+                                                            onClick={handleEditNearMe}
+                                                            disabled={isGettingEditLocation}
                                                             className="h-12 px-4 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary 
-                                                                font-semibold transition-colors flex items-center gap-2 whitespace-nowrap"
+                                                                font-semibold transition-colors flex items-center gap-2 whitespace-nowrap
+                                                                disabled:opacity-50 disabled:cursor-not-allowed"
                                                         >
-                                                            <Navigation className="w-4 h-4" />
-                                                            <span className="hidden sm:inline">Near Me</span>
+                                                            {isGettingEditLocation ? (
+                                                                <>
+                                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                                    <span className="hidden sm:inline">Getting...</span>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <Navigation className="w-4 h-4" />
+                                                                    <span className="hidden sm:inline">Near Me</span>
+                                                                </>
+                                                            )}
                                                         </button>
                                                     </div>
+                                                    {editLocationError && (
+                                                        <motion.div
+                                                            initial={{ opacity: 0, y: -10 }}
+                                                            animate={{ opacity: 1, y: 0 }}
+                                                            className="mt-2 flex items-center gap-2 text-sm text-red-500"
+                                                        >
+                                                            <AlertCircle className="w-4 h-4" />
+                                                            {editLocationError}
+                                                        </motion.div>
+                                                    )}
                                                 </div>
 
                                                 {/* Search Button */}
@@ -784,15 +1057,20 @@ const SearchResultsPage: React.FC = () => {
 
                             {/* Filter Button */}
                             <button
-                                onClick={() => setShowFilters(!showFilters)}
-                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-colors text-sm font-semibold
-                                    ${showFilters
+                                onClick={() => setShowSidebarFilters(!showSidebarFilters)}
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-colors text-sm font-semibold relative
+                                    ${showSidebarFilters
                                         ? 'bg-primary text-white shadow-lg shadow-primary/30'
                                         : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
                                     }`}
                             >
                                 <SlidersHorizontal className="w-4 h-4" />
                                 <span className="hidden sm:inline">Filters</span>
+                                {activeFilterCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold border-2 border-white">
+                                        {activeFilterCount > 9 ? '9+' : activeFilterCount}
+                                    </span>
+                                )}
                             </button>
                         </div>
 
@@ -869,10 +1147,7 @@ const SearchResultsPage: React.FC = () => {
 
                                     {/* Clear Filters */}
                                     <button
-                                        onClick={() => {
-                                            setPriceRange([0, 100]);
-                                            setVerifiedOnly(false);
-                                        }}
+                                        onClick={clearAllFilters}
                                         className="text-sm text-gray-500 hover:text-primary font-medium flex items-center gap-1 
                                             px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                                     >
@@ -895,12 +1170,264 @@ const SearchResultsPage: React.FC = () => {
             )}
 
             {/* Main Content */}
-            <div className="max-w-7xl mx-auto">
-                <div className={`flex ${viewMode === 'list' ? 'flex-col' : viewMode === 'map' ? 'flex-col' : 'flex-col lg:flex-row'}`}>
+            <div className="w-full">
+                <div className={`flex ${viewMode === 'map' ? 'flex-col' : 'flex-row'}`}>
+                    {/* Advanced Filters Sidebar */}
+                    {viewMode !== 'map' && (
+                        <aside className="hidden lg:block w-80 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
+                            <div className="sticky top-[160px] h-[calc(100vh-160px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                                <div className="p-6 space-y-6">
+                                    {/* Header */}
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center shadow-lg">
+                                                <Filter className="w-5 h-5 text-white" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Filters</h3>
+                                                {activeFilterCount > 0 && (
+                                                    <p className="text-xs text-primary font-semibold">{activeFilterCount} active</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                        {activeFilterCount > 0 && (
+                                            <button
+                                                onClick={clearAllFilters}
+                                                className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
+                                                title="Clear all filters"
+                                            >
+                                                <XCircle className="w-4 h-4 text-gray-400 group-hover:text-red-500 transition-colors" />
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Price Range */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <DollarSign className="w-4 h-4 text-primary" />
+                                            <label className="text-sm font-semibold text-gray-900 dark:text-white">Price Range</label>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex-1">
+                                                    <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Min</label>
+                                                    <input
+                                                        type="number"
+                                                        value={priceRange[0]}
+                                                        onChange={(e) => setPriceRange([parseInt(e.target.value) || 0, priceRange[1]])}
+                                                        className="w-full px-3 py-2 rounded-lg border-2 border-gray-200 dark:border-gray-700 
+                                                                    bg-white dark:bg-gray-800 text-sm font-medium focus:border-primary focus:ring-0
+                                                                    text-gray-900 dark:text-white transition-colors"
+                                                        min={0}
+                                                    />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Max</label>
+                                                    <input
+                                                        type="number"
+                                                        value={priceRange[1]}
+                                                        onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value) || 100])}
+                                                        className="w-full px-3 py-2 rounded-lg border-2 border-gray-200 dark:border-gray-700 
+                                                                    bg-white dark:bg-gray-800 text-sm font-medium focus:border-primary focus:ring-0
+                                                                    text-gray-900 dark:text-white transition-colors"
+                                                        min={0}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                <span>${priceRange[0]}</span>
+                                                <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full relative">
+                                                    <div
+                                                        className="absolute h-full bg-gradient-to-r from-primary to-amber-500 rounded-full"
+                                                        style={{
+                                                            left: `${(priceRange[0] / 100) * 100}%`,
+                                                            width: `${((priceRange[1] - priceRange[0]) / 100) * 100}%`
+                                                        }}
+                                                    />
+                                                </div>
+                                                <span>${priceRange[1]}+</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="h-px bg-gray-200 dark:bg-gray-700"></div>
+
+                                    {/* Distance */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <MapPin className="w-4 h-4 text-primary" />
+                                            <label className="text-sm font-semibold text-gray-900 dark:text-white">Max Distance</label>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <input
+                                                type="range"
+                                                min={0}
+                                                max={50}
+                                                value={maxDistance}
+                                                onChange={(e) => setMaxDistance(parseInt(e.target.value))}
+                                                className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer
+                                                            [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
+                                                            [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary
+                                                            [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg
+                                                            [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full
+                                                            [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
+                                            />
+                                            <div className="flex items-center justify-between text-xs text-gray-500">
+                                                <span>0 km</span>
+                                                <span className="font-semibold text-primary">{maxDistance} km</span>
+                                                <span>50+ km</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="h-px bg-gray-200 dark:bg-gray-700"></div>
+
+                                    {/* Rating */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <Star className="w-4 h-4 text-primary fill-primary" />
+                                            <label className="text-sm font-semibold text-gray-900 dark:text-white">Minimum Rating</label>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {[0, 3, 4, 4.5, 5].map((rating) => (
+                                                <button
+                                                    key={rating}
+                                                    onClick={() => setMinRating(rating)}
+                                                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${minRating === rating
+                                                        ? 'bg-primary text-white shadow-lg shadow-primary/30'
+                                                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                                        }`}
+                                                >
+                                                    {rating === 0 ? 'Any' : `${rating}+`}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="h-px bg-gray-200 dark:bg-gray-700"></div>
+
+                                    {/* Experience */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <Award className="w-4 h-4 text-primary" />
+                                            <label className="text-sm font-semibold text-gray-900 dark:text-white">Experience</label>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {[
+                                                { value: 0, label: 'Any' },
+                                                { value: 1, label: '1+ years' },
+                                                { value: 3, label: '3+ years' },
+                                                { value: 5, label: '5+ years' },
+                                            ].map((option) => (
+                                                <label
+                                                    key={option.value}
+                                                    className="flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
+                                                >
+                                                    <input
+                                                        type="radio"
+                                                        name="experience"
+                                                        checked={minExperience === option.value}
+                                                        onChange={() => setMinExperience(option.value)}
+                                                        className="w-4 h-4 text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer"
+                                                    />
+                                                    <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
+                                                        {option.label}
+                                                    </span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="h-px bg-gray-200 dark:bg-gray-700"></div>
+
+                                    {/* Service Types */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <PawPrint className="w-4 h-4 text-primary" />
+                                            <label className="text-sm font-semibold text-gray-900 dark:text-white">Service Types</label>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {serviceOptions.map((service) => {
+                                                const isSelected = selectedServiceTypes.has(service.id);
+                                                return (
+                                                    <label
+                                                        key={service.id}
+                                                        className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${isSelected
+                                                            ? 'bg-primary/10 border-2 border-primary'
+                                                            : 'bg-gray-50 dark:bg-gray-800 border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700'
+                                                            }`}
+                                                    >
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={isSelected}
+                                                            onChange={(e) => {
+                                                                const newSet = new Set(selectedServiceTypes);
+                                                                if (e.target.checked) {
+                                                                    newSet.add(service.id);
+                                                                } else {
+                                                                    newSet.delete(service.id);
+                                                                }
+                                                                setSelectedServiceTypes(newSet);
+                                                            }}
+                                                            className="w-4 h-4 text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer rounded"
+                                                        />
+                                                        <span className="text-xl">{service.emoji}</span>
+                                                        <div className="flex-1">
+                                                            <div className="text-sm font-semibold text-gray-900 dark:text-white">{service.label}</div>
+                                                            <div className="text-xs text-gray-500">{service.desc}</div>
+                                                        </div>
+                                                    </label>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    <div className="h-px bg-gray-200 dark:bg-gray-700"></div>
+
+                                    {/* Additional Options */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <Sparkles className="w-4 h-4 text-primary" />
+                                            <label className="text-sm font-semibold text-gray-900 dark:text-white">Additional</label>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={verifiedOnly}
+                                                    onChange={(e) => setVerifiedOnly(e.target.checked)}
+                                                    className="w-4 h-4 text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer rounded"
+                                                />
+                                                <Shield className="w-4 h-4 text-emerald-500" />
+                                                <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
+                                                    Verified Sitters Only
+                                                </span>
+                                            </label>
+                                            <label className="flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={hasReviews}
+                                                    onChange={(e) => setHasReviews(e.target.checked)}
+                                                    className="w-4 h-4 text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer rounded"
+                                                />
+                                                <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                                                <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
+                                                    Has Reviews
+                                                </span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </aside>
+                    )}
+
                     {/* Sitter List */}
                     {viewMode !== 'map' && (
                         <div
-                            className={`p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent ${viewMode === 'split' ? 'lg:w-2/5 lg:max-h-[calc(100vh-160px)]' : 'w-full max-w-5xl mx-auto'
+                            className={`flex-1 p-4 lg:p-6 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent ${viewMode === 'split'
+                                ? 'lg:max-h-[calc(100vh-160px)]'
+                                : 'min-h-[calc(100vh-160px)]'
                                 }`}
                         >
                             {sortedSitters.length === 0 ? (
@@ -940,19 +1467,14 @@ const SearchResultsPage: React.FC = () => {
                         </div>
                     )}
 
-                    {/* Map */}
-                    {viewMode !== 'list' && (
-                        <div
-                            className={`relative ${viewMode === 'split'
-                                ? 'lg:w-3/5 h-[400px] lg:h-[calc(100vh-160px)] lg:sticky lg:top-[160px]'
-                                : 'w-full h-[calc(100vh-160px)]'
-                                }`}
-                        >
+                    {/* Map - Split View */}
+                    {viewMode === 'split' && (
+                        <div className="hidden lg:block w-2/5 flex-shrink-0 h-[calc(100vh-160px)] sticky top-[160px] relative">
                             <MapContainer
                                 center={mapCenter}
                                 zoom={12}
                                 style={{ height: '100%', width: '100%' }}
-                                className="rounded-none lg:rounded-l-3xl z-10"
+                                className="rounded-none z-10"
                             >
                                 <TileLayer
                                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
     Plus,
     Calendar,
@@ -38,6 +39,7 @@ const Dashboard: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const { showToast } = useToast();
+    const { t } = useTranslation();
 
     const [reviewModalOpen, setReviewModalOpen] = useState(false);
     const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
@@ -59,24 +61,24 @@ const Dashboard: React.FC = () => {
                 comment
             });
             setReviewModalOpen(false);
-            showToast('Review submitted successfully!', 'success');
+            showToast(t('dashboard.bookings.reviewSubmitted'), 'success');
         } catch (error) {
             console.error('Failed to submit review:', error);
-            showToast('Failed to submit review. You may have already reviewed this booking.', 'error');
+            showToast(t('dashboard.bookings.reviewFailed'), 'error');
         } finally {
             setSubmittingReview(false);
         }
     };
 
     const handleCancel = async (id: string) => {
-        if (!confirm('Are you sure you want to cancel this booking?')) return;
+        if (!confirm(t('dashboard.bookings.cancelConfirm'))) return;
         try {
             await bookingService.updateStatus(id, BookingStatus.CANCELLED);
-            showToast('Booking cancelled successfully', 'success');
+            showToast(t('dashboard.bookings.cancelledSuccess'), 'success');
             window.location.reload();
         } catch (err) {
             console.error('Failed to cancel booking:', err);
-            showToast('Failed to cancel booking', 'error');
+            showToast(t('dashboard.bookings.cancelledFailed'), 'error');
         }
     };
 
@@ -113,9 +115,9 @@ const Dashboard: React.FC = () => {
 
     const getGreeting = () => {
         const hour = new Date().getHours();
-        if (hour < 12) return 'Good morning';
-        if (hour < 17) return 'Good afternoon';
-        return 'Good evening';
+        if (hour < 12) return t('dashboard.greeting.morning');
+        if (hour < 17) return t('dashboard.greeting.afternoon');
+        return t('dashboard.greeting.evening');
     };
 
     if (isLoading) {
@@ -123,7 +125,7 @@ const Dashboard: React.FC = () => {
             <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
                 <div className="text-center">
                     <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-gray-500">Loading your dashboard...</p>
+                    <p className="text-gray-500">{t('dashboard.loading')}</p>
                 </div>
             </div>
         );
@@ -136,9 +138,9 @@ const Dashboard: React.FC = () => {
                     <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                         <span className="text-3xl">😿</span>
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Oops! Something went wrong</h2>
-                    <p className="text-gray-500 mb-6">We couldn't load your dashboard. Please try again.</p>
-                    <Button onClick={() => window.location.reload()}>Refresh Page</Button>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{t('dashboard.error.title')}</h2>
+                    <p className="text-gray-500 mb-6">{t('dashboard.error.message')}</p>
+                    <Button onClick={() => window.location.reload()}>{t('dashboard.error.refresh')}</Button>
                 </Card>
             </div>
         );
@@ -160,7 +162,7 @@ const Dashboard: React.FC = () => {
     // Quick stats
     const stats = [
         {
-            label: 'My Pets',
+            label: t('dashboard.stats.myPets'),
             value: petCount,
             icon: PawPrint,
             color: 'from-orange-500 to-amber-500',
@@ -168,7 +170,7 @@ const Dashboard: React.FC = () => {
             textColor: 'text-orange-600 dark:text-orange-400'
         },
         {
-            label: 'Upcoming',
+            label: t('dashboard.stats.upcoming'),
             value: upcomingBookings.length,
             icon: Calendar,
             color: 'from-blue-500 to-cyan-500',
@@ -176,7 +178,7 @@ const Dashboard: React.FC = () => {
             textColor: 'text-blue-600 dark:text-blue-400'
         },
         {
-            label: 'Completed',
+            label: t('dashboard.stats.completed'),
             value: pastBookings.filter((b: Booking) => b.status === BookingStatus.COMPLETED).length,
             icon: CheckCircle2,
             color: 'from-emerald-500 to-green-500',
@@ -188,24 +190,24 @@ const Dashboard: React.FC = () => {
     // Quick actions
     const quickActions = [
         {
-            title: 'Book a Sitter',
-            description: 'Find trusted pet sitters',
+            title: t('dashboard.quickActions.bookSitter.title'),
+            description: t('dashboard.quickActions.bookSitter.desc'),
             icon: Search,
             path: '/booking',
             gradient: 'from-primary to-orange-500',
             emoji: '🔍'
         },
         {
-            title: 'Add Pet',
-            description: 'Create pet profile',
+            title: t('dashboard.quickActions.addPet.title'),
+            description: t('dashboard.quickActions.addPet.desc'),
             icon: Plus,
             path: '/pet-profile',
             gradient: 'from-blue-500 to-cyan-500',
             emoji: '🐾'
         },
         {
-            title: 'Messages',
-            description: 'Chat with sitters',
+            title: t('dashboard.quickActions.messages.title'),
+            description: t('dashboard.quickActions.messages.desc'),
             icon: MessageSquare,
             path: '/messages',
             gradient: 'from-purple-500 to-pink-500',
@@ -229,8 +231,8 @@ const Dashboard: React.FC = () => {
                             </h1>
                             <p className="text-gray-500 dark:text-gray-400">
                                 {hasPets
-                                    ? `You have ${petCount} adorable pet${petCount > 1 ? 's' : ''} in your care`
-                                    : 'Welcome to your pet care dashboard'
+                                    ? t('dashboard.petsInCare', { count: petCount })
+                                    : t('dashboard.welcome')
                                 }
                             </p>
                         </div>
@@ -274,7 +276,7 @@ const Dashboard: React.FC = () => {
 
                 {/* Quick Actions */}
                 <div className="mb-8">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">{t('dashboard.quickActions.title')}</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {quickActions.map((action, index) => {
                             const Icon = action.icon;
@@ -452,7 +454,7 @@ const Dashboard: React.FC = () => {
                                                 : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                                         )}
                                     >
-                                        Upcoming
+                                        {t('dashboard.bookings.upcoming')}
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('past')}
@@ -463,7 +465,7 @@ const Dashboard: React.FC = () => {
                                                 : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                                         )}
                                     >
-                                        History
+                                        {t('dashboard.bookings.history')}
                                     </button>
                                 </div>
                             </div>
@@ -516,7 +518,7 @@ const Dashboard: React.FC = () => {
                                                                     className="text-red-600 border-red-200 hover:bg-red-50"
                                                                     onClick={() => handleCancel(booking.id)}
                                                                 >
-                                                                    Cancel
+                                                                    {t('dashboard.bookings.cancel')}
                                                                 </Button>
                                                             )}
                                                             {booking.status === BookingStatus.COMPLETED && !(booking as any).review && (
@@ -530,7 +532,7 @@ const Dashboard: React.FC = () => {
                                                                     }}
                                                                 >
                                                                     <Star className="w-3 h-3" />
-                                                                    Review
+                                                                    {t('dashboard.bookings.review')}
                                                                 </Button>
                                                             )}
                                                             {(booking.status === BookingStatus.ACCEPTED || booking.status === BookingStatus.PENDING) && (

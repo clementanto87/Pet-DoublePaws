@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   MapPin,
   Search,
@@ -12,6 +13,7 @@ import { cities } from '../data/cities';
 
 const BookingPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [selectedService, setSelectedService] = useState('boarding');
   const [location, setLocation] = useState('');
@@ -21,10 +23,10 @@ const BookingPage: React.FC = () => {
   // Animated placeholder text
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const placeholders = [
-    'Enter your city or neighborhood...',
-    'Try "New York, NY"...',
-    'Where does your pet need care?',
-    'Search by zip code or address...'
+    t('booking.enterCity'),
+    t('booking.tryLocation'),
+    t('booking.wherePetCare'),
+    t('booking.searchByZip')
   ];
 
   useEffect(() => {
@@ -35,11 +37,11 @@ const BookingPage: React.FC = () => {
   }, []);
 
   const serviceOptions = [
-    { id: 'boarding', icon: '🏠', label: 'Boarding', desc: 'Your pet stays at the sitter\'s home', color: 'from-orange-500 to-amber-500' },
-    { id: 'house-sitting', icon: '🏡', label: 'House Sitting', desc: 'Sitter stays at your home', color: 'from-blue-500 to-blue-600' },
-    { id: 'drop-in', icon: '☀️', label: 'Drop-In Visits', desc: '30-60 min check-ins at your home', color: 'from-amber-500 to-yellow-500' },
-    { id: 'day-care', icon: '🐕', label: 'Doggy Day Care', desc: 'Daytime care at sitter\'s home', color: 'from-green-500 to-emerald-600' },
-    { id: 'walking', icon: '🦮', label: 'Dog Walking', desc: 'Regular walks in your neighborhood', color: 'from-rose-500 to-rose-400' },
+    { id: 'boarding', icon: '🏠', label: t('landing.services.boarding.label'), desc: t('landing.services.boarding.desc'), color: 'from-orange-500 to-amber-500' },
+    { id: 'house-sitting', icon: '🏡', label: t('landing.services.houseSitting.label'), desc: t('landing.services.houseSitting.desc'), color: 'from-blue-500 to-blue-600' },
+    { id: 'drop-in', icon: '☀️', label: t('landing.services.dropInVisits.label'), desc: t('landing.services.dropInVisits.desc'), color: 'from-amber-500 to-yellow-500' },
+    { id: 'day-care', icon: '🐕', label: t('landing.services.dayCare.label'), desc: t('landing.services.dayCare.desc'), color: 'from-green-500 to-emerald-600' },
+    { id: 'walking', icon: '🦮', label: t('landing.services.walking.label'), desc: t('landing.services.walking.desc'), color: 'from-rose-500 to-rose-400' },
   ];
 
   const popularLocations = [
@@ -57,7 +59,7 @@ const BookingPage: React.FC = () => {
     const params = new URLSearchParams();
     if (selectedService) params.set('service', selectedService);
     if (location) params.set('location', location);
-    navigate(`/search?${params.toString()}`);
+      navigate(`/search?${params.toString()}`);
   };
 
   return (
@@ -77,10 +79,10 @@ const BookingPage: React.FC = () => {
               transition={{ delay: 0.3 }}
               className="text-5xl md:text-6xl lg:text-7xl font-display font-bold mb-6 leading-[1.1] tracking-tight text-gray-900 dark:text-white"
             >
-              Find Your Pet's<br />
+              {t('booking.title')}<br />
               <span className="relative">
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-orange-500 to-amber-500">
-                  Perfect Sitter
+                  {t('booking.titleHighlight')}
                 </span>
               </span>
             </motion.h1>
@@ -91,8 +93,7 @@ const BookingPage: React.FC = () => {
               transition={{ delay: 0.4 }}
               className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto"
             >
-              Connect with <strong className="text-gray-900 dark:text-white">verified pet sitters</strong> in your area.
-              Every booking is <strong className="text-primary">fully insured</strong>.
+              {t('booking.subtitle')}
             </motion.p>
           </motion.div>
 
@@ -114,7 +115,7 @@ const BookingPage: React.FC = () => {
               {/* Service Selection - Beautiful Pills */}
               <div className="p-6 pb-4 border-b border-gray-100 dark:border-gray-700">
                 <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-4 flex items-center gap-2">
-                  <span className="text-lg">🎯</span> What service does your pet need?
+                  <span className="text-lg">🎯</span> {t('booking.whatServiceNeeded')}
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                   {serviceOptions.map((service, index) => (
@@ -141,7 +142,7 @@ const BookingPage: React.FC = () => {
                           : 'bg-gray-100 dark:bg-gray-600'
                           }`}>
                           <span className="text-2xl">{service.icon}</span>
-                        </div>
+                      </div>
                         <p className={`font-bold text-sm mb-1 ${selectedService === service.id ? 'text-white' : 'text-gray-900 dark:text-white'
                           }`}>
                           {service.label}
@@ -164,13 +165,13 @@ const BookingPage: React.FC = () => {
                       )}
                     </motion.button>
                   ))}
-                </div>
-              </div>
+                    </div>
+                  </div>
 
               {/* Location Search */}
               <div className="p-6 pt-5 overflow-visible">
                 <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-4 flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-primary" /> Where do you need pet care?
+                  <MapPin className="w-4 h-4 text-primary" /> {t('booking.whereNeedCare')}
                 </p>
 
                 <div className="flex flex-col md:flex-row gap-3 relative">
@@ -186,7 +187,7 @@ const BookingPage: React.FC = () => {
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${showLocationSuggestions ? 'bg-primary/10' : 'bg-gray-100 dark:bg-gray-600'
                           }`}>
                           <MapPin className="w-5 h-5" />
-                        </div>
+                      </div>
                       </div>
 
                       <input
@@ -215,10 +216,10 @@ const BookingPage: React.FC = () => {
                         title="Use current location"
                       >
                         <Navigation className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-                        <span className="hidden sm:inline">Near Me</span>
+                        <span className="hidden sm:inline">{t('booking.nearMe')}</span>
                       </button>
-                    </div>
                   </div>
+                </div>
 
                   {/* Search Button */}
                   <motion.button
@@ -232,7 +233,7 @@ const BookingPage: React.FC = () => {
 
                     <span className="relative z-10 flex items-center gap-2 justify-center">
                       <Search className="w-5 h-5" />
-                      <span>Search Sitters</span>
+                      <span>{t('booking.searchSitters')}</span>
                       <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </span>
                   </motion.button>
@@ -248,7 +249,7 @@ const BookingPage: React.FC = () => {
                       >
                         <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/30">
                           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                            {location.length > 0 ? 'Suggestions' : 'Popular locations'}
+                            {location.length > 0 ? t('booking.suggestions') : t('booking.popularLocations')}
                           </p>
                         </div>
                         <div className="max-h-[240px] overflow-y-auto">
@@ -266,9 +267,9 @@ const BookingPage: React.FC = () => {
                                 {loc.count && <p className="text-xs text-gray-500">{loc.count}</p>}
                               </div>
                               <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" />
-                            </button>
-                          ))}
-                        </div>
+                      </button>
+                    ))}
+                  </div>
                       </motion.div>
                     )}
                   </AnimatePresence>

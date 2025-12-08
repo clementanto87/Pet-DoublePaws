@@ -8,6 +8,7 @@ import { Logo } from '../components/ui/Logo';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useGoogleLogin } from '@react-oauth/google';
+import { useTranslation } from 'react-i18next';
 
 const LoginPage: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
@@ -15,6 +16,7 @@ const LoginPage: React.FC = () => {
     const { login, googleLogin, error } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const { t } = useTranslation();
 
     const from = location.state?.from?.pathname || '/dashboard';
 
@@ -59,12 +61,12 @@ const LoginPage: React.FC = () => {
                     </Link>
                 </div>
                 <h2 className="mt-6 text-center text-3xl font-display font-bold tracking-tight text-foreground">
-                    Welcome back
+                    {t('auth.loginTitle')}
                 </h2>
                 <p className="mt-2 text-center text-sm text-muted-foreground">
-                    Or{' '}
+                    {t('auth.loginSubtitle')}{' '}
                     <Link to="/signup" className="font-medium text-primary hover:text-primary/90 hover:underline">
-                        create a new account
+                        {t('auth.createAccount')}
                     </Link>
                 </p>
             </div>
@@ -79,7 +81,7 @@ const LoginPage: React.FC = () => {
                         )}
                         <form className="space-y-6" onSubmit={handleLogin}>
                             <div>
-                                <Label htmlFor="email">Email address</Label>
+                                <Label htmlFor="email">{t('auth.email')}</Label>
                                 <div className="mt-1">
                                     <Input
                                         id="email"
@@ -87,7 +89,7 @@ const LoginPage: React.FC = () => {
                                         type="email"
                                         autoComplete="email"
                                         required
-                                        placeholder="you@example.com"
+                                        placeholder={t('auth.emailPlaceholder')}
                                         className="h-11"
                                     />
                                 </div>
@@ -95,10 +97,10 @@ const LoginPage: React.FC = () => {
 
                             <div>
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor="password">Password</Label>
+                                    <Label htmlFor="password">{t('auth.password')}</Label>
                                     <div className="text-sm">
                                         <a href="#" className="font-medium text-primary hover:text-primary/90 hover:underline">
-                                            Forgot your password?
+                                            {t('auth.forgotPassword')}
                                         </a>
                                     </div>
                                 </div>
@@ -110,7 +112,7 @@ const LoginPage: React.FC = () => {
                                         autoComplete="current-password"
                                         required
                                         className="h-11 pr-10"
-                                        placeholder="••••••••"
+                                        placeholder={t('auth.passwordPlaceholder')}
                                     />
                                     <button
                                         type="button"
@@ -132,7 +134,7 @@ const LoginPage: React.FC = () => {
                                     className="w-full h-11 text-base shadow-glow"
                                     disabled={isLoading}
                                 >
-                                    {isLoading ? 'Signing in...' : 'Sign in'}
+                                    {isLoading ? t('auth.signingIn') : t('auth.signIn')}
                                     {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
                                 </Button>
                             </div>
@@ -145,7 +147,7 @@ const LoginPage: React.FC = () => {
                                 </div>
                                 <div className="relative flex justify-center text-sm">
                                     <span className="px-2 bg-white dark:bg-card text-muted-foreground">
-                                        Or continue with
+                                        {t('auth.orContinueWith')}
                                     </span>
                                 </div>
                             </div>
@@ -175,7 +177,7 @@ const LoginPage: React.FC = () => {
                                             fill="#EA4335"
                                         />
                                     </svg>
-                                    Sign in with Google
+                                    {t('auth.signInWithGoogle')}
                                 </Button>
                             </div>
                         </div>

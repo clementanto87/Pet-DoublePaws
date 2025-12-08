@@ -37,6 +37,11 @@ export const bookingService = {
         return response.data;
     },
 
+    getBookingsBySitterId: async (sitterId: string): Promise<Booking[]> => {
+        const response = await api.get(`/bookings/sitter/${sitterId}`);
+        return response.data;
+    },
+
     updateStatus: async (id: string, status: BookingStatus) => {
         const response = await api.patch(`/bookings/${id}/status`, { status });
         return response.data;

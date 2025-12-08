@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import {
   Shield,
   Heart,
@@ -22,25 +23,32 @@ import {
   CreditCard,
   Award,
   Sparkles,
-  Navigation
+  Navigation,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
-import { cities } from '../data/cities';
+import { AddressAutocomplete } from '../components/ui/AddressAutocomplete';
+import { getCurrentPosition, reverseGeocode, formatAddressShort } from '../utils/geocoding';
+import type { Address } from '../utils/geocoding';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeService, setActiveService] = useState(1);
   const [selectedService, setSelectedService] = useState<string>('boarding');
   const [location, setLocation] = useState('');
+  const [selectedAddress, setSelectedAddress] = useState<Address | undefined>();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   // Animated placeholder text
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const placeholders = [
-    'Enter your city or neighborhood...',
-    'Try "New York, NY"...',
-    'Where does your pet need care?',
-    'Search by zip code or address...'
+    t('landing.enterCity'),
+    t('landing.tryLocation'),
+    t('landing.wherePetCare'),
+    t('landing.searchByZip')
   ];
 
   useEffect(() => {
@@ -51,103 +59,126 @@ const LandingPage: React.FC = () => {
   }, []);
 
   const serviceOptions = [
-    { id: 'boarding', icon: '🏠', label: 'Boarding', desc: 'Your pet stays at the sitter\'s home', color: 'from-primary to-orange-500' },
-    { id: 'housesitting', icon: '🏡', label: 'House Sitting', desc: 'Sitter stays at your home', color: 'from-blue-500 to-blue-600' },
-    { id: 'visits', icon: '☀️', label: 'Drop-In Visits', desc: '30-60 min check-ins at your home', color: 'from-amber-500 to-yellow-500' },
-    { id: 'daycare', icon: '🐕', label: 'Doggy Day Care', desc: 'Daytime care at sitter\'s home', color: 'from-rose-400 to-pink-500' },
-    { id: 'walking', icon: '🦮', label: 'Dog Walking', desc: 'Regular walks in your neighborhood', color: 'from-green-500 to-emerald-600' },
+    { id: 'boarding', icon: '🏠', label: t('landing.services.boarding.label'), desc: t('landing.services.boarding.desc'), color: 'from-primary to-orange-500' },
+    { id: 'housesitting', icon: '🏡', label: t('landing.services.houseSitting.label'), desc: t('landing.services.houseSitting.desc'), color: 'from-blue-500 to-blue-600' },
+    { id: 'visits', icon: '☀️', label: t('landing.services.dropInVisits.label'), desc: t('landing.services.dropInVisits.desc'), color: 'from-amber-500 to-yellow-500' },
+    { id: 'daycare', icon: '🐕', label: t('landing.services.dayCare.label'), desc: t('landing.services.dayCare.desc'), color: 'from-rose-400 to-pink-500' },
+    { id: 'walking', icon: '🦮', label: t('landing.services.walking.label'), desc: t('landing.services.walking.desc'), color: 'from-green-500 to-emerald-600' },
   ];
-
-  const popularLocations = [
-    { city: 'New York, NY', count: 'Popular' },
-    { city: 'Los Angeles, CA', count: 'Popular' },
-    { city: 'Chicago, IL', count: 'Popular' },
-    { city: 'Houston, TX', count: 'Popular' },
-  ];
-
-  const filteredLocations = location.length > 0
-    ? cities.filter(city => city.toLowerCase().includes(location.toLowerCase())).slice(0, 5).map(city => ({ city, count: '' }))
-    : popularLocations;
 
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (selectedService) params.set('service', selectedService);
     if (location) params.set('location', location);
+    // Add coordinates if available for better search results
+    if (selectedAddress?.coordinates) {
+      params.set('latitude', selectedAddress.coordinates.lat.toString());
+      params.set('longitude', selectedAddress.coordinates.lng.toString());
+    }
     navigate(`/search?${params.toString()}`);
   };
 
+  const handleNearMe = async () => {
+    setIsGettingLocation(true);
+    setLocationError(null);
+
+    try {
+      // Get current position
+      const coords = await getCurrentPosition();
+
+      // Reverse geocode to get address
+      const address = await reverseGeocode(coords.lat, coords.lng);
+
+      // Update location state
+      const formattedAddress = formatAddressShort(address);
+      setLocation(formattedAddress);
+      setSelectedAddress(address);
+    } catch (error) {
+      console.error('Geolocation error:', error);
+      setLocationError(error instanceof Error ? error.message : 'Failed to get your location');
+    } finally {
+      setIsGettingLocation(false);
+    }
+  };
+
+  const handleLocationChange = (value: string, address?: Address) => {
+    setLocation(value);
+    setSelectedAddress(address);
+    setLocationError(null);
+  };
+
   const trustFeatures = [
-    { icon: CheckCircle, label: 'Verified Sitters' },
-    { icon: Shield, label: 'Pet Insurance' },
-    { icon: Headphones, label: '24/7 Support' },
-    { icon: Lock, label: 'Secure Payments' },
+    { icon: CheckCircle, label: t('landing.trustFeatures.verifiedSitters') },
+    { icon: Shield, label: t('landing.trustFeatures.petInsurance') },
+    { icon: Headphones, label: t('landing.trustFeatures.support24') },
+    { icon: Lock, label: t('landing.trustFeatures.securePayments') },
   ];
 
   const howItWorks = [
     {
       step: 1,
-      title: 'Search & Compare',
-      desc: 'Find trusted pet sitters in your area. Compare profiles, services, and reviews.',
+      title: t('landing.howItWorks.step1.title'),
+      desc: t('landing.howItWorks.step1.desc'),
       icon: Search,
       color: 'bg-blue-500'
     },
     {
       step: 2,
-      title: 'Connect & Book',
-      desc: 'Message sitters, ask questions, and book with confidence through our secure platform.',
+      title: t('landing.howItWorks.step2.title'),
+      desc: t('landing.howItWorks.step2.desc'),
       icon: MessageCircle,
       color: 'bg-primary'
     },
     {
       step: 3,
-      title: 'Relax & Enjoy',
-      desc: 'Your pet gets amazing care while you get peace of mind with photo updates.',
+      title: t('landing.howItWorks.step3.title'),
+      desc: t('landing.howItWorks.step3.desc'),
       icon: Heart,
       color: 'bg-rose-400'
     },
   ];
 
   const services = [
-    { id: 0, title: 'Boarding', desc: 'Your pet stays overnight in a loving sitter\'s home', icon: Home },
-    { id: 1, title: 'House Sitting', desc: 'A trusted sitter stays at your home with your pet', icon: Calendar },
-    { id: 2, title: 'Drop-In Visits', desc: '30-60 minute check-ins for feeding and playtime', icon: Clock },
-    { id: 3, title: 'Doggy Day Care', desc: 'Daytime care and socialization at sitter\'s home', icon: PawPrint },
-    { id: 4, title: 'Dog Walking', desc: 'Regular walks and exercise in your neighborhood', icon: PawPrint },
+    { id: 0, title: t('landing.services.boarding.label'), desc: t('landing.services.boarding.desc'), icon: Home },
+    { id: 1, title: t('landing.services.houseSitting.label'), desc: t('landing.services.houseSitting.desc'), icon: Calendar },
+    { id: 2, title: t('landing.services.dropInVisits.label'), desc: t('landing.services.dropInVisits.desc'), icon: Clock },
+    { id: 3, title: t('landing.services.dayCare.label'), desc: t('landing.services.dayCare.desc'), icon: PawPrint },
+    { id: 4, title: t('landing.services.walking.label'), desc: t('landing.services.walking.desc'), icon: PawPrint },
   ];
 
   const safetyFeatures = [
-    { icon: CheckCircle, title: 'Verified Sitters', desc: 'Every sitter passes identity verification and background checks' },
-    { icon: Shield, title: 'Pet Insurance', desc: 'Every booking includes comprehensive pet insurance coverage' },
-    { icon: Headphones, title: '24/7 Support', desc: 'Our dedicated team is always here when you need us' },
-    { icon: Lock, title: 'Secure Payments', desc: 'Your payments are protected with bank-level security' },
+    { icon: CheckCircle, title: t('landing.safetyFeatures.verifiedSitters.title'), desc: t('landing.safetyFeatures.verifiedSitters.desc') },
+    { icon: Shield, title: t('landing.safetyFeatures.petInsurance.title'), desc: t('landing.safetyFeatures.petInsurance.desc') },
+    { icon: Headphones, title: t('landing.safetyFeatures.support24.title'), desc: t('landing.safetyFeatures.support24.desc') },
+    { icon: Lock, title: t('landing.safetyFeatures.securePayments.title'), desc: t('landing.safetyFeatures.securePayments.desc') },
   ];
 
   const featureBar = [
-    { icon: Camera, label: 'Photo & video updates' },
-    { icon: MapPin, label: 'GPS tracking on walks' },
-    { icon: Stethoscope, label: 'Vet care coordination' },
-    { icon: CreditCard, label: 'Easy online payments' },
-    { icon: Star, label: 'Honest reviews' },
-    { icon: Clock, label: 'Flexible scheduling' },
+    { icon: Camera, label: t('landing.features.photoUpdates') },
+    { icon: MapPin, label: t('landing.features.gpsTracking') },
+    { icon: Stethoscope, label: t('landing.features.vetCare') },
+    { icon: CreditCard, label: t('landing.features.onlinePayments') },
+    { icon: Star, label: t('landing.features.reviews') },
+    { icon: Clock, label: t('landing.features.flexibleScheduling') },
   ];
 
   return (
     <div className="flex-1 w-full overflow-hidden bg-gradient-to-b from-orange-50/50 via-white to-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-900">
 
       {/* Hero Section with Search */}
-      <section className="relative min-h-[95vh] flex items-center">
+      <section className="relative min-h-[70vh] md:min-h-[95vh] flex items-center">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {/* Animated Background Gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-orange-50 via-amber-50/30 to-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-900" />
 
-          {/* Floating Animated Paws */}
+          {/* Floating Animated Paws - Hidden on mobile for better performance */}
           <motion.div
             animate={{
               y: [0, -20, 0],
               rotate: [0, 10, 0]
             }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-20 right-[15%] text-primary/10 text-[120px] pointer-events-none"
+            className="hidden md:block absolute top-20 right-[15%] text-primary/10 text-[120px] pointer-events-none"
           >
             🐾
           </motion.div>
@@ -157,7 +188,7 @@ const LandingPage: React.FC = () => {
               rotate: [0, -15, 0]
             }}
             transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-            className="absolute bottom-32 left-[10%] text-primary/10 text-[80px] pointer-events-none"
+            className="hidden md:block absolute bottom-32 left-[10%] text-primary/10 text-[80px] pointer-events-none"
           >
             🐾
           </motion.div>
@@ -167,7 +198,7 @@ const LandingPage: React.FC = () => {
               x: [0, 10, 0]
             }}
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-            className="absolute top-1/3 right-[8%] text-amber-500/10 text-[60px] pointer-events-none"
+            className="hidden md:block absolute top-1/3 right-[8%] text-amber-500/10 text-[60px] pointer-events-none"
           >
             🐕
           </motion.div>
@@ -177,51 +208,51 @@ const LandingPage: React.FC = () => {
               scale: [1, 1.1, 1]
             }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-            className="absolute bottom-40 right-[25%] text-rose-400/10 text-[50px] pointer-events-none"
+            className="hidden md:block absolute bottom-40 right-[25%] text-rose-400/10 text-[50px] pointer-events-none"
           >
             🐈
           </motion.div>
 
         </div>
 
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-16 pb-12">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-8 md:pt-16 pb-8 md:pb-12">
           <div className="max-w-5xl mx-auto">
-            {/* Header Content */}
+            {/* Header Content - Reduced spacing on mobile */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="text-center mb-10"
+              className="text-center mb-6 md:mb-10"
             >
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2 }}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-primary/10 to-amber-500/10 border border-primary/20 shadow-sm mb-8"
+                className="inline-flex items-center gap-2 px-4 md:px-5 py-2 md:py-2.5 rounded-full bg-gradient-to-r from-primary/10 to-amber-500/10 border border-primary/20 shadow-sm mb-4 md:mb-8"
               >
-                <Sparkles className="w-4 h-4 text-primary" />
-                <span className="text-sm font-semibold bg-gradient-to-r from-primary to-amber-600 bg-clip-text text-transparent">
-                  Trusted Pet Care, Made Simple
+                <Sparkles className="w-3 h-3 md:w-4 md:h-4 text-primary" />
+                <span className="text-xs md:text-sm font-semibold bg-gradient-to-r from-primary to-amber-600 bg-clip-text text-transparent">
+                  {t('landing.tagline')}
                 </span>
-                <Sparkles className="w-4 h-4 text-amber-500" />
+                <Sparkles className="w-3 h-3 md:w-4 md:h-4 text-amber-500" />
               </motion.div>
 
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="text-5xl md:text-6xl lg:text-7xl font-display font-bold mb-6 leading-[1.1] tracking-tight text-gray-900 dark:text-white"
+                className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-display font-bold mb-4 md:mb-6 leading-[1.1] tracking-tight text-gray-900 dark:text-white"
               >
-                Find Your Pet's<br />
+                {t('landing.heroTitle')}<br />
                 <span className="relative">
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-orange-500 to-amber-500">
-                    Perfect Sitter
+                    {t('landing.heroTitleHighlight')}
                   </span>
                   <motion.svg
                     initial={{ pathLength: 0 }}
                     animate={{ pathLength: 1 }}
                     transition={{ delay: 1, duration: 0.8 }}
-                    className="absolute -bottom-2 left-0 w-full h-3"
+                    className="absolute -bottom-2 left-0 w-full h-3 hidden md:block"
                     viewBox="0 0 300 12"
                   >
                     <motion.path
@@ -245,10 +276,9 @@ const LandingPage: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto"
+                className="text-base md:text-lg lg:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto px-2"
               >
-                Connect with <strong className="text-gray-900 dark:text-white">verified pet sitters</strong> in your area.
-                Every booking is <strong className="text-primary">fully insured</strong>.
+                {t('landing.heroSubtitle')}
               </motion.p>
             </motion.div>
 
@@ -257,22 +287,23 @@ const LandingPage: React.FC = () => {
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.6 }}
-              className="relative z-20"
+              className="relative z-20 -mx-2 md:mx-0"
             >
-              {/* Glow Effect Behind Search */}
-              <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-amber-400/20 to-primary/20 rounded-[40px] blur-2xl opacity-60" />
+              {/* Glow Effect Behind Search - Reduced on mobile */}
+              <div className="absolute -inset-2 md:-inset-4 bg-gradient-to-r from-primary/20 via-amber-400/20 to-primary/20 rounded-[24px] md:rounded-[40px] blur-xl md:blur-2xl opacity-40 md:opacity-60" />
 
               {/* Main Search Container */}
-              <div className={`relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border-2 transition-all duration-500 overflow-visible ${isSearchFocused
-                ? 'border-primary shadow-primary/20 shadow-2xl scale-[1.02]'
+              <div className={`relative bg-white dark:bg-gray-800 rounded-2xl md:rounded-3xl shadow-xl md:shadow-2xl border-2 transition-all duration-500 overflow-visible ${isSearchFocused
+                ? 'border-primary shadow-primary/20 shadow-xl md:shadow-2xl scale-[1.01] md:scale-[1.02]'
                 : 'border-gray-100 dark:border-gray-700'
                 }`}>
-                {/* Service Selection - Beautiful Pills */}
-                <div className="p-6 pb-4 border-b border-gray-100 dark:border-gray-700">
-                  <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-4 flex items-center gap-2">
-                    <span className="text-lg">🎯</span> What service does your pet need?
+                {/* Service Selection - Compact Grid Design for Mobile */}
+                <div className="p-3 md:p-6 pb-2.5 md:pb-4 border-b border-gray-100 dark:border-gray-700">
+                  <p className="text-xs md:text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2 md:mb-4 flex items-center gap-1.5 md:gap-2">
+                    <span className="text-sm md:text-lg">🎯</span> {t('landing.whatServiceNeeded')}
                   </p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                  {/* Compact Grid Layout - 3 columns on mobile to fit all services, 5 on desktop */}
+                  <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-5 gap-1.5 md:gap-3">
                     {serviceOptions.map((service, index) => (
                       <motion.button
                         key={service.id}
@@ -282,165 +313,146 @@ const LandingPage: React.FC = () => {
                         whileHover={{ scale: 1.03, y: -3 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => setSelectedService(service.id)}
-                        className={`relative p-4 rounded-2xl text-left transition-all duration-300 overflow-hidden group ${selectedService === service.id
-                          ? 'bg-gradient-to-br ' + service.color + ' text-white shadow-lg ring-2 ring-offset-2 ring-primary/50'
-                          : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-white dark:hover:bg-gray-700 hover:shadow-md border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-600'
+                        className={`relative p-2 md:p-4 rounded-lg md:rounded-2xl text-left transition-all duration-300 overflow-hidden group flex flex-col justify-center items-center md:items-start min-h-[80px] md:aspect-square ${selectedService === service.id
+                          ? 'bg-gradient-to-br ' + service.color + ' text-white shadow-md md:shadow-lg ring-1 md:ring-2 ring-offset-0 md:ring-offset-2 ring-primary/50'
+                          : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm md:hover:shadow-md border border-transparent hover:border-gray-200 dark:hover:border-gray-600'
                           }`}
                       >
                         {/* Shine Effect on Hover */}
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
 
-                        <div className="relative z-10">
-                          {/* Icon Circle */}
-                          <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-all ${selectedService === service.id
+                        <div className="relative z-10 flex flex-col items-center md:items-start w-full">
+                          {/* Icon Circle - Smaller on mobile */}
+                          <div className={`w-8 h-8 md:w-12 md:h-12 rounded-full flex items-center justify-center mb-1.5 md:mb-3 transition-all flex-shrink-0 ${selectedService === service.id
                             ? 'bg-white/20'
                             : 'bg-gray-100 dark:bg-gray-600'
                             }`}>
-                            <span className="text-2xl">{service.icon}</span>
+                            <span className="text-lg md:text-2xl">{service.icon}</span>
                           </div>
-                          <p className={`font-bold text-sm mb-1 ${selectedService === service.id ? 'text-white' : 'text-gray-900 dark:text-white'
-                            }`}>
-                            {service.label}
-                          </p>
-                          <p className={`text-xs leading-relaxed ${selectedService === service.id ? 'text-white/90' : 'text-gray-500 dark:text-gray-400'
-                            }`}>
-                            {service.desc}
-                          </p>
-              </div>
+                          
+                          {/* Text Content - Compact on mobile */}
+                          <div className="flex flex-col items-center md:items-start text-center md:text-left w-full">
+                            <p className={`font-bold text-[10px] md:text-sm mb-0.5 md:mb-1 leading-tight ${selectedService === service.id ? 'text-white' : 'text-gray-900 dark:text-white'
+                              }`}>
+                              {service.label}
+                            </p>
+                            <p className={`text-[9px] md:text-xs leading-tight md:leading-snug line-clamp-2 ${selectedService === service.id ? 'text-white/90' : 'text-gray-500 dark:text-gray-400'
+                              }`}>
+                              {service.desc}
+                            </p>
+                          </div>
+                        </div>
 
-                        {/* Checkmark for Selected */}
+                        {/* Checkmark for Selected - Smaller on mobile */}
                         {selectedService === service.id && (
                           <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            className="absolute top-3 right-3 w-6 h-6 rounded-full bg-white flex items-center justify-center shadow-md"
+                            initial={{ scale: 0, rotate: -180 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                            transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                            className="absolute top-1.5 right-1.5 md:top-3 md:right-3 w-4 h-4 md:w-6 md:h-6 rounded-full bg-white flex items-center justify-center shadow-md md:shadow-lg z-20"
                           >
-                            <CheckCircle className="w-5 h-5 text-primary" />
+                            <CheckCircle className="w-3 h-3 md:w-5 md:h-5 text-primary" />
                           </motion.div>
+                        )}
+
+                        {/* Subtle border glow for selected */}
+                        {selectedService === service.id && (
+                          <div className="absolute inset-0 rounded-lg md:rounded-2xl bg-gradient-to-br from-white/20 to-transparent pointer-events-none" />
                         )}
                       </motion.button>
                     ))}
-                </div>
+                  </div>
                 </div>
 
-                {/* Location Search */}
-                <div className="p-6 pt-5 overflow-visible">
-                  <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-4 flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-primary" /> Where do you need pet care?
+                {/* Location Search - Improved for mobile */}
+                <div className="p-4 md:p-6 pt-3 md:pt-5 overflow-visible">
+                  <p className="text-xs md:text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 md:mb-4 flex items-center gap-2">
+                    <MapPin className="w-3.5 h-3.5 md:w-4 md:h-4 text-primary" /> {t('landing.whereNeedCare')}
                   </p>
 
-                  <div className="flex flex-col md:flex-row gap-3 relative">
-                    {/* Beautiful Location Input */}
+                  <div className="flex flex-col md:flex-row gap-2.5 md:gap-3 relative">
+                    {/* Beautiful Location Input with Autocomplete */}
                     <div className="flex-1 relative">
-                      <div className={`relative flex items-center rounded-full transition-all duration-300 ${showLocationSuggestions
-                        ? 'ring-2 ring-primary/50 ring-offset-2 bg-white dark:bg-gray-700 shadow-lg shadow-primary/10'
+                      <div className={`relative flex items-center rounded-full md:rounded-full transition-all duration-300 ${isSearchFocused
+                        ? 'ring-2 ring-primary/50 ring-offset-1 md:ring-offset-2 bg-white dark:bg-gray-700 shadow-lg shadow-primary/10'
                         : 'bg-gray-50 dark:bg-gray-700 hover:bg-white shadow-sm hover:shadow-md'
                         }`}>
                         {/* Location Icon */}
-                        <div className={`flex items-center justify-center w-14 h-14 rounded-l-full transition-colors ${
-                          showLocationSuggestions ? 'text-primary' : 'text-gray-400'
-                        }`}>
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                            showLocationSuggestions ? 'bg-primary/10' : 'bg-gray-100 dark:bg-gray-600'
+                        <div className={`flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-l-full transition-colors flex-shrink-0 ${isSearchFocused ? 'text-primary' : 'text-gray-400'
                           }`}>
-                            <MapPin className="w-5 h-5" />
-              </div>
-            </div>
+                          <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-all ${isSearchFocused ? 'bg-primary/10' : 'bg-gray-100 dark:bg-gray-600'
+                            }`}>
+                            <MapPin className="w-4 h-4 md:w-5 md:h-5" />
+                          </div>
+                        </div>
 
-                        <input
-                          type="text"
+                        <AddressAutocomplete
                           value={location}
-                          onChange={(e) => setLocation(e.target.value)}
-                          onFocus={() => {
-                            setIsSearchFocused(true);
-                            setShowLocationSuggestions(true);
-                          }}
-                          onBlur={() => {
-                            setTimeout(() => {
-                              setIsSearchFocused(false);
-                              setShowLocationSuggestions(false);
-                            }, 200);
-                          }}
+                          onChange={handleLocationChange}
+                          onFocus={() => setIsSearchFocused(true)}
+                          onBlur={() => setIsSearchFocused(false)}
                           placeholder={placeholders[placeholderIndex]}
-                          className="flex-1 h-14 pr-2 bg-transparent text-gray-900 dark:text-white placeholder-gray-400 text-base font-medium !border-0 !outline-none !ring-0 focus:!border-0 focus:!outline-none focus:!ring-0"
-                          style={{ border: 'none', outline: 'none', boxShadow: 'none' }}
-                />
+                          className="flex-1 h-12 md:h-14 pr-2 bg-transparent text-gray-900 dark:text-white placeholder-gray-400 text-sm md:text-base font-medium !border-0 !outline-none !ring-0 focus:!border-0 focus:!outline-none focus:!ring-0"
+                        />
 
-                        {/* Near Me Button */}
+                        {/* Near Me Button - Better mobile layout */}
                         <button
-                          onClick={() => setLocation('Current Location')}
-                          className="mr-2 px-4 py-2.5 rounded-full bg-primary/10 hover:bg-primary hover:text-white text-primary font-semibold text-sm transition-all group flex items-center gap-2 whitespace-nowrap border border-primary/20 hover:border-primary"
+                          onClick={handleNearMe}
+                          disabled={isGettingLocation}
+                          className="mr-2 px-3 md:px-4 py-2 md:py-2.5 rounded-full bg-primary/10 hover:bg-primary hover:text-white text-primary font-semibold text-xs md:text-sm transition-all group flex items-center gap-1.5 md:gap-2 whitespace-nowrap border border-primary/20 hover:border-primary disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                           title="Use current location"
                         >
-                          <Navigation className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-                          <span className="hidden sm:inline">Near Me</span>
+                          {isGettingLocation ? (
+                            <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 animate-spin" />
+                          ) : (
+                            <Navigation className="w-3.5 h-3.5 md:w-4 md:h-4 group-hover:rotate-12 transition-transform" />
+                          )}
+                          <span className="hidden xs:inline md:hidden lg:inline">
+                            {isGettingLocation ? 'Getting...' : t('landing.nearMe')}
+                          </span>
                         </button>
-                    </div>
+                      </div>
+
+                      {/* Error Message */}
+                      {locationError && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="absolute top-full left-0 right-0 mt-2 p-2.5 md:p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg md:rounded-xl flex items-start gap-2 z-50"
+                        >
+                          <AlertCircle className="w-3.5 h-3.5 md:w-4 md:h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                          <p className="text-xs md:text-sm text-red-600 dark:text-red-400">{locationError}</p>
+                        </motion.div>
+                      )}
                     </div>
 
-                    {/* Search Button */}
+                    {/* Search Button - Full width on mobile */}
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={handleSearch}
-                      className="relative h-14 px-8 md:px-10 rounded-full bg-gradient-to-r from-primary to-amber-500 text-white font-bold text-base shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all overflow-hidden group"
+                      className="relative h-12 md:h-14 w-full md:w-auto px-6 md:px-8 lg:px-10 rounded-full bg-gradient-to-r from-primary to-amber-500 text-white font-bold text-sm md:text-base shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all overflow-hidden group"
                     >
                       {/* Animated Shine */}
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
 
                       <span className="relative z-10 flex items-center gap-2 justify-center">
-                        <Search className="w-5 h-5" />
-                        <span>Search Sitters</span>
-                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        <Search className="w-4 h-4 md:w-5 md:h-5" />
+                        <span>{t('landing.searchSitters')}</span>
+                        <ArrowRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform" />
                       </span>
                     </motion.button>
-                    
-                    {/* Location Suggestions Dropdown */}
-                    <AnimatePresence>
-                      {showLocationSuggestions && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                          className="absolute left-0 right-0 md:right-auto md:w-[calc(100%-180px)] top-[calc(100%+12px)] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-[100]"
-                        >
-                          <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/30">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                              {location.length > 0 ? 'Suggestions' : 'Popular locations'}
-                            </p>
-                  </div>
-                          <div className="max-h-[240px] overflow-y-auto">
-                            {filteredLocations.map((loc, i) => (
-                              <button
-                                key={i}
-                                onMouseDown={() => setLocation(loc.city)}
-                                className="w-full px-4 py-3 flex items-center gap-3 hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors text-left group"
-                              >
-                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary transition-colors flex-shrink-0">
-                                  <MapPin className="w-4 h-4 text-primary group-hover:text-white transition-colors" />
-                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-semibold text-gray-900 dark:text-white truncate">{loc.city}</p>
-                                  <p className="text-xs text-gray-500">{loc.count}</p>
-                        </div>
-                                <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" />
-                              </button>
-                      ))}
-                    </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
                   </div>
                 </div>
               </div>
             </motion.div>
 
-            {/* Trust Badges Below Search */}
+            {/* Trust Badges Below Search - Compact on mobile */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1 }}
-              className="flex flex-wrap items-center justify-center gap-6 mt-8"
+              className="flex flex-wrap items-center justify-center gap-3 md:gap-6 mt-4 md:mt-8"
             >
               {[
                 { icon: CheckCircle, text: 'Background Checked', color: 'text-green-500' },
@@ -450,22 +462,22 @@ const LandingPage: React.FC = () => {
                 <motion.div
                   key={i}
                   whileHover={{ scale: 1.05 }}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-sm border border-gray-100 dark:border-gray-700"
+                  className="flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-sm border border-gray-100 dark:border-gray-700"
                 >
-                  <item.icon className={`w-5 h-5 ${item.color}`} />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{item.text}</span>
+                  <item.icon className={`w-4 h-4 md:w-5 md:h-5 ${item.color}`} />
+                  <span className="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">{item.text}</span>
                 </motion.div>
               ))}
             </motion.div>
           </div>
         </div>
 
-        {/* Scroll Indicator */}
+        {/* Scroll Indicator - Hidden on mobile */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+          className="hidden md:block absolute bottom-8 left-1/2 -translate-x-1/2"
         >
           <motion.div
             animate={{ y: [0, 8, 0] }}
@@ -553,7 +565,7 @@ const LandingPage: React.FC = () => {
               <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
           </motion.div>
-                  </div>
+        </div>
       </section>
 
       {/* Services Section */}
@@ -621,7 +633,7 @@ const LandingPage: React.FC = () => {
 
               <h2 className="text-4xl md:text-5xl font-display font-bold mb-6 text-gray-900 dark:text-white">
                 We Take <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-amber-500">Safety</span> Seriously
-                </h2>
+              </h2>
 
               <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
                 Your pet's safety is our top priority. Every sitter on our platform goes through a rigorous verification process.
@@ -639,11 +651,11 @@ const LandingPage: React.FC = () => {
                   >
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <feature.icon className="w-5 h-5 text-primary" />
-                  </div>
+                    </div>
                     <div>
                       <h4 className="font-bold text-gray-900 dark:text-white mb-1">{feature.title}</h4>
                       <p className="text-sm text-gray-600 dark:text-gray-400">{feature.desc}</p>
-                </div>
+                    </div>
                   </motion.div>
                 ))}
               </div>
@@ -655,12 +667,12 @@ const LandingPage: React.FC = () => {
               viewport={{ once: true }}
               className="flex-1 relative"
             >
-                <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-4">
                   <div className="relative rounded-2xl overflow-hidden shadow-lg">
-                  <img
-                    src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
-                    alt="Dogs playing"
+                    <img
+                      src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+                      alt="Dogs playing"
                       className="w-full h-48 object-cover"
                     />
                     <div className="absolute bottom-4 left-4 right-4 bg-white dark:bg-gray-800 p-3 rounded-xl shadow-lg">
@@ -682,7 +694,7 @@ const LandingPage: React.FC = () => {
                       src="https://images.unsplash.com/photo-1560807707-8cc77767d783?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
                       alt="Cat relaxing"
                       className="w-full h-64 object-cover"
-                  />
+                    />
                   </div>
                 </div>
               </div>
@@ -699,7 +711,7 @@ const LandingPage: React.FC = () => {
               <div key={i} className="flex items-center gap-2 text-white">
                 <feature.icon className="w-5 h-5" />
                 <span className="text-sm font-medium whitespace-nowrap">{feature.label}</span>
-            </div>
+              </div>
             ))}
           </div>
         </div>
@@ -768,14 +780,14 @@ const LandingPage: React.FC = () => {
               Join thousands of pet parents who trust Double Paws for safe, loving pet care. Book your first stay today!
             </p>
 
-              <Button
-                onClick={() => navigate('/booking')}
-                size="lg"
+            <Button
+              onClick={() => navigate('/booking')}
+              size="lg"
               className="text-lg px-12 h-14 bg-white text-primary hover:bg-gray-100 shadow-2xl hover:scale-105 transition-all group"
-              >
+            >
               Find Sitters Near Me
               <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
+            </Button>
 
             <p className="mt-8 text-white/70 text-sm">
               Free to search • No booking fees • Cancel anytime

@@ -88,6 +88,33 @@ export const getBookings = async (req: Request, res: Response) => {
     }
 };
 
+export const getBookingsBySitterId = async (req: Request, res: Response) => {
+    try {
+        const { sitterId } = req.params;
+
+        // Verify sitter exists
+        const sitter = await sitterRepository.findOne({ where: { id: sitterId } });
+        if (!sitter) {
+            return res.status(404).json({ message: 'Sitter not found' });
+        }
+
+        // Get all bookings for this sitter (only accepted and pending to show on calendar)
+        const bookings = await bookingRepository.find({
+            where: [
+                { sitterId, status: BookingStatus.ACCEPTED },
+                { sitterId, status: BookingStatus.PENDING }
+            ],
+            select: ['id', 'startDate', 'endDate', 'status', 'serviceType'],
+            order: { startDate: 'ASC' }
+        });
+
+        return res.json(bookings);
+    } catch (error) {
+        console.error('Error fetching bookings by sitter:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
 export const updateBookingStatus = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
