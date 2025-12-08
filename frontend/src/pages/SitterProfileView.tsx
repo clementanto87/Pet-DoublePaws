@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
     ArrowLeft,
@@ -21,7 +21,9 @@ import {
     User,
     Sun,
     Baby,
-    TreeDeciduous
+    TreeDeciduous,
+    ChevronLeft,
+    ChevronRight
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
@@ -56,6 +58,140 @@ const serviceDescriptions: Record<string, string> = {
     dogWalking: 'Walks in your neighborhood'
 };
 
+// Get monthly calendar availability from real backend data
+const getMonthlyAvailability = (sitter: any, monthOffset: number = 0, bookings: any[] = []) => {
+    const today = new Date();
+    const targetDate = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+    const year = targetDate.getFullYear();
+    const month = targetDate.getMonth();
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startDayOfWeek = firstDay.getDay();
+
+    const monthName = targetDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    // Get blocked dates from sitter's availability
+    const blockedDates = sitter.availability?.blockedDates || [];
+    const blockedSet = new Set<number>();
+
+    // Convert blocked date strings to day numbers for this month
+    blockedDates.forEach((dateStr: string) => {
+        const date = new Date(dateStr);
+        if (date.getFullYear() === year && date.getMonth() === month) {
+            blockedSet.add(date.getDate());
+        }
+    });
+
+    // Parse general availability settings
+    const generalAvailability = sitter.availability?.general || [];
+    const hasWeekdays = generalAvailability.includes('Weekdays');
+    const hasWeekends = generalAvailability.includes('Weekends');
+    const hasFullTime = generalAvailability.includes('Full-Time');
+
+    // Map day names to day numbers (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+    const dayNameToNumber: Record<string, number> = {
+        'Sun': 0, 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6
+    };
+
+    // Get specific days selected
+    const specificDays = new Set<number>();
+    generalAvailability.forEach((item: string) => {
+        if (dayNameToNumber[item] !== undefined) {
+            specificDays.add(dayNameToNumber[item]);
+        }
+    });
+
+    // Helper function to check if a date matches general availability
+    const isDayAvailable = (date: Date): boolean => {
+        // If Full-Time is selected, all days are available (unless specifically blocked)
+        if (hasFullTime) return true;
+
+        const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
+
+        // Check if specific day is selected
+        if (specificDays.has(dayOfWeek)) return true;
+
+        // Check weekday/weekend rules
+        const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5; // Monday to Friday
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // Saturday or Sunday
+
+        if (hasWeekdays && isWeekday) return true;
+        if (hasWeekends && isWeekend) return true;
+
+        // If no general availability is set, default to all days available
+        if (generalAvailability.length === 0) return true;
+
+        // Otherwise, day is not available
+        return false;
+    };
+
+    // Get booked dates from bookings (ACCEPTED and PENDING)
+    const bookedSet = new Set<number>();
+    bookings.forEach((booking) => {
+        const startDate = new Date(booking.startDate);
+        const endDate = new Date(booking.endDate);
+
+        // Check if booking overlaps with this month
+        if (startDate.getFullYear() === year && startDate.getMonth() === month) {
+            // Booking starts this month
+            const startDay = startDate.getDate();
+            const endDay = endDate.getFullYear() === year && endDate.getMonth() === month
+                ? endDate.getDate()
+                : daysInMonth;
+
+            for (let day = startDay; day <= endDay; day++) {
+                bookedSet.add(day);
+            }
+        } else if (endDate.getFullYear() === year && endDate.getMonth() === month) {
+            // Booking ends this month
+            const endDay = endDate.getDate();
+            for (let day = 1; day <= endDay; day++) {
+                bookedSet.add(day);
+            }
+        } else if (
+            startDate < new Date(year, month, 1) &&
+            endDate > new Date(year, month + 1, 0)
+        ) {
+            // Booking spans the entire month
+            for (let day = 1; day <= daysInMonth; day++) {
+                bookedSet.add(day);
+            }
+        }
+    });
+
+    // Calculate available days (all days except blocked, booked, past, and not in general availability)
+    const availableDays = new Set<number>();
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const isPast = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const isBlocked = blockedSet.has(day);
+        const isBooked = bookedSet.has(day);
+        const matchesGeneralAvailability = isDayAvailable(date);
+
+        if (!isPast && !isBlocked && !isBooked && matchesGeneralAvailability) {
+            availableDays.add(day);
+        }
+    }
+
+    // Calculate days since last update
+    const lastUpdated = sitter.updatedAt
+        ? Math.floor((Date.now() - new Date(sitter.updatedAt).getTime()) / (1000 * 60 * 60 * 24))
+        : 0;
+
+    return {
+        monthName,
+        year,
+        month,
+        daysInMonth,
+        startDayOfWeek,
+        availableDays,
+        bookedDays: bookedSet,
+        lastUpdated
+    };
+};
+
 const SitterProfileView: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -69,6 +205,9 @@ const SitterProfileView: React.FC = () => {
 
     // For now, we use the sitter from state. In production, you'd fetch by ID
     const sitter = sitterFromState;
+
+    // Month navigation for calendar
+    const [monthOffset, setMonthOffset] = useState(0);
 
     if (!sitter) {
         return (
@@ -461,27 +600,113 @@ const SitterProfileView: React.FC = () => {
                                     <Calendar className="w-5 h-5 text-primary" />
                                     Availability
                                 </h2>
-                                <div className="space-y-3">
-                                    <div>
-                                        <h3 className="text-sm font-medium text-gray-500 mb-2">General Availability</h3>
-                                        <div className="flex flex-wrap gap-2">
-                                            {sitter.availability?.general?.map((day: string) => (
-                                                <span
-                                                    key={day}
-                                                    className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-sm font-medium"
+
+                                {/* Calendar View */}
+                                {(() => {
+                                    const calendar = useMemo(() => getMonthlyAvailability(sitter, monthOffset, []), [sitter, monthOffset]);
+                                    const calendarDays: (number | null)[] = [];
+
+                                    // Add empty cells for days before the first day of the month
+                                    for (let i = 0; i < calendar.startDayOfWeek; i++) {
+                                        calendarDays.push(null);
+                                    }
+
+                                    // Add the days of the month
+                                    for (let day = 1; day <= calendar.daysInMonth; day++) {
+                                        calendarDays.push(day);
+                                    }
+
+                                    return (
+                                        <div className="space-y-4">
+                                            {/* Month Navigation */}
+                                            <div className="flex items-center justify-between mb-3">
+                                                <button
+                                                    onClick={() => setMonthOffset(prev => prev - 1)}
+                                                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                                                    aria-label="Previous month"
                                                 >
-                                                    {day}
-                                                </span>
-                                            ))}
+                                                    <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                                                </button>
+                                                <h3 className="text-base font-bold text-gray-900 dark:text-white">
+                                                    {calendar.monthName}
+                                                </h3>
+                                                <button
+                                                    onClick={() => setMonthOffset(prev => prev + 1)}
+                                                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                                                    aria-label="Next month"
+                                                >
+                                                    <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                                                </button>
+                                            </div>
+
+                                            {/* Legend */}
+                                            <div className="flex items-center gap-4 text-xs mb-3">
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className="w-3 h-3 rounded-full bg-green-100 dark:bg-green-900/30 border-2 border-green-500" />
+                                                    <span className="text-gray-600 dark:text-gray-400">Available</span>
+                                                </div>
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className="w-3 h-3 rounded-full bg-amber-100 dark:bg-amber-900/30 border-2 border-amber-500" />
+                                                    <span className="text-gray-600 dark:text-gray-400">Booked</span>
+                                                </div>
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className="w-3 h-3 rounded-full bg-gray-100 dark:bg-gray-800 opacity-40" />
+                                                    <span className="text-gray-600 dark:text-gray-400">Not available</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Calendar Grid */}
+                                            <div className="grid grid-cols-7 gap-1">
+                                                {/* Day headers */}
+                                                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                                                    <div key={i} className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 pb-1">
+                                                        {day}
+                                                    </div>
+                                                ))}
+
+                                                {/* Calendar days */}
+                                                {calendarDays.map((day, index) => {
+                                                    if (day === null) {
+                                                        return <div key={`empty-${index}`} className="aspect-square" />;
+                                                    }
+
+                                                    const isAvailable = calendar.availableDays.has(day);
+                                                    const isBooked = calendar.bookedDays.has(day);
+                                                    const isToday = monthOffset === 0 && day === new Date().getDate();
+
+                                                    return (
+                                                        <div
+                                                            key={day}
+                                                            className={cn(
+                                                                "aspect-square rounded-full flex items-center justify-center text-xs font-medium transition-all",
+                                                                isAvailable && "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-2 border-green-500",
+                                                                isBooked && "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-2 border-amber-500",
+                                                                !isAvailable && !isBooked && "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 opacity-40",
+                                                                isToday && "ring-2 ring-primary ring-offset-2 dark:ring-offset-gray-900"
+                                                            )}
+                                                        >
+                                                            {day}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+
+                                            {/* Footer Info */}
+                                            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                                                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                                    <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                                                    <span>Updated {calendar.lastUpdated === 0 ? 'today' : `${calendar.lastUpdated} day${calendar.lastUpdated === 1 ? '' : 's'} ago`}</span>
+                                                </div>
+                                                {sitter.noticePeriod && (
+                                                    <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                                                        <Clock className="w-3.5 h-3.5 text-gray-400" />
+                                                        <span>Cancellation: <span className="font-medium text-primary">{sitter.cancellationPolicy || 'flexible'}</span></span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                    {sitter.noticePeriod && (
-                                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 pt-2">
-                                            <Clock className="w-4 h-4 text-gray-400" />
-                                            <span>{sitter.noticePeriod} notice required</span>
-                                        </div>
-                                    )}
-                                </div>
+                                    );
+                                })()}
                             </CardContent>
                         </Card>
 

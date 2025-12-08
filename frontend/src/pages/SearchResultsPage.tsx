@@ -237,7 +237,7 @@ const SearchResultsPage: React.FC = () => {
     const [hoveredSitter, setHoveredSitter] = useState<string | null>(null);
     const [selectedSitter, setSelectedSitter] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('list');
-    const [showSidebarFilters, setShowSidebarFilters] = useState(true); // Always show on desktop
+    const [showSidebarFilters, setShowSidebarFilters] = useState(true); // Show by default, toggle with button
     const [sortBy, setSortBy] = useState<SortOption>('distance');
     const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
@@ -1203,68 +1203,6 @@ const SearchResultsPage: React.FC = () => {
                             ))}
                         </div>
                     </div>
-
-                    {/* Filter Panel */}
-                    <AnimatePresence>
-                        {showSidebarFilters && (
-                            <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                className="overflow-hidden"
-                            >
-                                <div className="py-4 flex flex-wrap items-center gap-4 border-t border-gray-200 dark:border-gray-700 mt-4">
-                                    {/* Price Range */}
-                                    <div className="flex items-center gap-3 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-xl">
-                                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1">
-                                            <DollarSign className="w-4 h-4 text-primary" /> Price
-                                        </label>
-                                        <div className="flex items-center gap-2">
-                                            <input
-                                                type="number"
-                                                value={priceRange[0]}
-                                                onChange={(e) => setPriceRange([parseInt(e.target.value) || 0, priceRange[1]])}
-                                                className="w-16 px-2 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 
-                                                    bg-white dark:bg-gray-700 text-sm font-medium"
-                                                min={0}
-                                            />
-                                            <span className="text-gray-400">-</span>
-                                            <input
-                                                type="number"
-                                                value={priceRange[1]}
-                                                onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value) || 100])}
-                                                className="w-16 px-2 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 
-                                                    bg-white dark:bg-gray-700 text-sm font-medium"
-                                                min={0}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Verified Only */}
-                                    <label className="flex items-center gap-2 cursor-pointer bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-xl">
-                                        <input
-                                            type="checkbox"
-                                            checked={verifiedOnly}
-                                            onChange={(e) => setVerifiedOnly(e.target.checked)}
-                                            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
-                                        />
-                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1">
-                                            <Shield className="w-4 h-4 text-emerald-500" /> Verified Only
-                                        </span>
-                                    </label>
-
-                                    {/* Clear Filters */}
-                                    <button
-                                        onClick={clearAllFilters}
-                                        className="text-sm text-gray-500 hover:text-primary font-medium flex items-center gap-1 
-                                            px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                                    >
-                                        <X className="w-4 h-4" /> Clear All
-                                    </button>
-                                </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
                 </div>
             </div>
 
@@ -1281,7 +1219,7 @@ const SearchResultsPage: React.FC = () => {
             <div className="w-full">
                 <div className={`flex ${viewMode === 'map' ? 'flex-col' : 'flex-row'}`}>
                     {/* Advanced Filters Sidebar */}
-                    {viewMode !== 'map' && (
+                    {viewMode !== 'map' && showSidebarFilters && (
                         <aside className="hidden lg:block w-80 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
                             <div className="sticky top-[160px] h-[calc(100vh-160px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                                 <div className="p-6 space-y-6">

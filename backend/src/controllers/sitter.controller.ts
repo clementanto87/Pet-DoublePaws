@@ -12,21 +12,17 @@ export const createOrUpdateSitterProfile = async (req: AuthRequest, res: Respons
         const sitterRepository = AppDataSource.getRepository(SitterProfile);
         const userRepository = AppDataSource.getRepository(User);
 
-        // Check if user exists
         const user = await userRepository.findOneBy({ id: userId });
         if (!user) {
             res.status(404).json({ message: 'User not found' });
             return;
         }
 
-        // Check if profile already exists
         let profile: SitterProfile | null = await sitterRepository.findOneBy({ userId });
 
         if (profile) {
-            // Update existing profile
             sitterRepository.merge(profile, profileData);
         } else {
-            // Create new profile
             profile = sitterRepository.create();
             sitterRepository.merge(profile, {
                 ...profileData,
@@ -40,7 +36,6 @@ export const createOrUpdateSitterProfile = async (req: AuthRequest, res: Respons
         }
 
         const savedProfile = await sitterRepository.save(profile);
-
         res.status(200).json(savedProfile);
     } catch (error) {
         console.error('Error saving sitter profile:', error);
@@ -65,7 +60,7 @@ export const searchSitters = async (req: AuthRequest, res: Response): Promise<vo
             minExperience,
             verifiedOnly,
             hasReviews,
-            serviceTypes // Comma-separated list of service types
+            serviceTypes // Comma-separated list
         } = req.query;
 
         const sitterRepository = AppDataSource.getRepository(SitterProfile);
@@ -77,7 +72,7 @@ export const searchSitters = async (req: AuthRequest, res: Response): Promise<vo
         if (latitude && longitude) {
             const lat = parseFloat(latitude as string);
             const lon = parseFloat(longitude as string);
-            const rad = parseFloat(radius as string);
+            const rad = maxDistance ? parseFloat(maxDistance as string) : parseFloat(radius as string);
 
             query.addSelect(
                 `(6371 * acos(cos(radians(:lat)) * cos(radians(sitter.latitude)) * cos(radians(sitter.longitude) - radians(:lon)) + sin(radians(:lat)) * sin(radians(sitter.latitude))))`,
@@ -93,7 +88,6 @@ export const searchSitters = async (req: AuthRequest, res: Response): Promise<vo
         let sittersWithDistance;
         if (latitude && longitude) {
             const result = await query.getRawAndEntities();
-            // Map distance from raw results to entities
             sittersWithDistance = result.entities.map((sitter, index) => {
                 const raw = result.raw[index];
                 (sitter as any).distance = raw?.distance || null;
@@ -103,28 +97,51 @@ export const searchSitters = async (req: AuthRequest, res: Response): Promise<vo
             sittersWithDistance = await query.getMany();
         }
 
-        // 2. In-Memory Filtering for JSON fields (Robustness)
+        // 2. In-Memory Filtering
         const filteredSitters = sittersWithDistance.filter(sitter => {
-            // Service Filter
+            // Service Type Filter (single service from basic search)
             if (serviceType) {
                 const type = serviceType as string;
-                // Map frontend service IDs to backend keys if necessary
-                // frontend: boarding, house-sitting, drop-in, day-care, walking
-                // backend: boarding, houseSitting, dropInVisits, doggyDayCare, dogWalking
-                let backendServiceKey = type;
-                if (type === 'house-sitting') backendServiceKey = 'houseSitting';
-                if (type === 'drop-in') backendServiceKey = 'dropInVisits';
-                if (type === 'day-care') backendServiceKey = 'doggyDayCare';
-                if (type === 'walking') backendServiceKey = 'dogWalking';
+                const serviceMap: Record<string, string> = {
+                    'boarding': 'boarding',
+                    'house-sitting': 'houseSitting',
+                    'drop-in': 'dropInVisits',
+                    'day-care': 'doggyDayCare',
+                    'walking': 'dogWalking'
+                };
 
-                const service = sitter.services?.[backendServiceKey as keyof typeof sitter.services];
+                const backendKey = serviceMap[type] || type;
+                const service = sitter.services?.[backendKey as keyof typeof sitter.services];
                 if (!service?.active) return false;
+            }
+
+            // Multiple Service Types Filter (from advanced filters)
+            if (serviceTypes) {
+                const serviceTypesArray = (serviceTypes as string).split(',').map(s => s.trim().toLowerCase());
+                const services = sitter.services || {};
+
+                const serviceMap: Record<string, keyof typeof services> = {
+                    'boarding': 'boarding',
+                    'house-sitting': 'houseSitting',
+                    'housesitting': 'houseSitting',
+                    'drop-in': 'dropInVisits',
+                    'visits': 'dropInVisits',
+                    'day-care': 'doggyDayCare',
+                    'daycare': 'doggyDayCare',
+                    'walking': 'dogWalking'
+                };
+
+                const hasMatchingService = serviceTypesArray.some(type => {
+                    const backendKey = serviceMap[type] || type as keyof typeof services;
+                    const service = services[backendKey];
+                    return service?.active === true;
+                });
+
+                if (!hasMatchingService) return false;
             }
 
             // Pet Type Filter
             if (petType) {
-                // petType is 'dog' or 'cat' (from frontend counters)
-                // backend: 'Dog', 'Cat' (capitalized)
                 const type = (petType as string).charAt(0).toUpperCase() + (petType as string).slice(1);
                 if (!sitter.preferences?.acceptedPetTypes?.includes(type)) return false;
             }
@@ -145,7 +162,6 @@ export const searchSitters = async (req: AuthRequest, res: Response): Promise<vo
                     }
                 });
 
-                // Check if sitter accepts ALL required sizes
                 for (const size of requiredSizes) {
                     if (!sitter.preferences?.acceptedPetSizes?.includes(size)) {
                         return false;
@@ -153,19 +169,25 @@ export const searchSitters = async (req: AuthRequest, res: Response): Promise<vo
                 }
             }
 
-            // Advanced Filters
-
-            // Price Range Filter
+            // Price Range Filter (check against all active service rates)
             if (minPrice || maxPrice) {
                 const services = sitter.services || {};
                 const rates = Object.values(services)
-                    .map((s: any) => s?.rate || 999)
-                    .filter((r: number) => r < 999);
-                const minRate = rates.length > 0 ? Math.min(...rates) : 999;
+                    .filter((s: any) => s?.active === true && s?.rate != null && s?.rate > 0)
+                    .map((s: any) => s.rate);
 
-                // Filter out if rate is below minimum or above maximum
-                if (minPrice && minRate < parseFloat(minPrice as string)) return false;
-                if (maxPrice && minRate > parseFloat(maxPrice as string)) return false;
+                if (rates.length === 0) return false; // No active services with prices
+
+                const minRate = Math.min(...rates);
+                const maxRate = Math.max(...rates);
+
+                // Check if any rate falls within the range
+                const min = minPrice ? parseFloat(minPrice as string) : 0;
+                const max = maxPrice ? parseFloat(maxPrice as string) : Infinity;
+
+                // At least one service rate should be within range
+                const hasRateInRange = rates.some(rate => rate >= min && rate <= max);
+                if (!hasRateInRange) return false;
             }
 
             // Verified Only Filter
@@ -174,9 +196,12 @@ export const searchSitters = async (req: AuthRequest, res: Response): Promise<vo
             // Minimum Rating Filter
             if (minRating) {
                 const reviews = sitter.reviews || [];
-                if (reviews.length === 0) return false; // No reviews means no rating
+                if (reviews.length === 0) return false;
+
                 const avgRating = reviews.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) / reviews.length;
-                if (avgRating < parseFloat(minRating as string)) return false;
+                const threshold = parseFloat(minRating as string);
+
+                if (avgRating < threshold) return false;
             }
 
             // Has Reviews Filter
@@ -188,57 +213,18 @@ export const searchSitters = async (req: AuthRequest, res: Response): Promise<vo
             // Minimum Experience Filter
             if (minExperience) {
                 const exp = sitter.yearsExperience || 0;
-                if (exp < parseFloat(minExperience as string)) return false;
+                const threshold = parseFloat(minExperience as string);
+
+                if (exp < threshold) return false;
             }
 
-            // Max Distance Filter (already handled in query, but double-check)
+            // Max Distance is already handled in the SQL query above
+            // But double-check for consistency
             if (maxDistance && (sitter as any).distance !== null && (sitter as any).distance !== undefined) {
                 const dist = parseFloat((sitter as any).distance);
                 const maxDist = parseFloat(maxDistance as string);
                 if (dist > maxDist) return false;
             }
-
-            // Multiple Service Types Filter
-            if (serviceTypes) {
-                const serviceTypesArray = (serviceTypes as string).split(',');
-                const services = sitter.services || {};
-                const serviceMap: Record<string, keyof typeof services> = {
-                    'boarding': 'boarding',
-                    'housesitting': 'houseSitting',
-                    'visits': 'dropInVisits',
-                    'daycare': 'doggyDayCare',
-                    'walking': 'dogWalking',
-                };
-
-                const hasMatchingService = serviceTypesArray.some(type => {
-                    const backendKey = serviceMap[type] || type as keyof typeof services;
-                    const service = services[backendKey];
-                    return service?.active;
-                });
-
-                if (!hasMatchingService) return false;
-            }
-
-            // Availability Filter (Blocked Dates)
-            // User requested to remove this filter for now (2025-12-03)
-            /*
-            if (req.query.startDate && req.query.endDate) {
-                const start = new Date(req.query.startDate as string);
-                start.setHours(0, 0, 0, 0);
-                const end = new Date(req.query.endDate as string);
-                end.setHours(0, 0, 0, 0);
-                
-                if (sitter.availability?.blockedDates && sitter.availability.blockedDates.length > 0) {
-                    const hasConflict = sitter.availability.blockedDates.some(dateStr => {
-                        const blockedDate = new Date(dateStr);
-                        blockedDate.setHours(0, 0, 0, 0);
-                        return blockedDate.getTime() >= start.getTime() && blockedDate.getTime() <= end.getTime();
-                    });
-                    
-                    if (hasConflict) return false;
-                }
-            }
-            */
 
             return true;
         });
