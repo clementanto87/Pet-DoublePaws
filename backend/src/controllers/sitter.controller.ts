@@ -56,12 +56,22 @@ export const searchSitters = async (req: AuthRequest, res: Response): Promise<vo
             serviceType,
             petType,
             weight,
-            radius = 20
+            radius = 20,
+            // Advanced filter parameters
+            minPrice,
+            maxPrice,
+            minRating,
+            maxDistance,
+            minExperience,
+            verifiedOnly,
+            hasReviews,
+            serviceTypes // Comma-separated list of service types
         } = req.query;
 
         const sitterRepository = AppDataSource.getRepository(SitterProfile);
         const query = sitterRepository.createQueryBuilder('sitter')
-            .leftJoinAndSelect('sitter.user', 'user');
+            .leftJoinAndSelect('sitter.user', 'user')
+            .leftJoinAndSelect('sitter.reviews', 'reviews');
 
         // 1. Geolocation Filter
         if (latitude && longitude) {
@@ -80,10 +90,21 @@ export const searchSitters = async (req: AuthRequest, res: Response): Promise<vo
                 .orderBy('distance', 'ASC');
         }
 
-        const sitters = await query.getMany();
+        let sittersWithDistance;
+        if (latitude && longitude) {
+            const result = await query.getRawAndEntities();
+            // Map distance from raw results to entities
+            sittersWithDistance = result.entities.map((sitter, index) => {
+                const raw = result.raw[index];
+                (sitter as any).distance = raw?.distance || null;
+                return sitter;
+            });
+        } else {
+            sittersWithDistance = await query.getMany();
+        }
 
         // 2. In-Memory Filtering for JSON fields (Robustness)
-        const filteredSitters = sitters.filter(sitter => {
+        const filteredSitters = sittersWithDistance.filter(sitter => {
             // Service Filter
             if (serviceType) {
                 const type = serviceType as string;
@@ -130,6 +151,72 @@ export const searchSitters = async (req: AuthRequest, res: Response): Promise<vo
                         return false;
                     }
                 }
+            }
+
+            // Advanced Filters
+
+            // Price Range Filter
+            if (minPrice || maxPrice) {
+                const services = sitter.services || {};
+                const rates = Object.values(services)
+                    .map((s: any) => s?.rate || 999)
+                    .filter((r: number) => r < 999);
+                const minRate = rates.length > 0 ? Math.min(...rates) : 999;
+
+                // Filter out if rate is below minimum or above maximum
+                if (minPrice && minRate < parseFloat(minPrice as string)) return false;
+                if (maxPrice && minRate > parseFloat(maxPrice as string)) return false;
+            }
+
+            // Verified Only Filter
+            if (verifiedOnly === 'true' && !sitter.isVerified) return false;
+
+            // Minimum Rating Filter
+            if (minRating) {
+                const reviews = sitter.reviews || [];
+                if (reviews.length === 0) return false; // No reviews means no rating
+                const avgRating = reviews.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) / reviews.length;
+                if (avgRating < parseFloat(minRating as string)) return false;
+            }
+
+            // Has Reviews Filter
+            if (hasReviews === 'true') {
+                const reviews = sitter.reviews || [];
+                if (reviews.length === 0) return false;
+            }
+
+            // Minimum Experience Filter
+            if (minExperience) {
+                const exp = sitter.yearsExperience || 0;
+                if (exp < parseFloat(minExperience as string)) return false;
+            }
+
+            // Max Distance Filter (already handled in query, but double-check)
+            if (maxDistance && (sitter as any).distance !== null && (sitter as any).distance !== undefined) {
+                const dist = parseFloat((sitter as any).distance);
+                const maxDist = parseFloat(maxDistance as string);
+                if (dist > maxDist) return false;
+            }
+
+            // Multiple Service Types Filter
+            if (serviceTypes) {
+                const serviceTypesArray = (serviceTypes as string).split(',');
+                const services = sitter.services || {};
+                const serviceMap: Record<string, keyof typeof services> = {
+                    'boarding': 'boarding',
+                    'housesitting': 'houseSitting',
+                    'visits': 'dropInVisits',
+                    'daycare': 'doggyDayCare',
+                    'walking': 'dogWalking',
+                };
+
+                const hasMatchingService = serviceTypesArray.some(type => {
+                    const backendKey = serviceMap[type] || type as keyof typeof services;
+                    const service = services[backendKey];
+                    return service?.active;
+                });
+
+                if (!hasMatchingService) return false;
             }
 
             // Availability Filter (Blocked Dates)

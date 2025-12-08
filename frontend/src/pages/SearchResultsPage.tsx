@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { sitterService } from '../services/sitter.service';
 import { bookingService } from '../services/booking.service';
@@ -52,12 +52,12 @@ const getMonthlyAvailability = (sitter: SitterData, monthOffset: number = 0, boo
     const hasWeekdays = generalAvailability.includes('Weekdays');
     const hasWeekends = generalAvailability.includes('Weekends');
     const hasFullTime = generalAvailability.includes('Full-Time');
-    
+
     // Map day names to day numbers (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
     const dayNameToNumber: Record<string, number> = {
         'Sun': 0, 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6
     };
-    
+
     // Get specific days selected
     const specificDays = new Set<number>();
     generalAvailability.forEach((item: string) => {
@@ -65,27 +65,27 @@ const getMonthlyAvailability = (sitter: SitterData, monthOffset: number = 0, boo
             specificDays.add(dayNameToNumber[item]);
         }
     });
-    
+
     // Helper function to check if a date matches general availability
     const isDayAvailable = (date: Date): boolean => {
         // If Full-Time is selected, all days are available (unless specifically blocked)
         if (hasFullTime) return true;
-        
+
         const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
-        
+
         // Check if specific day is selected
         if (specificDays.has(dayOfWeek)) return true;
-        
+
         // Check weekday/weekend rules
         const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5; // Monday to Friday
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // Saturday or Sunday
-        
+
         if (hasWeekdays && isWeekday) return true;
         if (hasWeekends && isWeekend) return true;
-        
+
         // If no general availability is set, default to all days available
         if (generalAvailability.length === 0) return true;
-        
+
         // Otherwise, day is not available
         return false;
     };
@@ -95,7 +95,7 @@ const getMonthlyAvailability = (sitter: SitterData, monthOffset: number = 0, boo
     bookings.forEach((booking) => {
         const startDate = new Date(booking.startDate);
         const endDate = new Date(booking.endDate);
-        
+
         // Check if booking overlaps with this month
         if (startDate.getFullYear() === year && startDate.getMonth() === month) {
             // Booking starts this month
@@ -103,7 +103,7 @@ const getMonthlyAvailability = (sitter: SitterData, monthOffset: number = 0, boo
             const endDay = endDate.getFullYear() === year && endDate.getMonth() === month
                 ? endDate.getDate()
                 : daysInMonth;
-            
+
             for (let day = startDay; day <= endDay; day++) {
                 bookedSet.add(day);
             }
@@ -211,6 +211,12 @@ interface SitterData {
         outdoorSpace?: string;
     };
     distance?: number;
+    availability?: {
+        general?: string[];
+        blockedDates?: string[];
+    };
+    updatedAt?: string;
+    reviews?: any[]; // Reviews array for rating and review count
 }
 
 type ViewMode = 'split' | 'list' | 'map';
@@ -247,8 +253,33 @@ const SearchResultsPage: React.FC = () => {
     const [isGettingEditLocation, setIsGettingEditLocation] = useState(false);
     const [editLocationError, setEditLocationError] = useState('');
 
+    // Get price for sitter (needed before filter states)
+    const getSitterPrice = useCallback((sitter: SitterData) => {
+        const services = sitter.services || {};
+        const rates = Object.values(services).map((s) => s?.rate || 999).filter(r => r < 999);
+        return rates.length > 0 ? Math.min(...rates) : 25;
+    }, []);
+
+    // Calculate dynamic price range from sitters
+    const maxPrice = useMemo(() => {
+        if (sitters.length === 0) return 200;
+        const prices = sitters.map(s => getSitterPrice(s));
+        const max = Math.max(...prices);
+        return Math.ceil(max / 10) * 10; // Round up to nearest 10
+    }, [sitters, getSitterPrice]);
+
     // Filter states
-    const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
+    const [priceRange, setPriceRange] = useState<[number, number]>([0, 200]);
+
+    // Update price range max when maxPrice changes (but don't trigger filter refetch)
+    useEffect(() => {
+        // Only update if the current max is greater than the new maxPrice
+        // This prevents unnecessary updates that would trigger filter refetch
+        if (maxPrice > 0 && priceRange[1] > maxPrice) {
+            setPriceRange([priceRange[0], maxPrice]);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [maxPrice]); // Intentionally not including priceRange to avoid loops
     const [verifiedOnly, setVerifiedOnly] = useState(false);
     const [minRating, setMinRating] = useState(0);
     const [maxDistance, setMaxDistance] = useState(50);
@@ -258,78 +289,197 @@ const SearchResultsPage: React.FC = () => {
 
     // Availability week navigator state (must be before any conditional returns)
     const [weekOffset, setWeekOffset] = useState<Record<string, number>>({});
-    
+
     // Bookings state for each sitter
     const [sitterBookings, setSitterBookings] = useState<Record<string, any[]>>({});
 
-    // Preserve search params for navigation
+    // Preserve search params for navigation (used in JSX)
     const searchParamsString = searchParams.toString();
 
-    useEffect(() => {
-        const fetchSitters = async () => {
-            setLoading(true);
-            setError('');
-            try {
-                // Map URL params to API params
-                const apiParams: any = {};
+    // Debounce function for filter changes
+    const [filterDebounceTimer, setFilterDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+    const isInitialMount = useRef(true);
+    const previousFilters = useRef<string>('');
+    const isFetching = useRef(false);
+    const searchParamsStringRef = useRef<string>('');
 
-                // Get coordinates from URL
-                const latitude = searchParams.get('latitude');
-                const longitude = searchParams.get('longitude');
-                if (latitude && longitude) {
-                    apiParams.latitude = latitude;
-                    apiParams.longitude = longitude;
-                    apiParams.radius = 50; // Default 50km radius
-                }
+    // Stable fetch function using refs to prevent re-creation
+    const fetchSittersRef = useRef(async (filterParams?: {
+        priceRange: [number, number];
+        minRating: number;
+        maxDistance: number;
+        minExperience: number;
+        verifiedOnly: boolean;
+        hasReviews: boolean;
+        selectedServiceTypes: Set<string>;
+        maxPrice: number;
+    }) => {
+        // Prevent concurrent calls
+        if (isFetching.current) {
+            console.log('Already fetching, skipping...');
+            return;
+        }
 
-                // Map service type
-                const service = searchParams.get('service');
-                if (service) {
-                    // Map frontend service IDs to backend format
-                    const serviceMap: Record<string, string> = {
-                        'boarding': 'boarding',
-                        'housesitting': 'houseSitting',
-                        'visits': 'dropInVisits',
-                        'daycare': 'doggyDayCare',
-                        'walking': 'dogWalking',
-                    };
-                    apiParams.serviceType = serviceMap[service] || service;
-                }
+        isFetching.current = true;
+        setLoading(true);
+        setError('');
 
-                console.log('Fetching sitters with params:', apiParams);
-                const data = await sitterService.searchSitters(apiParams);
-                console.log('Received sitters:', data);
+        try {
+            // Map URL params to API params
+            const apiParams: any = {};
 
-                // Transform backend response to frontend format
-                const transformedData: SitterData[] = data.map((profile: any) => ({
-                    id: profile.id,
-                    user: profile.user,
-                    headline: profile.headline,
-                    bio: profile.bio,
-                    address: profile.address,
-                    latitude: profile.latitude,
-                    longitude: profile.longitude,
-                    isVerified: profile.isVerified || false,
-                    services: profile.services,
-                    skills: profile.skills,
-                    yearsExperience: profile.yearsExperience,
-                    housing: profile.housing,
-                    distance: profile.distance, // Backend calculates this
-                    availability: profile.availability,
-                    updatedAt: profile.updatedAt,
-                }));
-
-                setSitters(transformedData);
-            } catch (err) {
-                console.error('Failed to fetch sitters:', err);
-                setError('Failed to load sitters. Please try again.');
-            } finally {
-                setLoading(false);
+            // Get coordinates from URL
+            const latitude = searchParams.get('latitude');
+            const longitude = searchParams.get('longitude');
+            if (latitude && longitude) {
+                apiParams.latitude = latitude;
+                apiParams.longitude = longitude;
+                // Use filter maxDistance if available, otherwise default to 50
+                const radius = filterParams && filterParams.maxDistance < 50 ? filterParams.maxDistance : 50;
+                apiParams.radius = radius;
             }
-        };
 
-        fetchSitters();
+            // Map service type
+            const service = searchParams.get('service');
+            if (service) {
+                // Map frontend service IDs to backend format
+                const serviceMap: Record<string, string> = {
+                    'boarding': 'boarding',
+                    'housesitting': 'houseSitting',
+                    'visits': 'dropInVisits',
+                    'daycare': 'doggyDayCare',
+                    'walking': 'dogWalking',
+                };
+                apiParams.serviceType = serviceMap[service] || service;
+            }
+
+            // Add advanced filter parameters if filterParams is provided
+            if (filterParams) {
+                if (filterParams.priceRange[0] > 0) apiParams.minPrice = filterParams.priceRange[0].toString();
+                if (filterParams.priceRange[1] < filterParams.maxPrice) apiParams.maxPrice = filterParams.priceRange[1].toString();
+                if (filterParams.minRating > 0) apiParams.minRating = filterParams.minRating.toString();
+                if (filterParams.maxDistance < 50) apiParams.maxDistance = filterParams.maxDistance.toString();
+                if (filterParams.minExperience > 0) apiParams.minExperience = filterParams.minExperience.toString();
+                if (filterParams.verifiedOnly) apiParams.verifiedOnly = 'true';
+                if (filterParams.hasReviews) apiParams.hasReviews = 'true';
+                if (filterParams.selectedServiceTypes.size > 0) {
+                    apiParams.serviceTypes = Array.from(filterParams.selectedServiceTypes).join(',');
+                }
+            }
+
+            console.log('Fetching sitters with params:', apiParams);
+            const data = await sitterService.searchSitters(apiParams);
+            console.log('Received sitters:', data);
+
+            // Transform backend response to frontend format
+            const transformedData: SitterData[] = data.map((profile: any) => ({
+                id: profile.id,
+                user: profile.user,
+                headline: profile.headline,
+                bio: profile.bio,
+                address: profile.address,
+                latitude: profile.latitude,
+                longitude: profile.longitude,
+                isVerified: profile.isVerified || false,
+                services: profile.services,
+                skills: profile.skills,
+                yearsExperience: profile.yearsExperience,
+                housing: profile.housing,
+                distance: profile.distance, // Backend calculates this
+                availability: profile.availability,
+                updatedAt: profile.updatedAt,
+                reviews: profile.reviews || [], // Include reviews for rating filter
+            }));
+
+            setSitters(transformedData);
+        } catch (err) {
+            console.error('Failed to fetch sitters:', err);
+            setError('Failed to load sitters. Please try again.');
+        } finally {
+            setLoading(false);
+            isFetching.current = false;
+        }
+    });
+
+    // Fetch sitters when search params change (initial load)
+    useEffect(() => {
+        const currentParamsString = searchParams.toString();
+
+        // Only fetch if search params actually changed
+        if (currentParamsString === searchParamsStringRef.current) {
+            return;
+        }
+
+        searchParamsStringRef.current = currentParamsString;
+        isInitialMount.current = true;
+        previousFilters.current = '';
+        isFetching.current = false; // Reset fetching flag
+
+        fetchSittersRef.current();
     }, [searchParams]);
+
+    // Fetch sitters when filters change (with debouncing)
+    useEffect(() => {
+        // Skip on initial mount
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
+
+        // Don't fetch if already fetching
+        if (isFetching.current) {
+            return;
+        }
+
+        // Create a string representation of current filters to detect changes
+        const currentFilters = JSON.stringify({
+            priceRange,
+            minRating,
+            maxDistance,
+            minExperience,
+            verifiedOnly,
+            hasReviews,
+            selectedServiceTypes: Array.from(selectedServiceTypes).sort()
+        });
+
+        // Only proceed if filters actually changed
+        if (currentFilters === previousFilters.current) {
+            return;
+        }
+
+        previousFilters.current = currentFilters;
+
+        // Clear existing timer
+        if (filterDebounceTimer) {
+            clearTimeout(filterDebounceTimer);
+        }
+
+        // Set new timer to debounce filter changes
+        const timer = setTimeout(() => {
+            if (!isFetching.current) {
+                // Capture maxPrice at the time of the API call
+                const currentMaxPrice = maxPrice;
+                fetchSittersRef.current({
+                    priceRange,
+                    minRating,
+                    maxDistance,
+                    minExperience,
+                    verifiedOnly,
+                    hasReviews,
+                    selectedServiceTypes,
+                    maxPrice: currentMaxPrice
+                });
+            }
+        }, 500); // 500ms debounce
+
+        setFilterDebounceTimer(timer);
+
+        // Cleanup
+        return () => {
+            if (timer) clearTimeout(timer);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [priceRange, minRating, maxDistance, minExperience, verifiedOnly, hasReviews, selectedServiceTypes]);
 
     // Handle Near Me for search modification
     const handleEditNearMe = async () => {
@@ -381,72 +531,34 @@ const SearchResultsPage: React.FC = () => {
         return [avgLat, avgLng] as [number, number];
     }, [sitters]);
 
-    // Get price for sitter
-    const getSitterPrice = useCallback((sitter: SitterData) => {
-        const services = sitter.services || {};
-        const rates = Object.values(services).map((s) => s?.rate || 999).filter(r => r < 999);
-        return rates.length > 0 ? Math.min(...rates) : 25;
+    // Get rating for sitter (from reviews if available)
+    const getSitterRating = useCallback((sitter: SitterData) => {
+        // Calculate average rating from reviews if available
+        if (sitter.reviews && sitter.reviews.length > 0) {
+            const totalRating = sitter.reviews.reduce((sum: number, review: any) => sum + (review.rating || 0), 0);
+            return totalRating / sitter.reviews.length;
+        }
+        // Default to 5.0 if no reviews (new sitters)
+        return 5.0;
     }, []);
 
-    // Sort sitters
+    // Sort sitters (filtering is now done on backend, only sorting here)
     const sortedSitters = useMemo(() => {
-        let filtered = [...sitters];
-
-        if (verifiedOnly) {
-            filtered = filtered.filter(s => s.isVerified);
-        }
-
-        filtered = filtered.filter(s => {
-            const price = getSitterPrice(s);
-            return price >= priceRange[0] && price <= priceRange[1];
-        });
-
-        // Additional filters
-        if (minRating > 0) {
-            // Assuming all have 5.0 for now, but filter by actual rating if available
-            filtered = filtered.filter(s => {
-                // In real app, use actual rating from sitter data
-                return true; // Placeholder
-            });
-        }
-
-        if (maxDistance < 50) {
-            filtered = filtered.filter(s => {
-                return (s.distance || 0) <= maxDistance;
-            });
-        }
-
-        if (minExperience > 0) {
-            filtered = filtered.filter(s => {
-                return (s.yearsExperience || 0) >= minExperience;
-            });
-        }
-
-        if (hasReviews) {
-            // Filter sitters with reviews (assuming review count > 0)
-            // In real app, check actual review count
-        }
-
-        if (selectedServiceTypes.size > 0) {
-            filtered = filtered.filter(s => {
-                const services = s.services || {};
-                return Array.from(selectedServiceTypes).some(type => services[type]?.active);
-            });
-        }
+        let sorted = [...sitters];
 
         switch (sortBy) {
             case 'distance':
-                return filtered.sort((a, b) => (a.distance || 0) - (b.distance || 0));
+                return sorted.sort((a, b) => (a.distance || 0) - (b.distance || 0));
             case 'price_low':
-                return filtered.sort((a, b) => getSitterPrice(a) - getSitterPrice(b));
+                return sorted.sort((a, b) => getSitterPrice(a) - getSitterPrice(b));
             case 'price_high':
-                return filtered.sort((a, b) => getSitterPrice(b) - getSitterPrice(a));
+                return sorted.sort((a, b) => getSitterPrice(b) - getSitterPrice(a));
             case 'rating':
-                return filtered;
+                return sorted.sort((a, b) => getSitterRating(b) - getSitterRating(a));
             default:
-                return filtered;
+                return sorted;
         }
-    }, [sitters, sortBy, verifiedOnly, priceRange, minRating, maxDistance, minExperience, hasReviews, selectedServiceTypes, getSitterPrice]);
+    }, [sitters, sortBy, getSitterPrice, getSitterRating]);
 
     const activeFilterCount = useMemo(() => {
         let count = 0;
@@ -456,12 +568,12 @@ const SearchResultsPage: React.FC = () => {
         if (minExperience > 0) count++;
         if (hasReviews) count++;
         if (selectedServiceTypes.size > 0) count++;
-        if (priceRange[0] > 0 || priceRange[1] < 100) count++;
+        if (priceRange[0] > 0 || priceRange[1] < maxPrice) count++;
         return count;
-    }, [verifiedOnly, minRating, maxDistance, minExperience, hasReviews, selectedServiceTypes, priceRange]);
+    }, [verifiedOnly, minRating, maxDistance, minExperience, hasReviews, selectedServiceTypes, priceRange, maxPrice]);
 
     const clearAllFilters = () => {
-        setPriceRange([0, 100]);
+        setPriceRange([0, maxPrice]);
         setVerifiedOnly(false);
         setMinRating(0);
         setMaxDistance(50);
@@ -1214,11 +1326,15 @@ const SearchResultsPage: React.FC = () => {
                                                     <input
                                                         type="number"
                                                         value={priceRange[0]}
-                                                        onChange={(e) => setPriceRange([parseInt(e.target.value) || 0, priceRange[1]])}
+                                                        onChange={(e) => {
+                                                            const val = parseInt(e.target.value) || 0;
+                                                            setPriceRange([Math.min(val, priceRange[1]), priceRange[1]]);
+                                                        }}
                                                         className="w-full px-3 py-2 rounded-lg border-2 border-gray-200 dark:border-gray-700 
                                                                     bg-white dark:bg-gray-800 text-sm font-medium focus:border-primary focus:ring-0
                                                                     text-gray-900 dark:text-white transition-colors"
                                                         min={0}
+                                                        max={maxPrice}
                                                     />
                                                 </div>
                                                 <div className="flex-1">
@@ -1226,11 +1342,15 @@ const SearchResultsPage: React.FC = () => {
                                                     <input
                                                         type="number"
                                                         value={priceRange[1]}
-                                                        onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value) || 100])}
+                                                        onChange={(e) => {
+                                                            const val = parseInt(e.target.value) || maxPrice;
+                                                            setPriceRange([priceRange[0], Math.max(priceRange[0], Math.min(val, maxPrice))]);
+                                                        }}
                                                         className="w-full px-3 py-2 rounded-lg border-2 border-gray-200 dark:border-gray-700 
                                                                     bg-white dark:bg-gray-800 text-sm font-medium focus:border-primary focus:ring-0
                                                                     text-gray-900 dark:text-white transition-colors"
-                                                        min={0}
+                                                        min={priceRange[0]}
+                                                        max={maxPrice}
                                                     />
                                                 </div>
                                             </div>
@@ -1240,8 +1360,8 @@ const SearchResultsPage: React.FC = () => {
                                                     <div
                                                         className="absolute h-full bg-gradient-to-r from-primary to-amber-500 rounded-full"
                                                         style={{
-                                                            left: `${(priceRange[0] / 100) * 100}%`,
-                                                            width: `${((priceRange[1] - priceRange[0]) / 100) * 100}%`
+                                                            left: `${(priceRange[0] / maxPrice) * 100}%`,
+                                                            width: `${((priceRange[1] - priceRange[0]) / maxPrice) * 100}%`
                                                         }}
                                                     />
                                                 </div>
