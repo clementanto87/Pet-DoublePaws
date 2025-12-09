@@ -121,8 +121,8 @@ const FindSitterSearchBox: React.FC<FindSitterSearchBoxProps> = ({
                     <p className="text-xs md:text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2 md:mb-4 flex items-center gap-1.5 md:gap-2">
                         <span className="text-sm md:text-lg">🎯</span> {t('landing.whatServiceNeeded')}
                     </p>
-                    {/* Compact Grid Layout - 3 columns on mobile to fit all services, 5 on desktop */}
-                    <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-5 gap-1.5 md:gap-3">
+                    {/* Flex Layout for centered items - 3 columns mobile, 5 desktop */}
+                    <div className="flex flex-wrap justify-center gap-2 md:gap-3">
                         {serviceOptions.map((service, index) => (
                             <motion.button
                                 key={service.id}
@@ -132,7 +132,7 @@ const FindSitterSearchBox: React.FC<FindSitterSearchBoxProps> = ({
                                 whileHover={{ scale: 1.03, y: -3 }}
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => setSelectedService(service.id)}
-                                className={`relative p-2 md:p-4 rounded-lg md:rounded-2xl text-left transition-all duration-300 overflow-hidden group flex flex-col justify-center items-center md:items-start min-h-[80px] md:aspect-square ${selectedService === service.id
+                                className={`relative w-[31%] lg:w-[18%] p-2 md:p-4 rounded-lg md:rounded-2xl text-left transition-all duration-300 overflow-hidden group flex flex-col justify-center items-center md:items-start min-h-[80px] md:aspect-square ${selectedService === service.id
                                     ? 'bg-gradient-to-br ' + service.color + ' text-white shadow-md md:shadow-lg ring-1 md:ring-2 ring-offset-0 md:ring-offset-2 ring-primary/50'
                                     : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm md:hover:shadow-md border border-transparent hover:border-gray-200 dark:hover:border-gray-600'
                                     }`}

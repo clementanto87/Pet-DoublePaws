@@ -130,7 +130,7 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
             </div>
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-8 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-5 space-y-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
 
                 {/* Location Section */}
                 <section>
