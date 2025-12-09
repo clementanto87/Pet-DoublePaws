@@ -27,6 +27,7 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const isSelectingRef = useRef(false);
+    const isUserTypingRef = useRef(false);
 
     useEffect(() => {
         // Skip search if value was set programmatically (from selection)
@@ -38,6 +39,12 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
         // Debounce address search
         if (debounceTimer.current) {
             clearTimeout(debounceTimer.current);
+        }
+
+
+        // Only search if the user is actively typing
+        if (!isUserTypingRef.current) {
+            return;
         }
 
         if (value.length >= 3) {
@@ -69,8 +76,9 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
 
     const handleSelectAddress = (address: Address) => {
         const formattedAddress = formatAddressShort(address);
-        // Mark that we're selecting to prevent triggering new search
+        // Mark that we're selecting and NOT typing
         isSelectingRef.current = true;
+        isUserTypingRef.current = false;
         // Clear suggestions immediately
         setShowSuggestions(false);
         setSuggestions([]);
@@ -79,6 +87,7 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        isUserTypingRef.current = true;
         onChange(e.target.value);
     };
 

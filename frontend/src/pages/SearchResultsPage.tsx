@@ -8,16 +8,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     MapPin, Star, Shield, Heart, Grid3X3,
     List, Map as MapIcon, ChevronDown, X,
-    Home, DollarSign, SlidersHorizontal, Sparkles,
-    Award, CheckCircle2, ArrowUpDown, Search, Navigation,
-    Calendar, PawPrint, Sun, Building2, ArrowRight,
-    ChevronLeft, ChevronRight, MessageCircle, Filter,
-    XCircle, Loader2, AlertCircle
+    Home, SlidersHorizontal, Sparkles,
+    Award, CheckCircle2, ArrowUpDown, Search,
+    Calendar, PawPrint, Sun, Building2,
+    ChevronLeft, ChevronRight, MessageCircle
 } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
-import { AddressAutocomplete } from '../components/ui/AddressAutocomplete';
-import { getCurrentPosition, reverseGeocode } from '../utils/geocoding';
-import type { Address } from '../utils/geocoding';
+import { SearchFilters } from '../components/search/SearchFilters';
 
 // Get monthly calendar availability from real backend data
 const getMonthlyAvailability = (sitter: SitterData, monthOffset: number = 0, bookings: any[] = []) => {
@@ -269,7 +266,8 @@ const SearchResultsPage: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
     const [sitters, setSitters] = useState<SitterData[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [initialLoading, setInitialLoading] = useState(true); // Only for initial page load
+    const [filterLoading, setFilterLoading] = useState(false); // For filter updates
     const [error, setError] = useState('');
     const [hoveredSitter, setHoveredSitter] = useState<string | null>(null);
     const [selectedSitter, setSelectedSitter] = useState<string | null>(null);
@@ -278,47 +276,42 @@ const SearchResultsPage: React.FC = () => {
     const [sortBy, setSortBy] = useState<SortOption>('distance');
     const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
-    // Search modification states
-    const [editLocation, setEditLocation] = useState(searchParams.get('location') || '');
-    const [editService, setEditService] = useState(searchParams.get('service') || 'boarding');
-    const [isSearchExpanded, setIsSearchExpanded] = useState(false);
-    const [selectedEditAddress, setSelectedEditAddress] = useState<Address | null>(null);
-    const [isGettingEditLocation, setIsGettingEditLocation] = useState(false);
-    const [editLocationError, setEditLocationError] = useState('');
+    // Filter state
+    const [filters, setFilters] = useState({
+        location: searchParams.get('location') || '',
+        service: searchParams.get('service') || 'boarding',
+        latitude: parseFloat(searchParams.get('latitude') || '0'),
+        longitude: parseFloat(searchParams.get('longitude') || '0'),
+        priceRange: [0, 200] as [number, number],
+        maxPrice: 200,
+        minRating: 0,
+        maxDistance: 50,
+        minExperience: 0,
+        verifiedOnly: false,
+        hasReviews: false,
+        selectedServiceTypes: new Set<string>()
+    });
 
-    // Get price for sitter (needed before filter states)
-    const getSitterPrice = useCallback((sitter: SitterData) => {
-        const services = sitter.services || {};
-        const rates = Object.values(services).map((s) => s?.rate || 999).filter(r => r < 999);
-        return rates.length > 0 ? Math.min(...rates) : 25;
-    }, []);
+    const isInitialMount = useRef(true);
+    const searchParamsStringRef = useRef<string>('');
+    const fetchingRef = useRef(false);
 
-    // Calculate dynamic price range from sitters
-    const maxPrice = useMemo(() => {
-        if (sitters.length === 0) return 200;
-        const prices = sitters.map(s => getSitterPrice(s));
-        const max = Math.max(...prices);
-        return Math.ceil(max / 10) * 10; // Round up to nearest 10
-    }, [sitters, getSitterPrice]);
-
-    // Filter states
-    const [priceRange, setPriceRange] = useState<[number, number]>([0, 200]);
-
-    // Update price range max when maxPrice changes (but don't trigger filter refetch)
+    // Initial filter setup from URL
     useEffect(() => {
-        // Only update if the current max is greater than the new maxPrice
-        // This prevents unnecessary updates that would trigger filter refetch
-        if (maxPrice > 0 && priceRange[1] > maxPrice) {
-            setPriceRange([priceRange[0], maxPrice]);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [maxPrice]); // Intentionally not including priceRange to avoid loops
-    const [verifiedOnly, setVerifiedOnly] = useState(false);
-    const [minRating, setMinRating] = useState(0);
-    const [maxDistance, setMaxDistance] = useState(50);
-    const [minExperience, setMinExperience] = useState(0);
-    const [hasReviews, setHasReviews] = useState(false);
-    const [selectedServiceTypes, setSelectedServiceTypes] = useState<Set<string>>(new Set());
+        const location = searchParams.get('location') || '';
+        const service = searchParams.get('service') || 'boarding';
+        const lat = parseFloat(searchParams.get('latitude') || '0');
+        const lng = parseFloat(searchParams.get('longitude') || '0');
+
+        setFilters(prev => ({
+            ...prev,
+            location,
+            service,
+            latitude: lat || prev.latitude,
+            longitude: lng || prev.longitude
+        }));
+    }, [searchParams]);
+
 
     // Availability week navigator state (must be before any conditional returns)
     const [weekOffset, setWeekOffset] = useState<Record<string, number>>({});
@@ -329,245 +322,153 @@ const SearchResultsPage: React.FC = () => {
     // Preserve search params for navigation (used in JSX)
     const searchParamsString = searchParams.toString();
 
-    // Debounce function for filter changes
-    const [filterDebounceTimer, setFilterDebounceTimer] = useState<NodeJS.Timeout | null>(null);
-    const isInitialMount = useRef(true);
-    const previousFilters = useRef<string>('');
-    const isFetching = useRef(false);
-    const searchParamsStringRef = useRef<string>('');
-    const hasInitialFetchStarted = useRef(false); // Track if initial fetch has started
-
-    // Stable fetch function using refs to prevent re-creation
-    const fetchSittersRef = useRef(async (filterParams?: {
-        priceRange: [number, number];
-        minRating: number;
-        maxDistance: number;
-        minExperience: number;
-        verifiedOnly: boolean;
-        hasReviews: boolean;
-        selectedServiceTypes: Set<string>;
-        maxPrice: number;
-    }) => {
-        // Prevent concurrent calls
-        if (isFetching.current) {
-            console.log('Already fetching, skipping...');
-            return;
+    // Stable fetch function
+    const fetchSitters = useCallback(async (currentFilters: any, isInitialLoad: boolean = false) => {
+        // Prevent concurrent calls if needed, though debouncing helps
+        if (fetchingRef.current) return;
+        fetchingRef.current = true;
+        
+        // Only show full page loading on initial load
+        if (isInitialLoad) {
+            setInitialLoading(true);
+        } else {
+            setFilterLoading(true);
         }
+            setError('');
 
-        isFetching.current = true;
-        setLoading(true);
-        setError('');
+            try {
+                const apiParams: any = {};
 
-        try {
-            // Map URL params to API params
-            const apiParams: any = {};
-
-            // Get coordinates from URL
-            const latitude = searchParams.get('latitude');
-            const longitude = searchParams.get('longitude');
-            if (latitude && longitude) {
-                apiParams.latitude = latitude;
-                apiParams.longitude = longitude;
-                // Use filter maxDistance if available, otherwise default to 50
-                const radius = filterParams && filterParams.maxDistance < 50 ? filterParams.maxDistance : 50;
-                apiParams.radius = radius;
+            // Core Location Params
+            if (currentFilters.latitude && currentFilters.longitude) {
+                apiParams.latitude = currentFilters.latitude.toString();
+                apiParams.longitude = currentFilters.longitude.toString();
+                apiParams.radius = (currentFilters.maxDistance || 50).toString();
             }
 
-            // Map service type
-            const service = searchParams.get('service');
-            if (service) {
-                // Map frontend service IDs to backend format
-                const serviceMap: Record<string, string> = {
-                    'boarding': 'boarding',
-                    'housesitting': 'houseSitting',
-                    'visits': 'dropInVisits',
-                    'daycare': 'doggyDayCare',
-                    'walking': 'dogWalking',
-                };
-                apiParams.serviceType = serviceMap[service] || service;
+            // Service Type
+            if (currentFilters.service) {
+                    const serviceMap: Record<string, string> = {
+                        'boarding': 'boarding',
+                        'housesitting': 'houseSitting',
+                        'visits': 'dropInVisits',
+                        'daycare': 'doggyDayCare',
+                        'walking': 'dogWalking',
+                    };
+                apiParams.serviceType = serviceMap[currentFilters.service] || currentFilters.service;
             }
 
-            // Add advanced filter parameters if filterParams is provided
-            if (filterParams) {
-                if (filterParams.priceRange[0] > 0) apiParams.minPrice = filterParams.priceRange[0].toString();
-                if (filterParams.priceRange[1] < filterParams.maxPrice) apiParams.maxPrice = filterParams.priceRange[1].toString();
-                if (filterParams.minRating > 0) apiParams.minRating = filterParams.minRating.toString();
-                if (filterParams.maxDistance < 50) apiParams.maxDistance = filterParams.maxDistance.toString();
-                if (filterParams.minExperience > 0) apiParams.minExperience = filterParams.minExperience.toString();
-                if (filterParams.verifiedOnly) apiParams.verifiedOnly = 'true';
-                if (filterParams.hasReviews) apiParams.hasReviews = 'true';
-                if (filterParams.selectedServiceTypes.size > 0) {
-                    apiParams.serviceTypes = Array.from(filterParams.selectedServiceTypes).join(',');
-                }
+            // Advanced Filters
+            if (currentFilters.priceRange) {
+                if (currentFilters.priceRange[0] > 0) apiParams.minPrice = currentFilters.priceRange[0].toString();
+                if (currentFilters.priceRange[1] < (currentFilters.maxPrice || 200)) apiParams.maxPrice = currentFilters.priceRange[1].toString();
             }
+            if (currentFilters.minRating > 0) apiParams.minRating = currentFilters.minRating.toString();
+            if (currentFilters.minExperience > 0) apiParams.minExperience = currentFilters.minExperience.toString();
+            if (currentFilters.verifiedOnly) apiParams.verifiedOnly = 'true';
+            if (currentFilters.hasReviews) apiParams.hasReviews = 'true';
 
-            console.log('Fetching sitters with params:', apiParams);
-            const data = await sitterService.searchSitters(apiParams);
-            console.log('Received sitters:', data);
+                console.log('Fetching sitters with params:', apiParams);
+                const data = await sitterService.searchSitters(apiParams);
 
-            // Transform backend response to frontend format
-            const transformedData: SitterData[] = data.map((profile: any) => ({
-                id: profile.id,
-                user: profile.user,
-                headline: profile.headline,
-                bio: profile.bio,
-                address: profile.address,
-                latitude: profile.latitude,
-                longitude: profile.longitude,
-                isVerified: profile.isVerified || false,
-                services: profile.services,
-                skills: profile.skills,
-                yearsExperience: profile.yearsExperience,
-                housing: profile.housing,
-                distance: profile.distance, // Backend calculates this
-                availability: profile.availability,
-                updatedAt: profile.updatedAt,
-                reviews: profile.reviews || [], // Include reviews for rating filter
-            }));
+            // Transform data
+                const transformedData: SitterData[] = data.map((profile: any) => ({
+                    id: profile.id,
+                    user: profile.user,
+                    headline: profile.headline,
+                    bio: profile.bio,
+                    address: profile.address,
+                    latitude: profile.latitude,
+                    longitude: profile.longitude,
+                    isVerified: profile.isVerified || false,
+                    services: profile.services,
+                    skills: profile.skills,
+                    yearsExperience: profile.yearsExperience,
+                    housing: profile.housing,
+                distance: profile.distance,
+                    availability: profile.availability,
+                    updatedAt: profile.updatedAt,
+                reviews: profile.reviews || [],
+                }));
 
-            setSitters(transformedData);
-        } catch (err) {
-            console.error('Failed to fetch sitters:', err);
-            setError('Failed to load sitters. Please try again.');
-        } finally {
-            setLoading(false);
-            isFetching.current = false;
+                setSitters(transformedData);
+            } catch (err) {
+                console.error('Failed to fetch sitters:', err);
+                setError('Failed to load sitters. Please try again.');
+            } finally {
+            if (isInitialLoad) {
+                setInitialLoading(false);
+            } else {
+                setFilterLoading(false);
+            }
+            fetchingRef.current = false;
         }
-    });
+    }, []);
 
-    // Fetch sitters when search params change (initial load)
+    // Initial Fetch on Mount or when search params change from URL (not from filter changes)
     useEffect(() => {
+        // Prevent React Strict Mode double fetch
         const currentParamsString = searchParams.toString();
-
-        // Only fetch if search params actually changed
-        if (currentParamsString === searchParamsStringRef.current) {
+        if (currentParamsString === searchParamsStringRef.current && !isInitialMount.current) {
             return;
         }
-
-        // Prevent duplicate calls from React Strict Mode
-        // Use searchParamsStringRef as the guard since we update it immediately
         searchParamsStringRef.current = currentParamsString;
 
-        // Reset filter tracking
-        previousFilters.current = '';
-
-        // Mark that initial fetch has started
-        hasInitialFetchStarted.current = true;
-        isInitialMount.current = true;
-
-        fetchSittersRef.current();
-    }, [searchParams]); // Only depend on searchParams
-
-    // Fetch sitters when filters change (with debouncing)
-    useEffect(() => {
-        // Skip if initial fetch hasn't started yet (prevents duplicate call on mount)
-        if (!hasInitialFetchStarted.current) {
-            return;
-        }
-
-        // Skip on initial mount - this prevents duplicate call when component first loads with search params
-        // The searchParams useEffect will handle the initial fetch
-        if (isInitialMount.current) {
-            // Mark as no longer initial mount, but don't fetch yet
-            // This allows subsequent filter changes to trigger fetches
-            isInitialMount.current = false;
-            return;
-        }
-
-        // Don't fetch if already fetching
-        if (isFetching.current) {
-            return;
-        }
-
-        // Create a string representation of current filters to detect changes
-        const currentFilters = JSON.stringify({
-            priceRange,
-            minRating,
-            maxDistance,
-            minExperience,
-            verifiedOnly,
-            hasReviews,
-            selectedServiceTypes: Array.from(selectedServiceTypes).sort()
-        });
-
-        // Only proceed if filters actually changed
-        if (currentFilters === previousFilters.current) {
-            return;
-        }
-
-        previousFilters.current = currentFilters;
-
-        // Clear existing timer
-        if (filterDebounceTimer) {
-            clearTimeout(filterDebounceTimer);
-        }
-
-        // Set new timer to debounce filter changes
-        const timer = setTimeout(() => {
-            if (!isFetching.current) {
-                // Capture maxPrice at the time of the API call
-                const currentMaxPrice = maxPrice;
-                fetchSittersRef.current({
-                    priceRange,
-                    minRating,
-                    maxDistance,
-                    minExperience,
-                    verifiedOnly,
-                    hasReviews,
-                    selectedServiceTypes,
-                    maxPrice: currentMaxPrice
-                });
-            }
-        }, 500); // 500ms debounce
-
-        setFilterDebounceTimer(timer);
-
-        // Cleanup
-        return () => {
-            if (timer) clearTimeout(timer);
+        // Construct initial filters from params + defaults
+        const initialFilters = {
+            location: searchParams.get('location') || '',
+            service: searchParams.get('service') || 'boarding',
+            latitude: parseFloat(searchParams.get('latitude') || '0'),
+            longitude: parseFloat(searchParams.get('longitude') || '0'),
+            maxDistance: 50,
+            priceRange: [0, 200],
+            // ... other defaults
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [priceRange, minRating, maxDistance, minExperience, verifiedOnly, hasReviews, selectedServiceTypes]);
 
-    // Handle Near Me for search modification
-    const handleEditNearMe = async () => {
-        setIsGettingEditLocation(true);
-        setEditLocationError('');
-        try {
-            const position = await getCurrentPosition();
-            const address = await reverseGeocode(position.lat, position.lng);
-            setEditLocation(address.display_name.split(',').slice(0, 2).join(','));
-            setSelectedEditAddress(address);
-        } catch (error: any) {
-            setEditLocationError(error.message || 'Failed to get location');
-        } finally {
-            setIsGettingEditLocation(false);
+        // Only use initialLoading on true initial mount, otherwise use filterLoading
+        const isInitial = isInitialMount.current;
+        if (isInitial) {
+            isInitialMount.current = false;
         }
-    };
+        
+        fetchSitters(initialFilters, isInitial);
+    }, [searchParams, fetchSitters]);
 
-    // Handle location change from autocomplete
-    const handleEditLocationChange = (value: string, address?: Address) => {
-        setEditLocation(value);
-        if (address) {
-            setSelectedEditAddress(address);
-        } else {
-            setSelectedEditAddress(null);
-        }
-    };
+    // Handle filter changes from component
+    const handleFilterChange = useCallback((newFilters: any) => {
+        setFilters(prev => {
+            const updated = { ...prev, ...newFilters };
 
-    // Handle search update
-    const handleSearchUpdate = () => {
-        const newParams = new URLSearchParams();
-        if (editService) newParams.set('service', editService);
-        if (editLocation) newParams.set('location', editLocation);
-        // Add coordinates if available
-        if (selectedEditAddress?.coordinates) {
-            newParams.set('latitude', selectedEditAddress.coordinates.lat.toString());
-            newParams.set('longitude', selectedEditAddress.coordinates.lng.toString());
-        }
-        setSearchParams(newParams);
-        setIsSearchExpanded(false);
-    };
+            // Check if core params changed to update URL
+            if (updated.location !== prev.location || updated.service !== prev.service) {
+                // Fetch immediately with filterLoading, then update URL
+                // This prevents the searchParams useEffect from triggering with initialLoading
+                fetchSitters(updated, false); // false = not initial load, use filterLoading
+                
+                // Update URL after fetching to avoid triggering the useEffect
+                const newParams = new URLSearchParams(searchParams);
+                if (updated.location) newParams.set('location', updated.location);
+                if (updated.service) newParams.set('service', updated.service);
+                if (updated.latitude) newParams.set('latitude', updated.latitude.toString());
+                if (updated.longitude) newParams.set('longitude', updated.longitude.toString());
+                
+                // Use replace to avoid triggering the useEffect
+                setSearchParams(newParams, { replace: true });
+            } else {
+                // Only filters changed, not location/service - fetch with updated filters
+                fetchSitters(updated, false); // false = not initial load
+            }
+
+            return updated;
+        });
+    }, [searchParams, setSearchParams, fetchSitters]);
+
+    // Get price for sitter (needed for sorting)
+    const getSitterPrice = useCallback((sitter: SitterData) => {
+        const services = sitter.services || {};
+        const rates = Object.values(services).map((s) => s?.rate || 999).filter(r => r < 999);
+        return rates.length > 0 ? Math.min(...rates) : 25;
+    }, []);
 
     // Calculate map center based on sitters
     const mapCenter = useMemo(() => {
@@ -610,25 +511,13 @@ const SearchResultsPage: React.FC = () => {
 
     const activeFilterCount = useMemo(() => {
         let count = 0;
-        if (verifiedOnly) count++;
-        if (minRating > 0) count++;
-        if (maxDistance < 50) count++;
-        if (minExperience > 0) count++;
-        if (hasReviews) count++;
-        if (selectedServiceTypes.size > 0) count++;
-        if (priceRange[0] > 0 || priceRange[1] < maxPrice) count++;
+        if (filters.verifiedOnly) count++;
+        if (filters.minRating > 0) count++;
+        if (filters.maxDistance < 50) count++;
+        if (filters.hasReviews) count++;
+        if (filters.priceRange[0] > 0 || filters.priceRange[1] < filters.maxPrice) count++;
         return count;
-    }, [verifiedOnly, minRating, maxDistance, minExperience, hasReviews, selectedServiceTypes, priceRange, maxPrice]);
-
-    const clearAllFilters = () => {
-        setPriceRange([0, maxPrice]);
-        setVerifiedOnly(false);
-        setMinRating(0);
-        setMaxDistance(50);
-        setMinExperience(0);
-        setHasReviews(false);
-        setSelectedServiceTypes(new Set());
-    };
+    }, [filters]);
 
     const toggleFavorite = (id: string) => {
         setFavorites(prev => {
@@ -653,9 +542,8 @@ const SearchResultsPage: React.FC = () => {
         return null;
     }, [selectedSitter, sitters]);
 
-    const currentService = serviceOptions.find(s => s.id === searchParams.get('service')) || serviceOptions[0];
-
-    if (loading) {
+    // Only show full page loading on initial load
+    if (initialLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-white to-amber-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
                 <motion.div
@@ -909,7 +797,7 @@ const SearchResultsPage: React.FC = () => {
                                                     ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 cursor-pointer border border-emerald-200'
                                                     : isBooked
                                                         ? 'bg-amber-50 text-amber-700 cursor-default border border-amber-200'
-                                                        : 'text-gray-300 cursor-default bg-gray-50'
+                                                    : 'text-gray-300 cursor-default bg-gray-50'
                                                 }
                                                 ${isToday ? 'ring-2 ring-primary ring-offset-1' : ''}
                                             `}
@@ -1043,143 +931,7 @@ const SearchResultsPage: React.FC = () => {
                 <div className="max-w-7xl mx-auto px-4 py-3 overflow-visible">
                     {/* Main Search Bar - Always Visible */}
                     <div className="flex items-center gap-4">
-                        {/* Search Summary & Quick Edit */}
-                        <div className="flex-1">
-                            <motion.div
-                                className={`relative bg-gray-50 dark:bg-gray-800 rounded-2xl border-2 transition-all overflow-visible ${isSearchExpanded ? 'border-primary' : 'border-transparent hover:border-gray-200'
-                                    }`}
-                            >
-                                <div
-                                    className="flex items-center gap-3 p-3 cursor-pointer"
-                                    onClick={() => setIsSearchExpanded(!isSearchExpanded)}
-                                >
-                                    {/* Service Icon */}
-                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-amber-500 
-                                        flex items-center justify-center shadow-lg shadow-primary/20 flex-shrink-0">
-                                        <span className="text-2xl">{currentService.emoji}</span>
-                                    </div>
 
-                                    {/* Search Info */}
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2">
-                                            <h1 className="text-lg font-bold text-gray-900 dark:text-white truncate">
-                                                {currentService.label}
-                                            </h1>
-                                            <span className="text-gray-300">•</span>
-                                            <span className="text-gray-600 dark:text-gray-400 truncate flex items-center gap-1">
-                                                <MapPin className="w-4 h-4" />
-                                                {searchParams.get('location') || 'Current Location'}
-                                            </span>
-                                        </div>
-                                        <p className="text-sm text-primary font-semibold">
-                                            {sortedSitters.length} sitter{sortedSitters.length !== 1 ? 's' : ''} available
-                                        </p>
-                                    </div>
-
-                                    {/* Edit Button */}
-                                    <button className="px-4 py-2 bg-white dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600
-                                        text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600
-                                        transition-colors flex items-center gap-2 shadow-sm">
-                                        <Search className="w-4 h-4" />
-                                        <span className="hidden sm:inline">Modify Search</span>
-                                    </button>
-                                </div>
-
-                                {/* Expanded Search Panel */}
-                                <AnimatePresence>
-                                    {isSearchExpanded && (
-                                        <motion.div
-                                            initial={{ height: 0, opacity: 0 }}
-                                            animate={{ height: 'auto', opacity: 1 }}
-                                            exit={{ height: 0, opacity: 0 }}
-                                            className="overflow-visible border-t border-gray-200 dark:border-gray-700 relative z-50"
-                                        >
-                                            <div className="p-4 space-y-4 overflow-visible">
-                                                {/* Service Selection */}
-                                                <div>
-                                                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">
-                                                        🎯 Service Type
-                                                    </label>
-                                                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                                                        {serviceOptions.map((service) => (
-                                                            <button
-                                                                key={service.id}
-                                                                onClick={() => setEditService(service.id)}
-                                                                className={`p-3 rounded-xl text-left transition-all ${editService === service.id
-                                                                    ? 'bg-primary text-white shadow-lg shadow-primary/30 ring-2 ring-primary ring-offset-2'
-                                                                    : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:border-primary'
-                                                                    }`}
-                                                            >
-                                                                <span className="text-xl mb-1 block">{service.emoji}</span>
-                                                                <span className={`text-sm font-semibold block ${editService === service.id ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
-                                                                    {service.label}
-                                                                </span>
-                                                                <span className={`text-xs ${editService === service.id ? 'text-white/80' : 'text-gray-500'}`}>
-                                                                    {service.desc}
-                                                                </span>
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
-
-                                                {/* Location Input */}
-                                                <div className="relative overflow-visible z-50">
-                                                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">
-                                                        📍 Location
-                                                    </label>
-                                                    <div className="flex gap-3 relative overflow-visible">
-                                                        <AddressAutocomplete
-                                                            value={editLocation}
-                                                            onChange={handleEditLocationChange}
-                                                            placeholder="Search by zip code or address..."
-                                                            className="w-full pl-12 pr-4 h-12 rounded-xl border-2 border-gray-200 dark:border-gray-600
-                                                                bg-white dark:bg-gray-700 focus:border-primary focus:ring-0 transition-colors
-                                                                text-gray-900 dark:text-white"
-                                                        />
-                                                        <button
-                                                            onClick={handleEditNearMe}
-                                                            disabled={isGettingEditLocation}
-                                                            className="h-12 px-4 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary 
-                                                                font-semibold transition-colors flex items-center gap-2 whitespace-nowrap
-                                                                disabled:opacity-50 disabled:cursor-not-allowed"
-                                                        >
-                                                            {isGettingEditLocation ? (
-                                                                <>
-                                                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                                                    <span className="hidden sm:inline">Getting...</span>
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <Navigation className="w-4 h-4" />
-                                                                    <span className="hidden sm:inline">Near Me</span>
-                                                                </>
-                                                            )}
-                                                        </button>
-                                                    </div>
-                                                    {editLocationError && (
-                                                        <motion.div
-                                                            initial={{ opacity: 0, y: -10 }}
-                                                            animate={{ opacity: 1, y: 0 }}
-                                                            className="mt-2 flex items-center gap-2 text-sm text-red-500"
-                                                        >
-                                                            <AlertCircle className="w-4 h-4" />
-                                                            {editLocationError}
-                                                        </motion.div>
-                                                    )}
-                                                </div>
-
-                                                {/* Search Button */}
-                                                <Button onClick={handleSearchUpdate} className="w-full h-12 text-base">
-                                                    <Search className="w-5 h-5 mr-2" />
-                                                    Update Search
-                                                    <ArrowRight className="w-5 h-5 ml-2" />
-                                                </Button>
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </motion.div>
-                        </div>
                     </div>
 
                     {/* Controls Row */}
@@ -1256,287 +1008,59 @@ const SearchResultsPage: React.FC = () => {
                             ))}
                         </div>
                     </div>
-                </div>
-            </div>
+                                        </div>
+                                    </div>
 
-            {error && (
+            {
+                error && (
                 <div className="max-w-7xl mx-auto px-4 py-4">
                     <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl flex items-center gap-2">
                         <X className="w-5 h-5" />
                         {error}
                     </div>
                 </div>
-            )}
+                )
+            }
 
             {/* Main Content */}
             <div className="w-full">
                 <div className={`flex ${viewMode === 'map' ? 'flex-col' : 'flex-row'}`}>
-                    {/* Advanced Filters Sidebar */}
+                    {/* New Search Filters Component */}
                     {viewMode !== 'map' && showSidebarFilters && (
-                        <aside className="hidden lg:block w-80 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
-                            <div className="sticky top-[160px] h-[calc(100vh-160px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
-                                <div className="p-6 space-y-6">
-                                    {/* Header */}
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-amber-500 flex items-center justify-center shadow-lg">
-                                                <Filter className="w-5 h-5 text-white" />
-                                            </div>
-                                            <div>
-                                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Filters</h3>
-                                                {activeFilterCount > 0 && (
-                                                    <p className="text-xs text-primary font-semibold">{activeFilterCount} active</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                        {activeFilterCount > 0 && (
-                                            <button
-                                                onClick={clearAllFilters}
-                                                className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
-                                                title="Clear all filters"
-                                            >
-                                                <XCircle className="w-4 h-4 text-gray-400 group-hover:text-red-500 transition-colors" />
-                                            </button>
-                                        )}
-                                    </div>
-
-                                    {/* Price Range */}
-                                    <div className="space-y-3">
-                                        <div className="flex items-center gap-2">
-                                            <DollarSign className="w-4 h-4 text-primary" />
-                                            <label className="text-sm font-semibold text-gray-900 dark:text-white">Price Range</label>
-                                        </div>
-                                        <div className="space-y-3">
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex-1">
-                                                    <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Min</label>
-                                                    <input
-                                                        type="number"
-                                                        value={priceRange[0]}
-                                                        onChange={(e) => {
-                                                            const val = parseInt(e.target.value) || 0;
-                                                            setPriceRange([Math.min(val, priceRange[1]), priceRange[1]]);
-                                                        }}
-                                                        className="w-full px-3 py-2 rounded-lg border-2 border-gray-200 dark:border-gray-700 
-                                                                    bg-white dark:bg-gray-800 text-sm font-medium focus:border-primary focus:ring-0
-                                                                    text-gray-900 dark:text-white transition-colors"
-                                                        min={0}
-                                                        max={maxPrice}
+                        <div className="hidden lg:block w-80 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm h-[calc(100vh-160px)] sticky top-[160px]">
+                            <SearchFilters
+                                initialFilters={filters}
+                                onFilterChange={handleFilterChange}
+                                serviceOptions={serviceOptions}
                                                     />
                                                 </div>
-                                                <div className="flex-1">
-                                                    <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Max</label>
-                                                    <input
-                                                        type="number"
-                                                        value={priceRange[1]}
-                                                        onChange={(e) => {
-                                                            const val = parseInt(e.target.value) || maxPrice;
-                                                            setPriceRange([priceRange[0], Math.max(priceRange[0], Math.min(val, maxPrice))]);
-                                                        }}
-                                                        className="w-full px-3 py-2 rounded-lg border-2 border-gray-200 dark:border-gray-700 
-                                                                    bg-white dark:bg-gray-800 text-sm font-medium focus:border-primary focus:ring-0
-                                                                    text-gray-900 dark:text-white transition-colors"
-                                                        min={priceRange[0]}
-                                                        max={maxPrice}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-2 text-xs text-gray-500">
-                                                <span>${priceRange[0]}</span>
-                                                <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full relative">
-                                                    <div
-                                                        className="absolute h-full bg-gradient-to-r from-primary to-amber-500 rounded-full"
-                                                        style={{
-                                                            left: `${(priceRange[0] / maxPrice) * 100}%`,
-                                                            width: `${((priceRange[1] - priceRange[0]) / maxPrice) * 100}%`
-                                                        }}
-                                                    />
-                                                </div>
-                                                <span>${priceRange[1]}+</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="h-px bg-gray-200 dark:bg-gray-700"></div>
-
-                                    {/* Distance */}
-                                    <div className="space-y-3">
-                                        <div className="flex items-center gap-2">
-                                            <MapPin className="w-4 h-4 text-primary" />
-                                            <label className="text-sm font-semibold text-gray-900 dark:text-white">Max Distance</label>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <input
-                                                type="range"
-                                                min={0}
-                                                max={50}
-                                                value={maxDistance}
-                                                onChange={(e) => setMaxDistance(parseInt(e.target.value))}
-                                                className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer
-                                                            [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
-                                                            [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary
-                                                            [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg
-                                                            [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full
-                                                            [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
-                                            />
-                                            <div className="flex items-center justify-between text-xs text-gray-500">
-                                                <span>0 km</span>
-                                                <span className="font-semibold text-primary">{maxDistance} km</span>
-                                                <span>50+ km</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="h-px bg-gray-200 dark:bg-gray-700"></div>
-
-                                    {/* Rating */}
-                                    <div className="space-y-3">
-                                        <div className="flex items-center gap-2">
-                                            <Star className="w-4 h-4 text-primary fill-primary" />
-                                            <label className="text-sm font-semibold text-gray-900 dark:text-white">Minimum Rating</label>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            {[0, 3, 4, 4.5, 5].map((rating) => (
-                                                <button
-                                                    key={rating}
-                                                    onClick={() => setMinRating(rating)}
-                                                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${minRating === rating
-                                                        ? 'bg-primary text-white shadow-lg shadow-primary/30'
-                                                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                                                        }`}
-                                                >
-                                                    {rating === 0 ? 'Any' : `${rating}+`}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="h-px bg-gray-200 dark:bg-gray-700"></div>
-
-                                    {/* Experience */}
-                                    <div className="space-y-3">
-                                        <div className="flex items-center gap-2">
-                                            <Award className="w-4 h-4 text-primary" />
-                                            <label className="text-sm font-semibold text-gray-900 dark:text-white">Experience</label>
-                                        </div>
-                                        <div className="space-y-2">
-                                            {[
-                                                { value: 0, label: 'Any' },
-                                                { value: 1, label: '1+ years' },
-                                                { value: 3, label: '3+ years' },
-                                                { value: 5, label: '5+ years' },
-                                            ].map((option) => (
-                                                <label
-                                                    key={option.value}
-                                                    className="flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
-                                                >
-                                                    <input
-                                                        type="radio"
-                                                        name="experience"
-                                                        checked={minExperience === option.value}
-                                                        onChange={() => setMinExperience(option.value)}
-                                                        className="w-4 h-4 text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer"
-                                                    />
-                                                    <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
-                                                        {option.label}
-                                                    </span>
-                                                </label>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className="h-px bg-gray-200 dark:bg-gray-700"></div>
-
-                                    {/* Service Types */}
-                                    <div className="space-y-3">
-                                        <div className="flex items-center gap-2">
-                                            <PawPrint className="w-4 h-4 text-primary" />
-                                            <label className="text-sm font-semibold text-gray-900 dark:text-white">Service Types</label>
-                                        </div>
-                                        <div className="space-y-2">
-                                            {serviceOptions.map((service) => {
-                                                const isSelected = selectedServiceTypes.has(service.id);
-                                                return (
-                                                    <label
-                                                        key={service.id}
-                                                        className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${isSelected
-                                                            ? 'bg-primary/10 border-2 border-primary'
-                                                            : 'bg-gray-50 dark:bg-gray-800 border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700'
-                                                            }`}
-                                                    >
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={isSelected}
-                                                            onChange={(e) => {
-                                                                const newSet = new Set(selectedServiceTypes);
-                                                                if (e.target.checked) {
-                                                                    newSet.add(service.id);
-                                                                } else {
-                                                                    newSet.delete(service.id);
-                                                                }
-                                                                setSelectedServiceTypes(newSet);
-                                                            }}
-                                                            className="w-4 h-4 text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer rounded"
-                                                        />
-                                                        <span className="text-xl">{service.emoji}</span>
-                                                        <div className="flex-1">
-                                                            <div className="text-sm font-semibold text-gray-900 dark:text-white">{service.label}</div>
-                                                            <div className="text-xs text-gray-500">{service.desc}</div>
-                                                        </div>
-                                                    </label>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-
-                                    <div className="h-px bg-gray-200 dark:bg-gray-700"></div>
-
-                                    {/* Additional Options */}
-                                    <div className="space-y-3">
-                                        <div className="flex items-center gap-2">
-                                            <Sparkles className="w-4 h-4 text-primary" />
-                                            <label className="text-sm font-semibold text-gray-900 dark:text-white">Additional</label>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={verifiedOnly}
-                                                    onChange={(e) => setVerifiedOnly(e.target.checked)}
-                                                    className="w-4 h-4 text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer rounded"
-                                                />
-                                                <Shield className="w-4 h-4 text-emerald-500" />
-                                                <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
-                                                    Verified Sitters Only
-                                                </span>
-                                            </label>
-                                            <label className="flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={hasReviews}
-                                                    onChange={(e) => setHasReviews(e.target.checked)}
-                                                    className="w-4 h-4 text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer rounded"
-                                                />
-                                                <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                                                <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
-                                                    Has Reviews
-                                                </span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </aside>
                     )}
 
                     {/* Sitter List */}
-                    {viewMode !== 'map' && (
+                    {
+                        viewMode !== 'map' && (
                         <div
-                            className={`flex-1 p-4 lg:p-6 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent ${viewMode === 'split'
+                            className={`flex-1 p-4 lg:p-6 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent relative ${viewMode === 'split'
                                 ? 'lg:max-h-[calc(100vh-160px)]'
                                 : 'min-h-[calc(100vh-160px)]'
                                 }`}
                         >
+                            {/* Filter Loading Overlay */}
+                            {filterLoading && (
+                                <div className="absolute inset-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-xl">
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="flex flex-col items-center gap-3"
+                                    >
+                                        <div className="relative">
+                                            <div className="w-12 h-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin"></div>
+                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl">🐾</div>
+                                        </div>
+                                        <p className="text-gray-600 dark:text-gray-300 font-medium text-sm">Updating results...</p>
+                                    </motion.div>
+                                </div>
+                            )}
                             {sortedSitters.length === 0 ? (
                                 <motion.div
                                     initial={{ opacity: 0 }}
@@ -1553,7 +1077,7 @@ const SearchResultsPage: React.FC = () => {
                                     <p className="text-gray-500 mb-6">
                                         Try adjusting your filters or search area
                                     </p>
-                                    <Button onClick={() => setIsSearchExpanded(true)} size="lg">
+                                        <Button onClick={() => setShowSidebarFilters(true)} size="lg">
                                         <Search className="w-5 h-5 mr-2" />
                                         Update Search
                                     </Button>
@@ -1572,14 +1096,16 @@ const SearchResultsPage: React.FC = () => {
                                 </div>
                             )}
                         </div>
-                    )}
+                        )
+                    }
 
                     {/* Map - Split View */}
-                    {viewMode === 'split' && (
+                    {
+                        viewMode === 'split' && (
                         <div className="hidden lg:block w-2/5 flex-shrink-0 h-[calc(100vh-160px)] sticky top-[160px] relative">
                             <MapContainer
                                 center={mapCenter}
-                                zoom={10}
+                                    zoom={10}
                                 style={{ height: '100%', width: '100%' }}
                                 className="rounded-none z-10"
                             >
@@ -1587,10 +1113,10 @@ const SearchResultsPage: React.FC = () => {
                                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                                 />
-                                <MapBoundsFitter
-                                    centerLat={searchParams.get('latitude') ? parseFloat(searchParams.get('latitude')!) : undefined}
-                                    centerLng={searchParams.get('longitude') ? parseFloat(searchParams.get('longitude')!) : undefined}
-                                    radiusKm={maxDistance}
+                                    <MapBoundsFitter
+                                        centerLat={searchParams.get('latitude') ? parseFloat(searchParams.get('latitude')!) : undefined}
+                                        centerLng={searchParams.get('longitude') ? parseFloat(searchParams.get('longitude')!) : undefined}
+                                        radiusKm={filters.maxDistance}
                                 />
                                 <MapCenterUpdater center={highlightedCenter} />
 
@@ -1664,7 +1190,8 @@ const SearchResultsPage: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                    )}
+                        )
+                    }
                 </div>
             </div>
 
@@ -1690,7 +1217,7 @@ const SearchResultsPage: React.FC = () => {
                     ))}
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 
