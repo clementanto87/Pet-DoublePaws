@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
     Plus,
@@ -9,17 +8,17 @@ import {
     Dog,
     Cat,
     Clock,
-    MapPin,
     Star,
-    ArrowRight,
+    Search,
     Shield,
     PawPrint,
     MessageSquare,
-    CheckCircle2,
-    Search,
+    CheckCircle,
+    User,
+    ArrowRight
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
-import { Card, CardContent } from '../components/ui/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { petService, type PetData } from '../services/pet.service';
 import { useAuth } from '../context/AuthContext';
 import { cn } from '../lib/utils';
@@ -46,9 +45,29 @@ const Dashboard: React.FC = () => {
     const [rating, setRating] = useState(5);
     const [comment, setComment] = useState('');
     const [submittingReview, setSubmittingReview] = useState(false);
-    const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
+    const [activeTab, setActiveTab] = useState<'upcoming' | 'history'>('upcoming');
 
+    // Fetch Pets
+    const { data: pets, isLoading: petsLoading } = useQuery({
+        queryKey: ['pets'],
+        queryFn: petService.getPets,
+    });
 
+    // Fetch Bookings
+    const { data: bookings, isLoading: bookingsLoading } = useQuery({
+        queryKey: ['myBookings'],
+        queryFn: () => bookingService.getBookings('owner'),
+    });
+
+    // Fetch conversations for unread count
+    const { data: conversations } = useQuery({
+        queryKey: ['conversations'],
+        queryFn: messageService.getConversations,
+        refetchInterval: 30000,
+    });
+
+    // Calculate total unread messages
+    const totalUnreadCount = conversations?.reduce((sum, conv) => sum + conv.unreadCount, 0) || 0;
 
     const handleSubmitReview = async () => {
         if (!selectedBookingId) return;
@@ -82,37 +101,6 @@ const Dashboard: React.FC = () => {
         }
     };
 
-    const { data: pets, isLoading, error } = useQuery({
-        queryKey: ['pets'],
-        queryFn: petService.getPets,
-    });
-
-    const { data: bookings, isLoading: bookingsLoading } = useQuery({
-        queryKey: ['myBookings'],
-        queryFn: () => bookingService.getBookings('owner'),
-    });
-
-    // Fetch conversations for unread count
-    const { data: conversations } = useQuery({
-        queryKey: ['conversations'],
-        queryFn: messageService.getConversations,
-        refetchInterval: 30000, // Refetch every 30 seconds
-    });
-
-    // Calculate total unread messages
-    const totalUnreadCount = conversations?.reduce((sum, conv) => sum + conv.unreadCount, 0) || 0;
-
-    const getStatusColor = (status: BookingStatus) => {
-        switch (status) {
-            case BookingStatus.PENDING: return 'text-amber-700 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200';
-            case BookingStatus.ACCEPTED: return 'text-emerald-700 bg-emerald-50 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200';
-            case BookingStatus.REJECTED: return 'text-red-700 bg-red-50 dark:bg-red-900/30 dark:text-red-400 border-red-200';
-            case BookingStatus.COMPLETED: return 'text-blue-700 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200';
-            case BookingStatus.CANCELLED: return 'text-gray-700 bg-gray-50 dark:bg-gray-800 dark:text-gray-400 border-gray-200';
-            default: return 'text-gray-700 bg-gray-50 border-gray-200';
-        }
-    };
-
     const getGreeting = () => {
         const hour = new Date().getHours();
         if (hour < 12) return t('dashboard.greeting.morning');
@@ -120,215 +108,169 @@ const Dashboard: React.FC = () => {
         return t('dashboard.greeting.evening');
     };
 
-    if (isLoading) {
-        return (
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-gray-500">{t('dashboard.loading')}</p>
-                </div>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
-                <Card className="max-w-md w-full text-center p-8">
-                    <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-3xl">😿</span>
-                    </div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{t('dashboard.error.title')}</h2>
-                    <p className="text-gray-500 mb-6">{t('dashboard.error.message')}</p>
-                    <Button onClick={() => window.location.reload()}>{t('dashboard.error.refresh')}</Button>
-                </Card>
-            </div>
-        );
-    }
-
-    const hasPets = pets && pets.length > 0;
     const petCount = pets?.length || 0;
+
     const upcomingBookings = bookings?.filter((b: Booking) =>
         b.status === BookingStatus.PENDING || b.status === BookingStatus.ACCEPTED
     ) || [];
-    const pastBookings = bookings?.filter((b: Booking) =>
+
+    const historicalBookings = bookings?.filter((b: Booking) =>
         b.status === BookingStatus.COMPLETED ||
         b.status === BookingStatus.REJECTED ||
         b.status === BookingStatus.CANCELLED
     ) || [];
 
-    const displayedBookings = activeTab === 'upcoming' ? upcomingBookings : pastBookings;
+    const displayedBookings = activeTab === 'upcoming' ? upcomingBookings : historicalBookings;
 
-    // Quick stats
-    const stats = [
-        {
-            label: t('dashboard.stats.myPets'),
-            value: petCount,
-            icon: PawPrint,
-            color: 'from-orange-500 to-amber-500',
-            bgColor: 'bg-orange-50 dark:bg-orange-900/20',
-            textColor: 'text-orange-600 dark:text-orange-400'
-        },
-        {
-            label: t('dashboard.stats.upcoming'),
-            value: upcomingBookings.length,
-            icon: Calendar,
-            color: 'from-blue-500 to-cyan-500',
-            bgColor: 'bg-blue-50 dark:bg-blue-900/20',
-            textColor: 'text-blue-600 dark:text-blue-400'
-        },
-        {
-            label: t('dashboard.stats.completed'),
-            value: pastBookings.filter((b: Booking) => b.status === BookingStatus.COMPLETED).length,
-            icon: CheckCircle2,
-            color: 'from-emerald-500 to-green-500',
-            bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
-            textColor: 'text-emerald-600 dark:text-emerald-400'
-        },
-    ];
-
-    // Quick actions
-    const quickActions = [
-        {
-            title: t('dashboard.quickActions.bookSitter.title'),
-            description: t('dashboard.quickActions.bookSitter.desc'),
-            icon: Search,
-            path: '/booking',
-            gradient: 'from-primary to-orange-500',
-            emoji: '🔍'
-        },
-        {
-            title: t('dashboard.quickActions.addPet.title'),
-            description: t('dashboard.quickActions.addPet.desc'),
-            icon: Plus,
-            path: '/pet-profile',
-            gradient: 'from-blue-500 to-cyan-500',
-            emoji: '🐾'
-        },
-        {
-            title: t('dashboard.quickActions.messages.title'),
-            description: t('dashboard.quickActions.messages.desc'),
-            icon: MessageSquare,
-            path: '/messages',
-            gradient: 'from-purple-500 to-pink-500',
-            emoji: '💬'
-        },
-    ];
+    if (petsLoading || bookingsLoading) {
+        return (
+            <div className="min-h-screen bg-gray-50/50 dark:bg-background-alt-dark pt-8 pb-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+                <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+            </div>
+        );
+    }
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Welcome Header */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mb-8"
-                >
-                    <div className="flex items-center justify-between flex-wrap gap-4">
-                        <div>
-                            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
-                                {getGreeting()}, {user?.firstName}! 👋
-                            </h1>
-                            <p className="text-gray-500 dark:text-gray-400">
-                                {hasPets
-                                    ? t('dashboard.petsInCare', { count: petCount })
-                                    : t('dashboard.welcome')
-                                }
-                            </p>
-                        </div>
-                        <Link to="/booking">
-                            <Button size="lg" className="shadow-lg">
-                                <Calendar className="w-5 h-5 mr-2" />
-                                Book Now
-                            </Button>
-                        </Link>
+        <div className="min-h-screen bg-gray-50/50 dark:bg-background-alt-dark pt-8 pb-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto space-y-8">
+                {/* Header */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h1 className="text-3xl font-display font-bold text-foreground">
+                            {getGreeting()}, {user?.firstName}! 👋
+                        </h1>
+                        <p className="text-muted-foreground mt-1">
+                            {petCount > 0
+                                ? `You have ${petCount} adorable pet${petCount === 1 ? '' : 's'} in your care`
+                                : 'Welcome to your pet care dashboard'
+                            }
+                        </p>
                     </div>
-                </motion.div>
+                    <Link to="/booking">
+                        <Button className="shadow-glow">
+                            <Calendar className="w-4 h-4 mr-2" />
+                            Book Now
+                        </Button>
+                    </Link>
+                </div>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                    {stats.map((stat, index) => {
-                        const Icon = stat.icon;
-                        return (
-                            <motion.div
-                                key={stat.label}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.1 }}
-                            >
-                                <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
-                                    <CardContent className="p-6">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{stat.label}</p>
-                                                <p className="text-3xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
-                                            </div>
-                                            <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg`}>
-                                                <Icon className="w-7 h-7 text-white" />
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </motion.div>
-                        );
-                    })}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card className="bg-gradient-to-br from-primary/10 to-orange-100 dark:from-primary/20 dark:to-orange-900/20 border-primary/20">
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground">My Pets</p>
+                                    <p className="text-3xl font-bold text-foreground">{petCount}</p>
+                                </div>
+                                <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
+                                    <PawPrint className="w-6 h-6 text-primary" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="bg-gradient-to-br from-blue-50 to-cyan-100 dark:from-blue-900/20 dark:to-cyan-900/20 border-blue-200 dark:border-blue-800">
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground">Upcoming</p>
+                                    <p className="text-3xl font-bold text-foreground">{upcomingBookings.length}</p>
+                                </div>
+                                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center">
+                                    <Calendar className="w-6 h-6 text-blue-600" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground">Completed</p>
+                                    <p className="text-3xl font-bold text-foreground">
+                                        {bookings?.filter((b: Booking) => b.status === BookingStatus.COMPLETED).length || 0}
+                                    </p>
+                                </div>
+                                <div className="w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-xl flex items-center justify-center">
+                                    <CheckCircle className="w-6 h-6 text-green-600" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
 
-                {/* Quick Actions */}
-                <div className="mb-8">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">{t('dashboard.quickActions.title')}</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {quickActions.map((action, index) => {
-                            const Icon = action.icon;
-                            const isMessages = action.title === 'Messages';
-                            return (
-                                <motion.div
-                                    key={action.title}
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: index * 0.1 }}
-                                    whileHover={{ scale: 1.02 }}
-                                >
-                                    <Link to={action.path}>
-                                        <Card className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer group overflow-hidden">
-                                            <CardContent className="p-6 relative">
-                                                <div className={`absolute inset-0 bg-gradient-to-br ${action.gradient} opacity-0 group-hover:opacity-5 transition-opacity`} />
-                                                <div className="relative z-10">
-                                                    <div className="flex items-center gap-4 mb-3">
-                                                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${action.gradient} flex items-center justify-center shadow-lg relative`}>
-                                                            <Icon className="w-6 h-6 text-white" />
-                                                            {isMessages && totalUnreadCount > 0 && (
-                                                                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold border-2 border-white shadow-lg">
-                                                                    {totalUnreadCount > 9 ? '9+' : totalUnreadCount}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        <span className="text-2xl">{action.emoji}</span>
-                                                    </div>
-                                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
-                                                        {action.title}
-                                                    </h3>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                        {action.description}
-                                                    </p>
-                                                </div>
-                                                <ArrowRight className="absolute top-6 right-6 w-5 h-5 text-gray-300 group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                                            </CardContent>
-                                        </Card>
-                                    </Link>
-                                </motion.div>
-                            );
-                        })}
+                {/* Quick Actions Row */}
+                <div>
+                    <h3 className="text-lg font-bold text-foreground mb-4">Quick Actions</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <Link to="/booking">
+                            <Card className="hover:shadow-md transition-all cursor-pointer h-full group">
+                                <CardContent className="p-6 flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                            <Search className="w-6 h-6 text-orange-600" />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-foreground">Book a Sitter</h4>
+                                            <p className="text-sm text-muted-foreground">Find trusted pet sitters</p>
+                                        </div>
+                                    </div>
+                                    <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                                </CardContent>
+                            </Card>
+                        </Link>
+
+                        <Link to="/pet-profile">
+                            <Card className="hover:shadow-md transition-all cursor-pointer h-full group">
+                                <CardContent className="p-6 flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                            <Plus className="w-6 h-6 text-blue-600" />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-foreground">Add Pet</h4>
+                                            <p className="text-sm text-muted-foreground">Create pet profile</p>
+                                        </div>
+                                    </div>
+                                    <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                                </CardContent>
+                            </Card>
+                        </Link>
+
+                        <Link to="/messages">
+                            <Card className="hover:shadow-md transition-all cursor-pointer h-full group">
+                                <CardContent className="p-6 flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center group-hover:scale-110 transition-transform relative">
+                                            <MessageSquare className="w-6 h-6 text-purple-600" />
+                                            {totalUnreadCount > 0 && (
+                                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white dark:border-gray-900" />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-foreground">Messages</h4>
+                                            <p className="text-sm text-muted-foreground">Chat with sitters</p>
+                                        </div>
+                                    </div>
+                                    <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                                </CardContent>
+                            </Card>
+                        </Link>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Left Column - My Pets */}
-                    <div className="lg:col-span-2 space-y-6">
+                {/* Main Content Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+
+                    {/* Left Column (2/3) - My Pets & Bookings (Now separate, but stacked) */}
+                    <div className="lg:col-span-2 space-y-8">
+
                         {/* My Pets Section */}
                         <div>
                             <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-xl font-bold text-gray-900 dark:text-white">My Pets</h2>
+                                <h3 className="text-lg font-bold text-foreground">My Pets</h3>
                                 <Link to="/pet-profile">
                                     <Button variant="outline" size="sm">
                                         <Plus className="w-4 h-4 mr-2" />
@@ -337,104 +279,73 @@ const Dashboard: React.FC = () => {
                                 </Link>
                             </div>
 
-                            {!hasPets ? (
-                                <Card className="border-2 border-dashed border-gray-200 dark:border-gray-700">
-                                    <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                                        <div className="w-20 h-20 bg-gradient-to-br from-primary/20 to-orange-400/20 rounded-full flex items-center justify-center mb-4">
-                                            <PawPrint className="w-10 h-10 text-primary" />
+                            {!pets || pets.length === 0 ? (
+                                <Card className="bg-muted/30 border-dashed">
+                                    <CardContent className="p-8 text-center">
+                                        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <PawPrint className="w-8 h-8 text-muted-foreground" />
                                         </div>
-                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                                            No pets yet
-                                        </h3>
-                                        <p className="text-gray-500 mb-6 max-w-sm">
-                                            Add your furry friends to start booking amazing pet sitters
-                                        </p>
+                                        <h3 className="font-semibold text-foreground mb-1">No pets yet</h3>
+                                        <p className="text-muted-foreground text-sm mb-4">Add your furry friend to get started</p>
                                         <Link to="/pet-profile">
-                                            <Button>
-                                                <Plus className="w-4 h-4 mr-2" />
-                                                Create Pet Profile
-                                            </Button>
+                                            <Button size="sm">Create Profile</Button>
                                         </Link>
                                     </CardContent>
                                 </Card>
                             ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {pets.map((pet: Pet, index: number) => (
-                                        <motion.div
-                                            key={pet.id}
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: index * 0.1 }}
-                                        >
-                                            <Card className="border-0 shadow-md hover:shadow-lg transition-all overflow-hidden group">
-                                                <div className="relative h-40 overflow-hidden">
-                                                    {pet.imageUrl ? (
-                                                        <img
-                                                            src={pet.imageUrl}
-                                                            alt={pet.name}
-                                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                                        />
-                                                    ) : (
-                                                        <div className={cn(
-                                                            "w-full h-full flex items-center justify-center",
-                                                            "bg-gradient-to-br",
-                                                            pet.species?.toLowerCase() === 'dog'
-                                                                ? "from-orange-100 to-amber-100 dark:from-orange-900/30 dark:to-amber-900/30"
-                                                                : "from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30"
-                                                        )}>
-                                                            {pet.species?.toLowerCase() === 'dog' ? (
-                                                                <Dog className="w-16 h-16 text-orange-300" />
-                                                            ) : (
-                                                                <Cat className="w-16 h-16 text-purple-300" />
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                                                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                                                        <h3 className="text-xl font-bold text-white">{pet.name}</h3>
-                                                        <p className="text-white/80 text-sm">{pet.breed}</p>
-                                                    </div>
-                                                    <div className="absolute top-3 right-3">
-                                                        <span className={cn(
-                                                            "px-2.5 py-1 rounded-full text-xs font-bold shadow-lg",
-                                                            pet.species?.toLowerCase() === 'dog'
-                                                                ? "bg-orange-500 text-white"
-                                                                : "bg-purple-500 text-white"
-                                                        )}>
-                                                            {pet.species}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <CardContent className="p-4">
-                                                    <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-                                                        <span className="flex items-center gap-1">
-                                                            <Clock className="w-4 h-4" />
-                                                            {pet.age} {pet.age === 1 ? 'year' : 'years'}
-                                                        </span>
-                                                        {pet.weight && (
-                                                            <span>{pet.weight} kg</span>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {pets.map((pet: Pet) => (
+                                        <Card key={pet.id} className="overflow-hidden group hover:shadow-md transition-all">
+                                            <div className="relative h-32 bg-gray-100">
+                                                {pet.imageUrl ? (
+                                                    <img src={pet.imageUrl} alt={pet.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className={cn(
+                                                        "w-full h-full flex items-center justify-center",
+                                                        "bg-gradient-to-br",
+                                                        pet.species?.toLowerCase() === 'dog'
+                                                            ? "from-orange-100 to-amber-100"
+                                                            : "from-purple-100 to-pink-100"
+                                                    )}>
+                                                        {pet.species?.toLowerCase() === 'dog' ? (
+                                                            <Dog className="w-12 h-12 text-orange-300" />
+                                                        ) : (
+                                                            <Cat className="w-12 h-12 text-purple-300" />
                                                         )}
                                                     </div>
-                                                    <div className="flex gap-2">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            className="flex-1"
-                                                            onClick={() => navigate('/pet-profile', { state: { pet } })}
-                                                        >
-                                                            Edit
-                                                        </Button>
-                                                        <Button
-                                                            size="sm"
-                                                            className="flex-1"
-                                                            onClick={() => navigate('/booking')}
-                                                        >
-                                                            Book
-                                                        </Button>
+                                                )}
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                                                <div className="absolute bottom-3 left-4">
+                                                    <h4 className="text-white font-bold text-lg">{pet.name}</h4>
+                                                    <p className="text-white/80 text-xs">{pet.breed || pet.species}</p>
+                                                </div>
+                                                <span className="absolute top-3 right-3 px-2 py-0.5 bg-white/90 dark:bg-black/50 backdrop-blur-sm rounded text-[10px] font-bold uppercase tracking-wider text-foreground">
+                                                    {pet.species}
+                                                </span>
+                                            </div>
+                                            <CardContent className="p-4">
+                                                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Clock className="w-3.5 h-3.5" />
+                                                        {pet.age} yrs
                                                     </div>
-                                                </CardContent>
-                                            </Card>
-                                        </motion.div>
+                                                    {pet.weight && (
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className="text-xs">⚖️</span>
+                                                            {pet.weight} kg
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <Button variant="outline" size="sm" className="w-full" onClick={() => navigate('/pet-profile', { state: { pet } })}>
+                                                        Edit
+                                                    </Button>
+                                                    <Button size="sm" className="w-full" onClick={() => navigate('/booking')}>
+                                                        Book
+                                                    </Button>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
                                     ))}
                                 </div>
                             )}
@@ -443,176 +354,159 @@ const Dashboard: React.FC = () => {
                         {/* Bookings Section */}
                         <div>
                             <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-xl font-bold text-gray-900 dark:text-white">My Bookings</h2>
-                                <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+                                <h3 className="text-lg font-bold text-foreground">My Bookings</h3>
+                                <div className="flex bg-muted p-1 rounded-lg">
                                     <button
                                         onClick={() => setActiveTab('upcoming')}
                                         className={cn(
-                                            "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
+                                            "px-3 py-1 text-xs font-semibold rounded-md transition-all",
                                             activeTab === 'upcoming'
-                                                ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
-                                                : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                                                ? "bg-background text-foreground shadow-sm"
+                                                : "text-muted-foreground hover:text-foreground"
                                         )}
                                     >
-                                        {t('dashboard.bookings.upcoming')}
+                                        Upcoming
                                     </button>
                                     <button
-                                        onClick={() => setActiveTab('past')}
+                                        onClick={() => setActiveTab('history')}
                                         className={cn(
-                                            "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
-                                            activeTab === 'past'
-                                                ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
-                                                : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                                            "px-3 py-1 text-xs font-semibold rounded-md transition-all",
+                                            activeTab === 'history'
+                                                ? "bg-background text-foreground shadow-sm"
+                                                : "text-muted-foreground hover:text-foreground"
                                         )}
                                     >
-                                        {t('dashboard.bookings.history')}
+                                        History
                                     </button>
                                 </div>
                             </div>
-                            <Card className="border-0 shadow-md">
-                                <CardContent className="p-6">
-                                    {bookingsLoading ? (
-                                        <div className="text-center py-8 text-gray-500">Loading...</div>
-                                    ) : displayedBookings.length > 0 ? (
-                                        <div className="space-y-4">
-                                            {displayedBookings.map((booking: Booking, index: number) => (
-                                                <motion.div
-                                                    key={booking.id}
-                                                    initial={{ opacity: 0, x: -20 }}
-                                                    animate={{ opacity: 1, x: 0 }}
-                                                    transition={{ delay: index * 0.1 }}
-                                                    className="p-4 border border-gray-200 dark:border-gray-700 rounded-xl hover:shadow-md transition-all"
-                                                >
-                                                    <div className="flex items-start justify-between gap-4">
-                                                        <div className="flex-1">
-                                                            <div className="flex items-center gap-2 mb-2">
-                                                                <span className={cn("px-2.5 py-1 rounded-full text-xs font-bold border", getStatusColor(booking.status))}>
-                                                                    {booking.status}
-                                                                </span>
-                                                                <span className="text-xs text-gray-500">
-                                                                    {format(new Date(booking.createdAt), 'MMM d')}
-                                                                </span>
+
+                            <Card>
+                                <CardContent className="p-0">
+                                    {displayedBookings.length === 0 ? (
+                                        <div className="p-8 text-center">
+                                            <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-3">
+                                                <Calendar className="w-6 h-6 text-muted-foreground" />
+                                            </div>
+                                            <p className="text-muted-foreground text-sm">
+                                                {activeTab === 'upcoming'
+                                                    ? "No upcoming bookings found."
+                                                    : "No booking history found."}
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="divide-y divide-border">
+                                            {displayedBookings.map((booking: Booking) => (
+                                                <div key={booking.id} className="p-4 hover:bg-muted/30 transition-colors">
+                                                    <div className="flex flex-col sm:flex-row gap-4 justify-between">
+                                                        <div className="flex gap-4">
+                                                            <div className={cn(
+                                                                "w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0",
+                                                                booking.status === BookingStatus.ACCEPTED ? "bg-green-100 text-green-600" :
+                                                                    booking.status === BookingStatus.PENDING ? "bg-amber-100 text-amber-600" :
+                                                                        "bg-gray-100 text-gray-500"
+                                                            )}>
+                                                                <Calendar className="w-5 h-5" />
                                                             </div>
-                                                            <h3 className="font-bold text-gray-900 dark:text-white mb-2">
-                                                                {booking.serviceType.replace(/([A-Z])/g, ' $1').trim()}
-                                                            </h3>
-                                                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                                                                with {booking.sitter?.user?.firstName} {booking.sitter?.user?.lastName?.[0]}.
-                                                            </p>
-                                                            <div className="flex items-center gap-4 text-xs text-gray-500">
-                                                                <span className="flex items-center gap-1">
-                                                                    <Calendar className="w-3.5 h-3.5" />
-                                                                    {format(new Date(booking.startDate), 'MMM d')} - {format(new Date(booking.endDate), 'MMM d')}
-                                                                </span>
-                                                                <span className="flex items-center gap-1">
-                                                                    <MapPin className="w-3.5 h-3.5" />
-                                                                    {booking.sitter?.address?.split(',')[0] || 'Location'}
-                                                                </span>
+                                                            <div>
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    <h4 className="font-bold text-foreground">
+                                                                        {booking.serviceType.replace(/([A-Z])/g, ' $1').trim()}
+                                                                    </h4>
+                                                                    <span className={cn(
+                                                                        "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase",
+                                                                        booking.status === BookingStatus.ACCEPTED ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                                                                            booking.status === BookingStatus.PENDING ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
+                                                                                booking.status === BookingStatus.COMPLETED ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                                                                                    "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400"
+                                                                    )}>
+                                                                        {booking.status}
+                                                                    </span>
+                                                                </div>
+
+                                                                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <User className="w-3.5 h-3.5" />
+                                                                        {booking.sitter?.user?.firstName} {booking.sitter?.user?.lastName?.[0]}.
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <Calendar className="w-3.5 h-3.5" />
+                                                                        {format(new Date(booking.startDate), 'MMM d')} - {format(new Date(booking.endDate), 'MMM d, yyyy')}
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                        <div className="flex flex-col gap-2">
+
+                                                        <div className="flex items-center gap-2 self-start sm:self-center">
                                                             {booking.status === BookingStatus.PENDING && (
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    className="text-red-600 border-red-200 hover:bg-red-50"
-                                                                    onClick={() => handleCancel(booking.id)}
-                                                                >
-                                                                    {t('dashboard.bookings.cancel')}
+                                                                <Button variant="ghost" size="sm" onClick={() => handleCancel(booking.id)} className="text-red-600 hover:text-red-700 hover:bg-red-50">
+                                                                    Cancel
                                                                 </Button>
                                                             )}
                                                             {booking.status === BookingStatus.COMPLETED && !(booking as any).review && (
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="outline"
-                                                                    className="gap-1"
-                                                                    onClick={() => {
-                                                                        setSelectedBookingId(booking.id);
-                                                                        setReviewModalOpen(true);
-                                                                    }}
-                                                                >
-                                                                    <Star className="w-3 h-3" />
-                                                                    {t('dashboard.bookings.review')}
+                                                                <Button size="sm" variant="outline" onClick={() => {
+                                                                    setSelectedBookingId(booking.id);
+                                                                    setReviewModalOpen(true);
+                                                                }}>
+                                                                    Review
                                                                 </Button>
                                                             )}
-                                                            {(booking.status === BookingStatus.ACCEPTED || booking.status === BookingStatus.PENDING) && (
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="ghost"
-                                                                    className="text-blue-600 hover:bg-blue-50"
-                                                                    onClick={() => navigate('/messages', { state: { userId: booking.sitter?.userId } })}
-                                                                >
-                                                                    <MessageSquare className="w-4 h-4" />
-                                                                </Button>
-                                                            )}
+                                                            <Button size="sm" variant="ghost" onClick={() => navigate('/messages', { state: { userId: booking.sitter?.userId } })}>
+                                                                <MessageSquare className="w-4 h-4" />
+                                                            </Button>
                                                         </div>
                                                     </div>
-                                                </motion.div>
+                                                </div>
                                             ))}
-                                        </div>
-                                    ) : (
-                                        <div className="text-center py-12">
-                                            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                                                <Calendar className="w-8 h-8 text-gray-400" />
-                                            </div>
-                                            <h3 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                                                No {activeTab} bookings
-                                            </h3>
-                                            <p className="text-sm text-gray-500 mb-4">
-                                                {activeTab === 'upcoming'
-                                                    ? 'Book a trusted sitter for your pet'
-                                                    : 'Your past bookings will appear here'
-                                                }
-                                            </p>
-                                            {activeTab === 'upcoming' && (
-                                                <Link to="/booking">
-                                                    <Button size="sm">
-                                                        <Calendar className="w-4 h-4 mr-2" />
-                                                        Book Now
-                                                    </Button>
-                                                </Link>
-                                            )}
                                         </div>
                                     )}
                                 </CardContent>
                             </Card>
                         </div>
+
                     </div>
 
-                    {/* Right Column - Sidebar */}
+                    {/* Right Column (1/3) - Sidebar */}
                     <div className="space-y-6">
-                        {/* Trust Badges */}
-                        <Card className="border-0 shadow-md bg-gradient-to-br from-primary/5 to-orange-500/5">
-                            <CardContent className="p-6">
-                                <div className="flex items-center gap-2 mb-4">
-                                    <Shield className="w-5 h-5 text-primary" />
-                                    <h3 className="font-bold text-gray-900 dark:text-white">Why Choose Us</h3>
+                        <Card className="bg-orange-50 dark:bg-orange-900/10 border-orange-100 dark:border-orange-900/20">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-orange-900 dark:text-orange-100">
+                                    <Shield className="w-5 h-5 text-orange-500" />
+                                    Why Choose Us
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="flex gap-3">
+                                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                                    <p className="text-sm text-muted-foreground">All sitters are verified and background-checked</p>
                                 </div>
-                                <div className="space-y-3">
-                                    <div className="flex items-start gap-3">
-                                        <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                                            All sitters are verified and background-checked
-                                        </p>
-                                    </div>
-                                    <div className="flex items-start gap-3">
-                                        <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                                            Every booking includes pet insurance
-                                        </p>
-                                    </div>
-                                    <div className="flex items-start gap-3">
-                                        <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                                            24/7 support when you need us
-                                        </p>
-                                    </div>
+                                <div className="flex gap-3">
+                                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                                    <p className="text-sm text-muted-foreground">Every booking includes pet insurance</p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                                    <p className="text-sm text-muted-foreground">24/7 support when you need us</p>
                                 </div>
                             </CardContent>
                         </Card>
 
-
+                        {/* Help / Promo Card */}
+                        <Card className="bg-primary text-primary-foreground overflow-hidden relative">
+                            <div className="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 bg-white/10 rounded-full blur-xl" />
+                            <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-32 h-32 bg-black/10 rounded-full blur-xl" />
+                            <CardContent className="p-6 relative z-10">
+                                <h3 className="font-bold text-lg mb-2">Need Help?</h3>
+                                <p className="text-primary-foreground/90 text-sm mb-4">
+                                    Our support team is always here for you and your pets.
+                                </p>
+                                <Button variant="secondary" size="sm" className="w-full">
+                                    Contact Support
+                                </Button>
+                            </CardContent>
+                        </Card>
                     </div>
+
                 </div>
             </div>
 
@@ -641,17 +535,17 @@ const Dashboard: React.FC = () => {
                                 </button>
                             ))}
                         </div>
-                        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                        <span className="text-sm font-medium text-muted-foreground">
                             {rating === 5 ? 'Excellent!' : rating === 4 ? 'Good' : rating === 3 ? 'Okay' : rating === 2 ? 'Poor' : 'Terrible'}
                         </span>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <label className="text-sm font-medium text-foreground">
                             Share your experience
                         </label>
                         <textarea
-                            className="w-full min-h-[100px] p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none transition-all"
+                            className="w-full min-h-[100px] p-3 rounded-xl border border-input bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none transition-all"
                             placeholder="How was the service? Would you recommend this sitter?"
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
