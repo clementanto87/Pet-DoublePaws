@@ -67,7 +67,7 @@ export const sitterService = {
     },
 
     searchSitters: async (params: any) => {
-        const response = await api.get('/sitters/search', { params });
+        const response = await api.post('/sitters/search', params);
         return response.data;
     }
 };

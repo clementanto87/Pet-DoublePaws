@@ -61,7 +61,7 @@ export const searchSitters = async (req: AuthRequest, res: Response): Promise<vo
             verifiedOnly,
             hasReviews,
             serviceTypes // Comma-separated list
-        } = req.query;
+        } = req.body;
 
         const sitterRepository = AppDataSource.getRepository(SitterProfile);
         const query = sitterRepository.createQueryBuilder('sitter')

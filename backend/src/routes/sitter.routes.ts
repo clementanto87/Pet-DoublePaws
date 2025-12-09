@@ -5,7 +5,7 @@ import { authenticateToken } from '../middleware/auth.middleware';
 const router = Router();
 
 // Public routes
-router.get('/search', searchSitters);
+router.post('/search', searchSitters);
 
 // Protected routes
 router.use(authenticateToken);

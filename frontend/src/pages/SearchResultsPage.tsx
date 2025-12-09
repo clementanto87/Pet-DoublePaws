@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { sitterService } from '../services/sitter.service';
 import { Button } from '../components/ui/Button';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { DivIcon } from 'leaflet';
+import { DivIcon, LatLngBounds } from 'leaflet';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     MapPin, Star, Shield, Heart, Grid3X3,
@@ -177,14 +177,51 @@ const createCustomIcon = (isActive: boolean, price: number) => {
     });
 };
 
-// Map center update component
+// Map center update component - only pans, doesn't zoom
 const MapCenterUpdater: React.FC<{ center: [number, number] | null }> = ({ center }) => {
     const map = useMap();
     useEffect(() => {
         if (center) {
-            map.flyTo(center, 13, { duration: 0.5 });
+            // Only pan to center, keep current zoom level
+            map.panTo(center, { duration: 0.5 });
         }
     }, [center, map]);
+    return null;
+};
+
+// Map bounds fitter component for split view - shows 50km radius from search center
+const MapBoundsFitter: React.FC<{
+    centerLat?: number;
+    centerLng?: number;
+    radiusKm?: number;
+}> = ({ centerLat, centerLng, radiusKm = 50 }) => {
+    const map = useMap();
+
+    useEffect(() => {
+        if (!centerLat || !centerLng) {
+            return;
+        }
+
+        // Calculate bounds for a circle with specified radius (in km)
+        // 1 degree of latitude ≈ 111 km
+        // 1 degree of longitude ≈ 111 km * cos(latitude)
+        const latDelta = radiusKm / 111;
+        const lngDelta = radiusKm / (111 * Math.cos(centerLat * Math.PI / 180));
+
+        // Create bounds that represent the 50km radius circle
+        const bounds = new LatLngBounds(
+            [centerLat - latDelta, centerLng - lngDelta] as [number, number],
+            [centerLat + latDelta, centerLng + lngDelta] as [number, number]
+        );
+
+        // Fit bounds with padding to show the 50km radius area
+        map.fitBounds(bounds, {
+            padding: [20, 20],
+            maxZoom: 12, // Limit max zoom to ensure we can see the full area
+            duration: 0.5
+        });
+    }, [centerLat, centerLng, radiusKm, map]);
+
     return null;
 };
 
@@ -298,6 +335,7 @@ const SearchResultsPage: React.FC = () => {
     const previousFilters = useRef<string>('');
     const isFetching = useRef(false);
     const searchParamsStringRef = useRef<string>('');
+    const hasInitialFetchStarted = useRef(false); // Track if initial fetch has started
 
     // Stable fetch function using refs to prevent re-creation
     const fetchSittersRef = useRef(async (filterParams?: {
@@ -406,18 +444,32 @@ const SearchResultsPage: React.FC = () => {
             return;
         }
 
+        // Prevent duplicate calls from React Strict Mode
+        // Use searchParamsStringRef as the guard since we update it immediately
         searchParamsStringRef.current = currentParamsString;
-        isInitialMount.current = true;
+
+        // Reset filter tracking
         previousFilters.current = '';
-        isFetching.current = false; // Reset fetching flag
+
+        // Mark that initial fetch has started
+        hasInitialFetchStarted.current = true;
+        isInitialMount.current = true;
 
         fetchSittersRef.current();
-    }, [searchParams]);
+    }, [searchParams]); // Only depend on searchParams
 
     // Fetch sitters when filters change (with debouncing)
     useEffect(() => {
-        // Skip on initial mount
+        // Skip if initial fetch hasn't started yet (prevents duplicate call on mount)
+        if (!hasInitialFetchStarted.current) {
+            return;
+        }
+
+        // Skip on initial mount - this prevents duplicate call when component first loads with search params
+        // The searchParams useEffect will handle the initial fetch
         if (isInitialMount.current) {
+            // Mark as no longer initial mount, but don't fetch yet
+            // This allows subsequent filter changes to trigger fetches
             isInitialMount.current = false;
             return;
         }
@@ -591,14 +643,15 @@ const SearchResultsPage: React.FC = () => {
     };
 
     const highlightedCenter = useMemo(() => {
-        const target = hoveredSitter || selectedSitter;
+        // Only update center on selection, not on hover
+        const target = selectedSitter;
         if (!target) return null;
         const sitter = sitters.find(s => s.id === target);
         if (sitter?.latitude && sitter?.longitude) {
             return [sitter.latitude, sitter.longitude] as [number, number];
         }
         return null;
-    }, [hoveredSitter, selectedSitter, sitters]);
+    }, [selectedSitter, sitters]);
 
     const currentService = serviceOptions.find(s => s.id === searchParams.get('service')) || serviceOptions[0];
 
@@ -621,7 +674,7 @@ const SearchResultsPage: React.FC = () => {
         );
     }
 
-    const SitterCard: React.FC<{ sitter: SitterData }> = ({ sitter }) => {
+    const SitterCard = React.memo<{ sitter: SitterData }>(({ sitter }) => {
         const price = getSitterPrice(sitter);
         const isHovered = hoveredSitter === sitter.id;
         const isSelected = selectedSitter === sitter.id;
@@ -886,10 +939,10 @@ const SearchResultsPage: React.FC = () => {
                 </div>
             </div>
         );
-    };
+    });
 
     // Compact card for split view
-    const CompactSitterCard: React.FC<{ sitter: SitterData }> = ({ sitter }) => {
+    const CompactSitterCard = React.memo<{ sitter: SitterData }>(({ sitter }) => {
         const price = getSitterPrice(sitter);
         const isHovered = hoveredSitter === sitter.id;
         const isSelected = selectedSitter === sitter.id;
@@ -981,7 +1034,7 @@ const SearchResultsPage: React.FC = () => {
                 </div>
             </div>
         );
-    };
+    });
 
     return (
         <div className="min-h-screen bg-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -1526,13 +1579,18 @@ const SearchResultsPage: React.FC = () => {
                         <div className="hidden lg:block w-2/5 flex-shrink-0 h-[calc(100vh-160px)] sticky top-[160px] relative">
                             <MapContainer
                                 center={mapCenter}
-                                zoom={12}
+                                zoom={10}
                                 style={{ height: '100%', width: '100%' }}
                                 className="rounded-none z-10"
                             >
                                 <TileLayer
                                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                />
+                                <MapBoundsFitter
+                                    centerLat={searchParams.get('latitude') ? parseFloat(searchParams.get('latitude')!) : undefined}
+                                    centerLng={searchParams.get('longitude') ? parseFloat(searchParams.get('longitude')!) : undefined}
+                                    radiusKm={maxDistance}
                                 />
                                 <MapCenterUpdater center={highlightedCenter} />
 
