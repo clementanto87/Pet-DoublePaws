@@ -327,17 +327,17 @@ const SearchResultsPage: React.FC = () => {
         // Prevent concurrent calls if needed, though debouncing helps
         if (fetchingRef.current) return;
         fetchingRef.current = true;
-        
+
         // Only show full page loading on initial load
         if (isInitialLoad) {
             setInitialLoading(true);
         } else {
             setFilterLoading(true);
         }
-            setError('');
+        setError('');
 
-            try {
-                const apiParams: any = {};
+        try {
+            const apiParams: any = {};
 
             // Core Location Params
             if (currentFilters.latitude && currentFilters.longitude) {
@@ -348,13 +348,13 @@ const SearchResultsPage: React.FC = () => {
 
             // Service Type
             if (currentFilters.service) {
-                    const serviceMap: Record<string, string> = {
-                        'boarding': 'boarding',
-                        'housesitting': 'houseSitting',
-                        'visits': 'dropInVisits',
-                        'daycare': 'doggyDayCare',
-                        'walking': 'dogWalking',
-                    };
+                const serviceMap: Record<string, string> = {
+                    'boarding': 'boarding',
+                    'housesitting': 'houseSitting',
+                    'visits': 'dropInVisits',
+                    'daycare': 'doggyDayCare',
+                    'walking': 'dogWalking',
+                };
                 apiParams.serviceType = serviceMap[currentFilters.service] || currentFilters.service;
             }
 
@@ -368,34 +368,34 @@ const SearchResultsPage: React.FC = () => {
             if (currentFilters.verifiedOnly) apiParams.verifiedOnly = 'true';
             if (currentFilters.hasReviews) apiParams.hasReviews = 'true';
 
-                console.log('Fetching sitters with params:', apiParams);
-                const data = await sitterService.searchSitters(apiParams);
+            console.log('Fetching sitters with params:', apiParams);
+            const data = await sitterService.searchSitters(apiParams);
 
             // Transform data
-                const transformedData: SitterData[] = data.map((profile: any) => ({
-                    id: profile.id,
-                    user: profile.user,
-                    headline: profile.headline,
-                    bio: profile.bio,
-                    address: profile.address,
-                    latitude: profile.latitude,
-                    longitude: profile.longitude,
-                    isVerified: profile.isVerified || false,
-                    services: profile.services,
-                    skills: profile.skills,
-                    yearsExperience: profile.yearsExperience,
-                    housing: profile.housing,
+            const transformedData: SitterData[] = data.map((profile: any) => ({
+                id: profile.id,
+                user: profile.user,
+                headline: profile.headline,
+                bio: profile.bio,
+                address: profile.address,
+                latitude: profile.latitude,
+                longitude: profile.longitude,
+                isVerified: profile.isVerified || false,
+                services: profile.services,
+                skills: profile.skills,
+                yearsExperience: profile.yearsExperience,
+                housing: profile.housing,
                 distance: profile.distance,
-                    availability: profile.availability,
-                    updatedAt: profile.updatedAt,
+                availability: profile.availability,
+                updatedAt: profile.updatedAt,
                 reviews: profile.reviews || [],
-                }));
+            }));
 
-                setSitters(transformedData);
-            } catch (err) {
-                console.error('Failed to fetch sitters:', err);
-                setError('Failed to load sitters. Please try again.');
-            } finally {
+            setSitters(transformedData);
+        } catch (err) {
+            console.error('Failed to fetch sitters:', err);
+            setError('Failed to load sitters. Please try again.');
+        } finally {
             if (isInitialLoad) {
                 setInitialLoading(false);
             } else {
@@ -430,7 +430,7 @@ const SearchResultsPage: React.FC = () => {
         if (isInitial) {
             isInitialMount.current = false;
         }
-        
+
         fetchSitters(initialFilters, isInitial);
     }, [searchParams, fetchSitters]);
 
@@ -444,14 +444,14 @@ const SearchResultsPage: React.FC = () => {
                 // Fetch immediately with filterLoading, then update URL
                 // This prevents the searchParams useEffect from triggering with initialLoading
                 fetchSitters(updated, false); // false = not initial load, use filterLoading
-                
+
                 // Update URL after fetching to avoid triggering the useEffect
                 const newParams = new URLSearchParams(searchParams);
                 if (updated.location) newParams.set('location', updated.location);
                 if (updated.service) newParams.set('service', updated.service);
                 if (updated.latitude) newParams.set('latitude', updated.latitude.toString());
                 if (updated.longitude) newParams.set('longitude', updated.longitude.toString());
-                
+
                 // Use replace to avoid triggering the useEffect
                 setSearchParams(newParams, { replace: true });
             } else {
@@ -797,7 +797,7 @@ const SearchResultsPage: React.FC = () => {
                                                     ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 cursor-pointer border border-emerald-200'
                                                     : isBooked
                                                         ? 'bg-amber-50 text-amber-700 cursor-default border border-amber-200'
-                                                    : 'text-gray-300 cursor-default bg-gray-50'
+                                                        : 'text-gray-300 cursor-default bg-gray-50'
                                                 }
                                                 ${isToday ? 'ring-2 ring-primary ring-offset-1' : ''}
                                             `}
@@ -928,14 +928,9 @@ const SearchResultsPage: React.FC = () => {
         <div className="min-h-screen bg-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
             {/* Clean Search Header */}
             <div className="sticky top-0 z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 overflow-visible">
-                <div className="max-w-7xl mx-auto px-4 py-3 overflow-visible">
-                    {/* Main Search Bar - Always Visible */}
-                    <div className="flex items-center gap-4">
-
-                    </div>
-
+                <div className="max-w-7xl mx-auto px-4 py-2 overflow-visible">
                     {/* Controls Row */}
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+                    <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             {/* Sort Dropdown */}
                             <div className="relative group">
@@ -1008,17 +1003,17 @@ const SearchResultsPage: React.FC = () => {
                             ))}
                         </div>
                     </div>
-                                        </div>
-                                    </div>
+                </div>
+            </div>
 
             {
                 error && (
-                <div className="max-w-7xl mx-auto px-4 py-4">
-                    <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl flex items-center gap-2">
-                        <X className="w-5 h-5" />
-                        {error}
+                    <div className="max-w-7xl mx-auto px-4 py-4">
+                        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl flex items-center gap-2">
+                            <X className="w-5 h-5" />
+                            {error}
+                        </div>
                     </div>
-                </div>
                 )
             }
 
@@ -1032,164 +1027,164 @@ const SearchResultsPage: React.FC = () => {
                                 initialFilters={filters}
                                 onFilterChange={handleFilterChange}
                                 serviceOptions={serviceOptions}
-                                                    />
-                                                </div>
+                            />
+                        </div>
                     )}
 
                     {/* Sitter List */}
                     {
                         viewMode !== 'map' && (
-                        <div
-                            className={`flex-1 p-4 lg:p-6 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent relative ${viewMode === 'split'
-                                ? 'lg:max-h-[calc(100vh-160px)]'
-                                : 'min-h-[calc(100vh-160px)]'
-                                }`}
-                        >
-                            {/* Filter Loading Overlay */}
-                            {filterLoading && (
-                                <div className="absolute inset-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-xl">
-                                    <motion.div
-                                        initial={{ opacity: 0, scale: 0.9 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        className="flex flex-col items-center gap-3"
-                                    >
-                                        <div className="relative">
-                                            <div className="w-12 h-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin"></div>
-                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl">🐾</div>
-                                        </div>
-                                        <p className="text-gray-600 dark:text-gray-300 font-medium text-sm">Updating results...</p>
-                                    </motion.div>
-                                </div>
-                            )}
-                            {sortedSitters.length === 0 ? (
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    className="text-center py-16"
-                                >
-                                    <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-orange-100 to-amber-100 
-                                        flex items-center justify-center">
-                                        <span className="text-5xl">🐾</span>
+                            <div
+                                className={`flex-1 p-4 lg:p-6 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent relative ${viewMode === 'split'
+                                    ? 'lg:max-h-[calc(100vh-160px)]'
+                                    : 'min-h-[calc(100vh-160px)]'
+                                    }`}
+                            >
+                                {/* Filter Loading Overlay */}
+                                {filterLoading && (
+                                    <div className="absolute inset-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-xl">
+                                        <motion.div
+                                            initial={{ opacity: 0, scale: 0.9 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            className="flex flex-col items-center gap-3"
+                                        >
+                                            <div className="relative">
+                                                <div className="w-12 h-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin"></div>
+                                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl">🐾</div>
+                                            </div>
+                                            <p className="text-gray-600 dark:text-gray-300 font-medium text-sm">Updating results...</p>
+                                        </motion.div>
                                     </div>
-                                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                                        No sitters found
-                                    </h3>
-                                    <p className="text-gray-500 mb-6">
-                                        Try adjusting your filters or search area
-                                    </p>
+                                )}
+                                {sortedSitters.length === 0 ? (
+                                    <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        className="text-center py-16"
+                                    >
+                                        <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-orange-100 to-amber-100 
+                                        flex items-center justify-center">
+                                            <span className="text-5xl">🐾</span>
+                                        </div>
+                                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                                            No sitters found
+                                        </h3>
+                                        <p className="text-gray-500 mb-6">
+                                            Try adjusting your filters or search area
+                                        </p>
                                         <Button onClick={() => setShowSidebarFilters(true)} size="lg">
-                                        <Search className="w-5 h-5 mr-2" />
-                                        Update Search
-                                    </Button>
-                                </motion.div>
-                            ) : (
-                                <div className={`flex flex-col gap-4 ${viewMode === 'list' ? '' : ''}`}>
-                                    <AnimatePresence mode="popLayout">
-                                        {sortedSitters.map((sitter) => (
-                                            viewMode === 'split' ? (
-                                                <CompactSitterCard key={sitter.id} sitter={sitter} />
-                                            ) : (
-                                                <SitterCard key={sitter.id} sitter={sitter} />
-                                            )
-                                        ))}
-                                    </AnimatePresence>
-                                </div>
-                            )}
-                        </div>
+                                            <Search className="w-5 h-5 mr-2" />
+                                            Update Search
+                                        </Button>
+                                    </motion.div>
+                                ) : (
+                                    <div className={`flex flex-col gap-4 ${viewMode === 'list' ? '' : ''}`}>
+                                        <AnimatePresence mode="popLayout">
+                                            {sortedSitters.map((sitter) => (
+                                                viewMode === 'split' ? (
+                                                    <CompactSitterCard key={sitter.id} sitter={sitter} />
+                                                ) : (
+                                                    <SitterCard key={sitter.id} sitter={sitter} />
+                                                )
+                                            ))}
+                                        </AnimatePresence>
+                                    </div>
+                                )}
+                            </div>
                         )
                     }
 
                     {/* Map - Split View */}
                     {
                         viewMode === 'split' && (
-                        <div className="hidden lg:block w-2/5 flex-shrink-0 h-[calc(100vh-160px)] sticky top-[160px] relative">
-                            <MapContainer
-                                center={mapCenter}
+                            <div className="hidden lg:block w-2/5 flex-shrink-0 h-[calc(100vh-160px)] sticky top-[160px] relative">
+                                <MapContainer
+                                    center={mapCenter}
                                     zoom={10}
-                                style={{ height: '100%', width: '100%' }}
-                                className="rounded-none z-10"
-                            >
-                                <TileLayer
-                                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                />
+                                    style={{ height: '100%', width: '100%' }}
+                                    className="rounded-none z-10"
+                                >
+                                    <TileLayer
+                                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                    />
                                     <MapBoundsFitter
                                         centerLat={searchParams.get('latitude') ? parseFloat(searchParams.get('latitude')!) : undefined}
                                         centerLng={searchParams.get('longitude') ? parseFloat(searchParams.get('longitude')!) : undefined}
                                         radiusKm={filters.maxDistance}
-                                />
-                                <MapCenterUpdater center={highlightedCenter} />
+                                    />
+                                    <MapCenterUpdater center={highlightedCenter} />
 
-                                {sortedSitters
-                                    .filter(sitter => sitter.latitude && sitter.longitude)
-                                    .map((sitter) => {
-                                        const price = getSitterPrice(sitter);
-                                        const isActive = hoveredSitter === sitter.id || selectedSitter === sitter.id;
+                                    {sortedSitters
+                                        .filter(sitter => sitter.latitude && sitter.longitude)
+                                        .map((sitter) => {
+                                            const price = getSitterPrice(sitter);
+                                            const isActive = hoveredSitter === sitter.id || selectedSitter === sitter.id;
 
-                                        return (
-                                            <Marker
-                                                key={sitter.id}
-                                                position={[sitter.latitude!, sitter.longitude!]}
-                                                icon={createCustomIcon(isActive, price)}
-                                                eventHandlers={{
-                                                    click: () => setSelectedSitter(sitter.id),
-                                                    mouseover: () => setHoveredSitter(sitter.id),
-                                                    mouseout: () => setHoveredSitter(null),
-                                                }}
-                                            >
-                                                <Popup className="custom-popup">
-                                                    <div className="p-2 min-w-[220px]">
-                                                        <div className="flex items-center gap-3 mb-3">
-                                                            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-100 to-amber-100 
+                                            return (
+                                                <Marker
+                                                    key={sitter.id}
+                                                    position={[sitter.latitude!, sitter.longitude!]}
+                                                    icon={createCustomIcon(isActive, price)}
+                                                    eventHandlers={{
+                                                        click: () => setSelectedSitter(sitter.id),
+                                                        mouseover: () => setHoveredSitter(sitter.id),
+                                                        mouseout: () => setHoveredSitter(null),
+                                                    }}
+                                                >
+                                                    <Popup className="custom-popup">
+                                                        <div className="p-2 min-w-[220px]">
+                                                            <div className="flex items-center gap-3 mb-3">
+                                                                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-100 to-amber-100 
                                                                 overflow-hidden flex items-center justify-center flex-shrink-0">
-                                                                {sitter.user?.profileImage ? (
-                                                                    <img src={sitter.user.profileImage} className="w-full h-full object-cover" />
-                                                                ) : (
-                                                                    <span className="text-xl font-bold text-primary/50">
-                                                                        {sitter.user?.firstName?.[0]}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                            <div>
-                                                                <h4 className="font-bold text-gray-900">
-                                                                    {sitter.user?.firstName} {sitter.user?.lastName?.[0]}.
-                                                                </h4>
-                                                                <div className="flex items-center gap-1 text-sm">
-                                                                    <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                                                                    <span className="font-medium">5.0</span>
+                                                                    {sitter.user?.profileImage ? (
+                                                                        <img src={sitter.user.profileImage} className="w-full h-full object-cover" />
+                                                                    ) : (
+                                                                        <span className="text-xl font-bold text-primary/50">
+                                                                            {sitter.user?.firstName?.[0]}
+                                                                        </span>
+                                                                    )}
                                                                 </div>
-                                                                <span className="text-primary font-bold">${price}/night</span>
+                                                                <div>
+                                                                    <h4 className="font-bold text-gray-900">
+                                                                        {sitter.user?.firstName} {sitter.user?.lastName?.[0]}.
+                                                                    </h4>
+                                                                    <div className="flex items-center gap-1 text-sm">
+                                                                        <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                                                                        <span className="font-medium">5.0</span>
+                                                                    </div>
+                                                                    <span className="text-primary font-bold">${price}/night</span>
+                                                                </div>
                                                             </div>
+                                                            <Button
+                                                                size="sm"
+                                                                className="w-full"
+                                                                onClick={() => navigate(`/sitter/${sitter.id}${searchParamsString ? `?${searchParamsString}` : ''}`, { state: { sitter } })}
+                                                            >
+                                                                View Profile
+                                                            </Button>
                                                         </div>
-                                                        <Button
-                                                            size="sm"
-                                                            className="w-full"
-                                                            onClick={() => navigate(`/sitter/${sitter.id}${searchParamsString ? `?${searchParamsString}` : ''}`, { state: { sitter } })}
-                                                        >
-                                                            View Profile
-                                                        </Button>
-                                                    </div>
-                                                </Popup>
-                                            </Marker>
-                                        );
-                                    })}
-                            </MapContainer>
+                                                    </Popup>
+                                                </Marker>
+                                            );
+                                        })}
+                                </MapContainer>
 
-                            {/* Map Legend */}
-                            <div className="absolute bottom-4 left-4 z-[1000] bg-white/95 dark:bg-gray-800/95 
+                                {/* Map Legend */}
+                                <div className="absolute bottom-4 left-4 z-[1000] bg-white/95 dark:bg-gray-800/95 
                                 backdrop-blur-sm rounded-xl p-3 shadow-xl border border-gray-200 dark:border-gray-700">
-                                <div className="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-400 font-medium">
-                                    <span className="flex items-center gap-1.5">
-                                        <div className="w-4 h-4 rounded-full bg-primary shadow-md"></div>
-                                        Selected
-                                    </span>
-                                    <span className="flex items-center gap-1.5">
-                                        <Shield className="w-4 h-4 text-emerald-500" />
-                                        Verified
-                                    </span>
+                                    <div className="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-400 font-medium">
+                                        <span className="flex items-center gap-1.5">
+                                            <div className="w-4 h-4 rounded-full bg-primary shadow-md"></div>
+                                            Selected
+                                        </span>
+                                        <span className="flex items-center gap-1.5">
+                                            <Shield className="w-4 h-4 text-emerald-500" />
+                                            Verified
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
                         )
                     }
                 </div>

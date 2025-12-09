@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     Filter, MapPin, Star, Shield,
-    CheckCircle2
+    CheckCircle2, X
 } from 'lucide-react';
 import { AddressAutocomplete } from '../ui/AddressAutocomplete';
 import { Button } from '../ui/Button';
@@ -150,9 +150,26 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
                                 }
                             }}
                             placeholder="Where to?"
-                            className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                            className="w-full pl-10 pr-10 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                         />
                         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        {location && (
+                            <button
+                                onClick={() => {
+                                    setLocation('');
+                                    onFilterChange({
+                                        ...getCurrentFilters(),
+                                        location: '',
+                                        latitude: 0,
+                                        longitude: 0,
+                                        service: selectedService // Ensure service is preserved
+                                    });
+                                }}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        )}
                     </div>
                 </section>
 
