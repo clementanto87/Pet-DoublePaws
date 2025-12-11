@@ -90,7 +90,7 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
     };
 
     return (
-        <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 h-full flex flex-col ${className}`}>
+        <div className={`bg-white dark:bg-gray-800 rounded-tl-none rounded-tr-xl rounded-bl-xl rounded-br-xl shadow-lg border border-gray-100 dark:border-gray-700 h-full flex flex-col ${className}`}>
 
             {/* Header */}
             <div className="p-5 border-b border-gray-100 dark:border-gray-700">

@@ -40,9 +40,9 @@ function App() {
           <GoogleOneTap />
           <ToastProvider>
             <Router>
-              <div className="min-h-screen flex flex-col bg-background text-foreground font-sans">
+              <div className="min-h-screen flex flex-col bg-background text-foreground font-sans overflow-x-hidden">
                 <Navbar />
-                <main className="flex-1">
+                <main className="flex-1 w-full overflow-x-hidden">
                   <Routes>
                     <Route path="/" element={<LandingPage />} />
                     <Route

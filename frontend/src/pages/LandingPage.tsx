@@ -141,23 +141,23 @@ const LandingPage: React.FC = () => {
 
         </div>
 
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-8 md:pt-16 pb-8 md:pb-12">
+        <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 relative z-10 pt-6 sm:pt-8 md:pt-16 pb-6 sm:pb-8 md:pb-12 overflow-x-hidden">
           <div className="max-w-5xl mx-auto">
             {/* Header Content - Reduced spacing on mobile */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="text-center mb-6 md:mb-10"
+              className="text-center mb-4 sm:mb-6 md:mb-10"
             >
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2 }}
-                className="inline-flex items-center gap-2 px-4 md:px-5 py-2 md:py-2.5 rounded-full bg-gradient-to-r from-primary/10 to-amber-500/10 border border-primary/20 shadow-sm mb-4 md:mb-8"
+                className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 md:py-2.5 rounded-full bg-gradient-to-r from-primary/10 to-amber-500/10 border border-primary/20 shadow-sm mb-3 sm:mb-4 md:mb-8"
               >
                 <Sparkles className="w-3 h-3 md:w-4 md:h-4 text-primary" />
-                <span className="text-xs md:text-sm font-semibold bg-gradient-to-r from-primary to-amber-600 bg-clip-text text-transparent">
+                <span className="text-[10px] sm:text-xs md:text-sm font-semibold bg-gradient-to-r from-primary to-amber-600 bg-clip-text text-transparent whitespace-nowrap">
                   {t('landing.tagline')}
                 </span>
                 <Sparkles className="w-3 h-3 md:w-4 md:h-4 text-amber-500" />
@@ -167,7 +167,7 @@ const LandingPage: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-display font-bold mb-4 md:mb-6 leading-[1.1] tracking-tight text-gray-900 dark:text-white"
+                className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-display font-bold mb-3 sm:mb-4 md:mb-6 leading-[1.1] tracking-tight text-gray-900 dark:text-white px-1"
               >
                 {t('landing.heroTitle')}<br />
                 <span className="relative">
@@ -202,7 +202,7 @@ const LandingPage: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="text-base md:text-lg lg:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto px-2"
+                className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto px-2 sm:px-4"
               >
                 {t('landing.heroSubtitle')}
               </motion.p>
@@ -216,7 +216,7 @@ const LandingPage: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1 }}
-              className="flex flex-wrap items-center justify-center gap-3 md:gap-6 mt-4 md:mt-8"
+              className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 md:gap-6 mt-3 sm:mt-4 md:mt-8 px-2"
             >
               {[
                 { icon: CheckCircle, text: 'Background Checked', color: 'text-green-500' },
@@ -226,10 +226,10 @@ const LandingPage: React.FC = () => {
                 <motion.div
                   key={i}
                   whileHover={{ scale: 1.05 }}
-                  className="flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-1.5 md:py-2 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-sm border border-gray-100 dark:border-gray-700"
+                  className="flex items-center gap-1 sm:gap-1.5 md:gap-2 px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 md:py-2 rounded-full bg-white/80 dark:bg-gray-800/80 shadow-sm border border-gray-100 dark:border-gray-700"
                 >
-                  <item.icon className={`w-4 h-4 md:w-5 md:h-5 ${item.color}`} />
-                  <span className="text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">{item.text}</span>
+                  <item.icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 ${item.color}`} />
+                  <span className="text-[10px] sm:text-xs md:text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">{item.text}</span>
                 </motion.div>
               ))}
             </motion.div>
@@ -254,9 +254,9 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Trust Bar */}
-      <section className="py-6 bg-white dark:bg-gray-900 border-y border-gray-100 dark:border-gray-800">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16">
+      <section className="py-4 sm:py-5 md:py-6 bg-white dark:bg-gray-900 border-y border-gray-100 dark:border-gray-800 overflow-x-hidden">
+        <div className="container mx-auto px-3 sm:px-4">
+          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 md:gap-8 lg:gap-16">
             {trustFeatures.map((feature, i) => (
               <div key={i} className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                 <feature.icon className="w-5 h-5 text-primary" />
@@ -268,21 +268,21 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* How It Works */}
-      <section className="py-24 bg-gray-50 dark:bg-gray-800/30">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-12 sm:py-16 md:py-20 lg:py-24 bg-gray-50 dark:bg-gray-800/30 overflow-x-hidden">
+        <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-8 sm:mb-12 md:mb-16"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 mb-6">
-              <span className="text-sm font-semibold text-primary">✨ Simple & Easy</span>
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-primary/10 mb-4 sm:mb-5 md:mb-6">
+              <span className="text-xs sm:text-sm font-semibold text-primary">✨ Simple & Easy</span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-display font-bold mb-6 text-gray-900 dark:text-white">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-4 sm:mb-5 md:mb-6 text-gray-900 dark:text-white px-2">
               How <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-amber-500">Double Paws</span> Works
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto px-2">
               Finding trusted pet care has never been easier. Three simple steps to peace of mind.
             </p>
           </motion.div>
@@ -333,23 +333,23 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Services Section */}
-      <section className="py-24 bg-white dark:bg-gray-900">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-12 sm:py-16 md:py-24 bg-white dark:bg-gray-900 overflow-x-hidden">
+        <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-8 sm:mb-12 md:mb-16"
           >
-            <h2 className="text-4xl md:text-5xl font-display font-bold mb-6 text-gray-900 dark:text-white">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-3 sm:mb-4 md:mb-6 text-gray-900 dark:text-white px-2">
               Services for Every <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-amber-500">Pet Need</span>
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto px-2">
               From overnight stays to daily walks, our sitters offer personalized care for your furry family members.
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-5 max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-5 max-w-6xl mx-auto px-2">
             {services.map((service, index) => (
               <motion.div
                 key={index}
@@ -381,9 +381,9 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Safety Section */}
-      <section className="py-24 bg-gray-50 dark:bg-gray-800/30">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row items-center gap-16">
+      <section className="py-12 sm:py-16 md:py-20 lg:py-24 bg-gray-50 dark:bg-gray-800/30 overflow-x-hidden">
+        <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+          <div className="flex flex-col lg:flex-row items-center gap-8 sm:gap-12 md:gap-16">
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -468,9 +468,9 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Feature Bar */}
-      <section className="py-4 bg-primary overflow-hidden">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-center gap-8 md:gap-12 flex-wrap">
+      <section className="py-3 sm:py-4 bg-primary overflow-x-hidden">
+        <div className="container mx-auto px-3 sm:px-4">
+          <div className="flex items-center justify-center gap-4 sm:gap-6 md:gap-8 lg:gap-12 flex-wrap">
             {featureBar.map((feature, i) => (
               <div key={i} className="flex items-center gap-2 text-white">
                 <feature.icon className="w-5 h-5" />
@@ -482,15 +482,15 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Happiness Guarantee */}
-      <section className="py-24 bg-gradient-to-b from-green-50/50 to-white dark:from-gray-800/50 dark:to-gray-900">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-12 sm:py-16 md:py-20 lg:py-24 bg-gradient-to-b from-green-50/50 to-white dark:from-gray-800/50 dark:to-gray-900 overflow-x-hidden">
+        <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="max-w-3xl mx-auto"
           >
-            <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 dark:border-gray-700">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 lg:p-12 shadow-xl border border-gray-100 dark:border-gray-700">
               <div className="flex flex-col md:flex-row items-center gap-8">
                 <div className="w-24 h-24 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
                   <Award className="w-12 h-12 text-white" />
@@ -520,27 +520,27 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Final CTA */}
-      <section className="py-24 bg-gradient-to-br from-primary via-orange-500 to-amber-500 relative overflow-hidden">
+      <section className="py-12 sm:py-16 md:py-20 lg:py-24 bg-gradient-to-br from-primary via-orange-500 to-amber-500 relative overflow-x-hidden">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djJIMnYtMmgzNHptMC0zMHYySDJ2LTJoMzR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-50" />
 
-        <div className="absolute top-10 left-10 text-white/10 text-8xl">🐾</div>
-        <div className="absolute bottom-10 right-10 text-white/10 text-8xl rotate-45">🐾</div>
+        <div className="absolute top-10 left-10 text-white/10 text-6xl sm:text-8xl hidden sm:block">🐾</div>
+        <div className="absolute bottom-10 right-10 text-white/10 text-6xl sm:text-8xl rotate-45 hidden sm:block">🐾</div>
 
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="max-w-3xl mx-auto text-center text-white"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm mb-6">
-              <span className="text-sm font-semibold">✨ Start Today</span>
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/20 backdrop-blur-sm mb-4 sm:mb-5 md:mb-6">
+              <span className="text-xs sm:text-sm font-semibold">✨ Start Today</span>
             </div>
 
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-6">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-display font-bold mb-4 sm:mb-5 md:mb-6 px-2">
               Your Pet's Perfect Sitter is Waiting
             </h2>
-            <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white/90 mb-6 sm:mb-8 md:mb-10 max-w-2xl mx-auto px-2">
               Join thousands of pet parents who trust Double Paws for safe, loving pet care. Book your first stay today!
             </p>
 

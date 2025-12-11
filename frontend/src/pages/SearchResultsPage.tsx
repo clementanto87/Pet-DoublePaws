@@ -927,18 +927,18 @@ const SearchResultsPage: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
             {/* Clean Search Header */}
-            <div className="sticky top-0 z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 overflow-visible">
-                <div className="max-w-7xl mx-auto px-4 py-2 overflow-visible">
+            <div className="sticky top-0 z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 overflow-x-hidden">
+                <div className="max-w-7xl mx-auto px-2 sm:px-3 md:px-4 py-2 overflow-x-hidden">
                     {/* Controls Row */}
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between gap-1.5 sm:gap-2">
+                        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
                             {/* Sort Dropdown */}
                             <div className="relative group">
-                                <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 
-                                    hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-semibold">
-                                    <ArrowUpDown className="w-4 h-4 text-primary" />
+                                <button className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-2.5 rounded-lg sm:rounded-xl bg-gray-100 dark:bg-gray-800 
+                                    hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-xs sm:text-sm font-semibold">
+                                    <ArrowUpDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
                                     <span className="hidden sm:inline">Sort</span>
-                                    <ChevronDown className="w-4 h-4" />
+                                    <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
                                 </button>
                                 <div className="absolute left-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl 
                                     shadow-xl border border-gray-200 dark:border-gray-700 py-2 opacity-0 invisible 
@@ -966,16 +966,16 @@ const SearchResultsPage: React.FC = () => {
                             {/* Filter Button */}
                             <button
                                 onClick={() => setShowSidebarFilters(!showSidebarFilters)}
-                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl transition-colors text-sm font-semibold relative
+                                className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-2.5 rounded-lg sm:rounded-xl transition-colors text-xs sm:text-sm font-semibold relative flex-shrink-0
                                     ${showSidebarFilters
                                         ? 'bg-primary text-white shadow-lg shadow-primary/30'
                                         : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
                                     }`}
                             >
-                                <SlidersHorizontal className="w-4 h-4" />
+                                <SlidersHorizontal className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
                                 <span className="hidden sm:inline">Filters</span>
                                 {activeFilterCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold border-2 border-white">
+                                    <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 w-4 h-4 sm:w-5 sm:h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold border-2 border-white">
                                         {activeFilterCount > 9 ? '9+' : activeFilterCount}
                                     </span>
                                 )}
@@ -983,7 +983,7 @@ const SearchResultsPage: React.FC = () => {
                         </div>
 
                         {/* View Mode Toggle */}
-                        <div className="hidden md:flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1.5">
+                        <div className="hidden md:flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1.5 flex-shrink-0">
                             {[
                                 { mode: 'list' as ViewMode, icon: List, label: 'List' },
                                 { mode: 'split' as ViewMode, icon: Grid3X3, label: 'Split' },
@@ -1022,7 +1022,7 @@ const SearchResultsPage: React.FC = () => {
                 <div className={`flex ${viewMode === 'map' ? 'flex-col' : 'flex-row'}`}>
                     {/* New Search Filters Component */}
                     {viewMode !== 'map' && showSidebarFilters && (
-                        <div className="hidden lg:block w-80 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm h-[calc(100vh-160px)] sticky top-[160px]">
+                        <div className="hidden lg:block w-80 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm h-[calc(100vh-56px)] sticky top-[56px]">
                             <SearchFilters
                                 initialFilters={filters}
                                 onFilterChange={handleFilterChange}
@@ -1035,9 +1035,9 @@ const SearchResultsPage: React.FC = () => {
                     {
                         viewMode !== 'map' && (
                             <div
-                                className={`flex-1 p-4 lg:p-6 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent relative ${viewMode === 'split'
-                                    ? 'lg:max-h-[calc(100vh-160px)]'
-                                    : 'min-h-[calc(100vh-160px)]'
+                                className={`flex-1 p-2 sm:p-3 md:p-4 lg:p-6 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent relative ${viewMode === 'split'
+                                    ? 'lg:max-h-[calc(100vh-56px)]'
+                                    : 'min-h-[calc(100vh-56px)]'
                                     }`}
                             >
                                 {/* Filter Loading Overlay */}
@@ -1097,7 +1097,7 @@ const SearchResultsPage: React.FC = () => {
                     {/* Map - Split View */}
                     {
                         viewMode === 'split' && (
-                            <div className="hidden lg:block w-2/5 flex-shrink-0 h-[calc(100vh-160px)] sticky top-[160px] relative">
+                            <div className="hidden lg:block w-2/5 flex-shrink-0 h-[calc(100vh-56px)] sticky top-[56px] relative">
                                 <MapContainer
                                     center={mapCenter}
                                     zoom={10}

@@ -131,31 +131,31 @@ const Dashboard: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50/50 dark:bg-background-alt-dark pt-8 pb-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-7xl mx-auto space-y-8">
+        <div className="min-h-screen bg-gray-50/50 dark:bg-background-alt-dark pt-4 sm:pt-6 md:pt-8 pb-6 sm:pb-8 md:pb-12 px-3 sm:px-4 md:px-6 lg:px-8 overflow-x-hidden">
+            <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 md:space-y-8">
                 {/* Header */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                        <h1 className="text-3xl font-display font-bold text-foreground">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 sm:gap-4">
+                    <div className="min-w-0 flex-1">
+                        <h1 className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-foreground">
                             {getGreeting()}, {user?.firstName}! 👋
                         </h1>
-                        <p className="text-muted-foreground mt-1">
+                        <p className="text-sm sm:text-base text-muted-foreground mt-1">
                             {petCount > 0
                                 ? `You have ${petCount} adorable pet${petCount === 1 ? '' : 's'} in your care`
                                 : 'Welcome to your pet care dashboard'
                             }
                         </p>
                     </div>
-                    <Link to="/booking">
-                        <Button className="shadow-glow">
-                            <Calendar className="w-4 h-4 mr-2" />
+                    <Link to="/booking" className="flex-shrink-0">
+                        <Button className="shadow-glow text-xs sm:text-sm">
+                            <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
                             Book Now
                         </Button>
                     </Link>
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                     <Card className="bg-gradient-to-br from-primary/10 to-orange-100 dark:from-primary/20 dark:to-orange-900/20 border-primary/20">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
@@ -262,10 +262,10 @@ const Dashboard: React.FC = () => {
                 </div>
 
                 {/* Main Content Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6 items-start">
 
                     {/* Left Column (2/3) - My Pets & Bookings (Now separate, but stacked) */}
-                    <div className="lg:col-span-2 space-y-8">
+                    <div className="lg:col-span-2 space-y-4 sm:space-y-6 md:space-y-8">
 
                         {/* My Pets Section */}
                         <div>
