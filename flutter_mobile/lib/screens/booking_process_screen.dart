@@ -75,8 +75,17 @@ class _BookingProcessScreenState extends State<BookingProcessScreen> {
   Widget build(BuildContext context) {
     final user = widget.sitter['user'] ?? {};
     final firstName = user['firstName'] ?? 'Sitter';
-    final price = widget.sitter['price']?.toString() ?? '30';
-    final priceInt = int.tryParse(price) ?? 30;
+    // Extract price from services based on selected service
+    final services = widget.sitter['services'] as Map<String, dynamic>? ?? {};
+    // Map frontend service ID to backend key if necessary (simple mapping for now)
+    String backendServiceKey = _selectedService;
+    if (_selectedService == 'house-sitting') backendServiceKey = 'houseSitting';
+    if (_selectedService == 'drop-in') backendServiceKey = 'dropInVisits';
+    if (_selectedService == 'day-care') backendServiceKey = 'doggyDayCare';
+    if (_selectedService == 'walking') backendServiceKey = 'dogWalking';
+    
+    final serviceData = services[backendServiceKey] as Map<String, dynamic>?;
+    final priceInt = (serviceData?['rate'] as num?)?.toInt() ?? 30; // Default 30 if not found
     
     // Calculate nights
     int totalNights = 0;
@@ -497,8 +506,15 @@ class _BookingProcessScreenState extends State<BookingProcessScreen> {
 
 
   double _calculateTotalPrice() {
-    final price = widget.sitter['price']?.toString() ?? '30';
-    final priceInt = int.tryParse(price) ?? 30;
+    final services = widget.sitter['services'] as Map<String, dynamic>? ?? {};
+    String backendServiceKey = _selectedService;
+    if (_selectedService == 'house-sitting') backendServiceKey = 'houseSitting';
+    if (_selectedService == 'drop-in') backendServiceKey = 'dropInVisits';
+    if (_selectedService == 'day-care') backendServiceKey = 'doggyDayCare';
+    if (_selectedService == 'walking') backendServiceKey = 'dogWalking';
+
+    final serviceData = services[backendServiceKey] as Map<String, dynamic>?;
+    final priceInt = (serviceData?['rate'] as num?)?.toInt() ?? 30;
     
     // Calculate nights
     int totalNights = 0;

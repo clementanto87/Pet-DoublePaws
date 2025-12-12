@@ -9,15 +9,51 @@ class SitterResultCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Extract data with safe defaults
+    // Extract data with safe defaults for Backend Structure
     final user = sitter['user'] ?? {};
     final firstName = user['firstName'] ?? 'Sitter';
     final lastName = user['lastName'] ?? '';
-    final rating = sitter['rating']?.toString() ?? '5.0';
-    final reviews = sitter['reviewsCount']?.toString() ?? '0';
-    final price = sitter['price']?.toString() ?? '30';
+    
+    // Calculate Rating
+    final reviews = sitter['reviews'] as List?;
+    String rating = 'New';
+    String reviewsCount = '0';
+    if (reviews != null && reviews.isNotEmpty) {
+      final double avg = reviews.fold<double>(0, (sum, r) => sum + (r['rating'] as num).toDouble()) / reviews.length;
+      rating = avg.toStringAsFixed(1);
+      reviewsCount = reviews.length.toString();
+    } else {
+      // Fallback if 'rating' was passed directly (mock compatibility/edge case)
+      if (sitter['rating'] != null) rating = sitter['rating'].toString();
+      if (sitter['reviewsCount'] != null) reviewsCount = sitter['reviewsCount'].toString();
+    }
+
+    // Calculate Price (lowest active service)
+    String price = '0';
+    final services = sitter['services'] as Map<String, dynamic>?;
+    if (services != null) {
+      double? minPrice;
+      services.forEach((key, value) {
+        if (value is Map && value['active'] == true) {
+          final rate = (value['rate'] as num?)?.toDouble();
+          if (rate != null) {
+            if (minPrice == null || rate < minPrice!) {
+              minPrice = rate;
+            }
+          }
+        }
+      });
+      if (minPrice != null) {
+        price = minPrice!.toStringAsFixed(0);
+      }
+    } else {
+        // Fallback for mock data compatibility
+        price = sitter['price']?.toString() ?? '0';
+    }
+
     final title = sitter['headline'] ?? 'Loving Pet Sitter';
     // Use a placeholder if location is missing, or extract from user address if available
-    final location = sitter['location'] ?? 'Nearby'; 
+    final location = sitter['address'] ?? user['address'] ?? 'Nearby'; 
 
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
@@ -65,14 +101,19 @@ class SitterResultCard extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            '$firstName $lastName',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFFF97316),
+                          Flexible(
+                            child: Text(
+                              '$firstName $lastName',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFF97316),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          const SizedBox(width: 8),
                           const Icon(Icons.favorite_border, color: Colors.grey),
                         ],
                       ),
@@ -91,9 +132,13 @@ class SitterResultCard extends StatelessWidget {
                         children: [
                           Icon(Icons.location_on, size: 14, color: Colors.grey.shade400),
                           const SizedBox(width: 4),
-                          Text(
-                            location,
-                            style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                          Expanded(
+                            child: Text(
+                              location,
+                              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ),
@@ -108,7 +153,7 @@ class SitterResultCard extends StatelessWidget {
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           Text(
-                            ' ($reviews)',
+                            ' ($reviewsCount)',
                             style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
                           ),
                           const Spacer(),

@@ -86,11 +86,24 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
     ];
   }
 
-  List<dynamic> _filterBookings(String status) {
-    if (status == 'upcoming') {
-      return _allBookings.where((b) => b['status'] == 'upcoming' || b['status'] == 'confirmed').toList();
+  List<dynamic> _filterBookings(String tabName) {
+    if (tabName == 'upcoming') {
+      return _allBookings.where((b) {
+        final status = b['status'].toString().toUpperCase();
+        return status == 'ACCEPTED';
+      }).toList();
+    } else if (tabName == 'pending') {
+      return _allBookings.where((b) {
+        final status = b['status'].toString().toUpperCase();
+        return status == 'PENDING';
+      }).toList();
+    } else if (tabName == 'past') {
+      return _allBookings.where((b) {
+        final status = b['status'].toString().toUpperCase();
+        return status == 'COMPLETED' || status == 'CANCELLED' || status == 'REJECTED'; 
+      }).toList();
     }
-    return _allBookings.where((b) => b['status'] == status).toList();
+    return [];
   }
 
   @override
@@ -156,15 +169,17 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
 
   Widget _buildBookingCard(Map<String, dynamic> booking) {
     final sitter = booking['sitter'] ?? {};
-    final firstName = sitter['firstName'] ?? 'Sitter';
+    final user = sitter['user'] ?? {};
+    final firstName = user['firstName'] ?? 'Sitter'; // Using correct path now
     final startDate = DateTime.parse(booking['startDate']);
     final endDate = DateTime.parse(booking['endDate']);
     final dateStr = '${DateFormat('MMM d').format(startDate)} - ${DateFormat('MMM d').format(endDate)}';
     final status = booking['status'].toString().toUpperCase();
     
     Color statusColor = Colors.grey;
-    if (status == 'UPCOMING' || status == 'CONFIRMED') statusColor = Colors.green;
+    if (status == 'ACCEPTED') statusColor = Colors.green;
     if (status == 'PENDING') statusColor = Colors.orange;
+    if (status == 'CANCELLED' || status == 'REJECTED') statusColor = Colors.red;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -189,7 +204,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                 CircleAvatar(
                   backgroundColor: const Color(0xFFF97316).withOpacity(0.1),
                   child: Text(
-                    firstName[0].toString().toUpperCase(),
+                    firstName.isNotEmpty ? firstName[0].toString().toUpperCase() : 'S',
                     style: const TextStyle(color: Color(0xFFF97316), fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -203,7 +218,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       Text(
-                        booking['service'] ?? 'Service',
+                        booking['serviceType'] ?? 'Service',
                         style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
                       ),
                     ],
@@ -238,7 +253,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                   ],
                 ),
                 Text(
-                  '\$${booking['price']}',
+                  '\$${booking['totalPrice'] ?? 0}',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -280,7 +295,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
           const SizedBox(width: 12),
           Expanded(
             child: ElevatedButton.icon(
-              onPressed: () => _updateStatus(bookingId, 'CONFIRMED'),
+              onPressed: () => _updateStatus(bookingId, 'ACCEPTED'), // Changed from CONFIRMED
               icon: const Icon(Icons.check, color: Colors.white),
               label: const Text('Approve', style: TextStyle(fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
@@ -291,7 +306,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
           ),
         ],
       );
-    } else if (!isSitter && (status == 'PENDING' || status == 'CONFIRMED')) {
+    } else if (!isSitter && (status == 'PENDING' || status == 'ACCEPTED')) { // Changed from CONFIRMED
        return Row(
          children: [
            if (status == 'PENDING') 

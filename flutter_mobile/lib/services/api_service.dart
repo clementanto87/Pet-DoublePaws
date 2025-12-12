@@ -141,7 +141,7 @@ class ApiService {
         headers: _headers,
         body: jsonEncode({
           if (location != null) 'location': location,
-          if (service != null) 'service': service,
+          if (service != null) 'serviceType': service,
           if (latitude != null) 'latitude': latitude,
           if (longitude != null) 'longitude': longitude,
         }),
@@ -149,7 +149,7 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data['sitters'] ?? [];
+        return List<dynamic>.from(data);
       } else {
         return [];
       }
@@ -168,7 +168,7 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data['bookings'] ?? [];
+        return List<dynamic>.from(data);
       } else {
         return [];
       }

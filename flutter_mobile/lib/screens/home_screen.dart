@@ -108,6 +108,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).user;
     final firstName = user?['firstName'] ?? 'there';
+    final media = MediaQuery.of(context);
+    // Compact mode keeps the search box + CTA visible on smaller devices without scrolling.
+    final isCompact = media.size.height < 760;
 
     return Scaffold(
       body: Container(
@@ -128,46 +131,41 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             opacity: _fadeAnimation,
             child: SlideTransition(
               position: _slideAnimation,
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Column(
+                child: ListView(
+                  physics: const BouncingScrollPhysics(),
                   children: [
-                    // Enhanced Header
+                    // Enhanced Header (always visible)
                     _buildHeader(context, firstName),
-                    
-                    const SizedBox(height: 8),
 
-                    // Main Content
+                    SizedBox(height: isCompact ? 6 : 8),
+
+                    // Content: headline + search
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Welcome Message
                           _buildWelcomeSection(firstName),
-                          
-                          const SizedBox(height: 28),
+                          SizedBox(height: isCompact ? 14 : 20),
+                          _buildSearchBox(compact: isCompact),
+                        ],
+                      ),
+                    ),
 
-                          // Unified Search Box
-                          _buildSearchBox(),
-                          
-                          const SizedBox(height: 36),
-
-                          // Trust Badges Section
+                    // Scrollable extras (Trust + Features)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                      child: Column(
+                        children: [
                           _buildTrustSection(),
-                          
-                          const SizedBox(height: 32),
-
-                          // Quick Stats or Features
+                          const SizedBox(height: 28),
                           _buildFeaturesSection(),
-                          
                           const SizedBox(height: 40),
                         ],
                       ),
                     ),
                   ],
                 ),
-              ),
             ),
           ),
         ),
@@ -178,10 +176,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
 
 
-  Widget _buildSearchBox() {
+  Widget _buildSearchBox({required bool compact}) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(compact ? 16 : 20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -212,22 +210,22 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               Text(
                 'What service does your pet need?',
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: compact ? 14 : 15,
                   fontWeight: FontWeight.bold,
                   color: Colors.grey.shade700,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: compact ? 12 : 16),
           
-          // Services Grid (3 then 2)
-          _buildServicesGrid(),
+          // Services (compact uses horizontal list to save vertical space)
+          compact ? _buildServiceList() : _buildServicesGrid(compact: compact),
           
-          const SizedBox(height: 24),
+          SizedBox(height: compact ? 16 : 24),
           
           // Location Section Divider / Header
-          const Divider(height: 32),
+          Divider(height: compact ? 24 : 32),
            Row(
             children: [
               const Icon(
@@ -239,14 +237,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               Text(
                 'Where do you need pet care?',
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: compact ? 14 : 15,
                   fontWeight: FontWeight.bold,
                   color: Colors.grey.shade700,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: compact ? 10 : 12),
           
           // Location Input with Autocomplete
           LocationAutocomplete(
@@ -277,7 +275,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             },
           ),
           
-          const SizedBox(height: 24),
+          SizedBox(height: compact ? 16 : 24),
           
           // Search Button (Full Width)
           SizedBox(
@@ -287,7 +285,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFF97316),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: EdgeInsets.symmetric(vertical: compact ? 14 : 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
@@ -325,7 +323,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildServicesGrid() {
+  Widget _buildServicesGrid({required bool compact}) {
     final services = [
       {
         'id': 'boarding',
@@ -373,7 +371,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             ),
           )).toList(),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: compact ? 10 : 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: secondRow.map((s) => SizedBox(
@@ -398,7 +396,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        height: 110, // Fixed height for consistency
+        height: 104, // Slightly shorter to reduce vertical footprint
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFFF97316) : Colors.grey.shade50,
@@ -424,7 +422,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               children: [
                 Icon(
                   service['icon'] as IconData,
-                  size: 28,
+                  size: 26,
                   color: isSelected ? Colors.white : const Color(0xFFF97316),
                 ),
                 Flexible(

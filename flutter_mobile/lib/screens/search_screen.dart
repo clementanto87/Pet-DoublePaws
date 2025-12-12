@@ -29,14 +29,19 @@ class _SearchScreenState extends State<SearchScreen> {
         _performSearch(
           service: params['service'],
           location: params['location'],
-          // latitude: params['latitude']?.toDouble(), // Removed as per instruction
-          // longitude: params['longitude']?.toDouble(), // Removed as per instruction
+          latitude: params['latitude']?.toDouble(),
+          longitude: params['longitude']?.toDouble(),
         );
       }
     });
   }
 
-  Future<void> _performSearch({String? service, String? location}) async {
+  Future<void> _performSearch({
+    String? service,
+    String? location,
+    double? latitude,
+    double? longitude,
+  }) async {
     setState(() {
       _isLoading = true;
       _error = null;
@@ -46,57 +51,20 @@ class _SearchScreenState extends State<SearchScreen> {
       final results = await _apiService.searchSitters(
         service: service,
         location: location,
+        latitude: latitude,
+        longitude: longitude,
       );
 
-      // MOCK DATA FALLBACK for UI Demonstration
-      if (results.isEmpty) {
-        setState(() {
-          _sitters = _getMockSitters();
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _sitters = results;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      // Fallback to mock data even on error for demo purposes
       setState(() {
-         _sitters = _getMockSitters(); 
+        _sitters = results;
         _isLoading = false;
-        // _error = e.toString(); // Uncomment to show actual error
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _error = e.toString();
       });
     }
-  }
-
-  List<dynamic> _getMockSitters() {
-    return [
-      {
-        'user': {'firstName': 'Lisa', 'lastName': 'S.'},
-        'headline': 'Loving Dog Sitter',
-        'location': 'Berlin',
-        'rating': 5.0,
-        'reviewsCount': 0,
-        'price': 30,
-      },
-      {
-        'user': {'firstName': 'Mia', 'lastName': 'S.'},
-        'headline': 'Loving Dog Daycare',
-        'location': 'Berlin',
-        'rating': 5.0,
-        'reviewsCount': 0,
-        'price': 28,
-      },
-      {
-        'user': {'firstName': 'Alex', 'lastName': 'M.'},
-        'headline': 'Active Dog Walker',
-        'location': 'Berlin',
-        'rating': 4.9,
-        'reviewsCount': 12,
-        'price': 25,
-      },
-    ];
   }
 
   @override
