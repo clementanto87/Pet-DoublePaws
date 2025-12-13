@@ -75,7 +75,7 @@ const FindSitterSearchBox: React.FC<FindSitterSearchBoxProps> = ({
             params.set('latitude', selectedAddress.coordinates.lat.toString());
             params.set('longitude', selectedAddress.coordinates.lng.toString());
         }
-        
+
         console.log('Navigating to search with params:', params.toString());
         navigate(`/search?${params.toString()}`);
     };
@@ -197,7 +197,7 @@ const FindSitterSearchBox: React.FC<FindSitterSearchBoxProps> = ({
                         <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 text-primary flex-shrink-0" /> <span className="truncate">{t('landing.whereNeedCare')}</span>
                     </p>
 
-                    <form 
+                    <form
                         onSubmit={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -207,7 +207,7 @@ const FindSitterSearchBox: React.FC<FindSitterSearchBoxProps> = ({
                         className="flex flex-col md:flex-row gap-2 sm:gap-2.5 md:gap-3 relative [@media(max-height:750px)]:gap-1.5"
                     >
                         {/* Beautiful Location Input with Autocomplete */}
-                        <div className="flex-1 relative min-w-0">
+                        <div className={`flex-1 relative min-w-0 ${isSearchFocused ? 'z-50' : ''}`}>
                             <div className={`relative flex items-center rounded-full transition-all duration-300 overflow-visible ${isSearchFocused
                                 ? 'ring-2 ring-primary/50 ring-offset-1 md:ring-offset-2 bg-white dark:bg-gray-700 shadow-lg shadow-primary/10'
                                 : 'bg-gray-50 dark:bg-gray-700 hover:bg-white shadow-sm hover:shadow-md'
@@ -231,7 +231,7 @@ const FindSitterSearchBox: React.FC<FindSitterSearchBoxProps> = ({
                                         // Delay to check if focus moved to suggestions
                                         setTimeout(() => {
                                             const activeElement = document.activeElement as HTMLElement;
-                                            if (activeElement?.closest('.suggestion-item') === null && 
+                                            if (activeElement?.closest('.suggestion-item') === null &&
                                                 activeElement?.closest('.relative.flex-1.overflow-visible') === null) {
                                                 setIsSearchFocused(false);
                                             }

@@ -113,18 +113,18 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
         // Check if focus is moving to a suggestion or staying within the component
         const relatedTarget = e.relatedTarget as HTMLElement;
         const isClickingSuggestion = relatedTarget?.closest('.suggestion-item');
-        
+
         // If clicking on suggestion, don't blur
         if (isClickingSuggestion) {
             return;
         }
-        
+
         // Delay to allow click on suggestion or other elements
         setTimeout(() => {
             // Double check that input is still not focused and not clicking on suggestions
             const currentActive = document.activeElement as HTMLElement;
             const isClickingSuggestionNow = currentActive?.closest('.suggestion-item');
-            
+
             if (document.activeElement !== inputRef.current && !isClickingSuggestionNow) {
                 setShowSuggestions(false);
                 onBlur?.();
@@ -197,7 +197,7 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-[100] max-h-[300px] overflow-y-auto"
+                        className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-[9999] max-h-[300px] overflow-y-auto"
                     >
                         <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/30">
                             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">

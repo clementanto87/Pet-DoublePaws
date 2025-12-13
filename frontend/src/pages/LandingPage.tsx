@@ -92,7 +92,7 @@ const LandingPage: React.FC = () => {
     <div className="flex-1 w-full overflow-hidden bg-gradient-to-b from-orange-50/50 via-white to-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-900">
 
       {/* Hero Section with Search */}
-      <section className="relative min-h-[70vh] md:min-h-[95vh] flex items-center [@media(max-height:750px)]:min-h-[100svh]">
+      <section className="relative min-h-[70vh] md:min-h-[95vh] flex items-center [@media(max-height:750px)]:min-h-[100svh] z-20">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {/* Animated Background Gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-orange-50 via-amber-50/30 to-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-900" />
@@ -254,7 +254,7 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Trust Bar */}
-      <section className="py-4 sm:py-5 md:py-6 bg-white dark:bg-gray-900 border-y border-gray-100 dark:border-gray-800 overflow-x-hidden">
+      <section className="py-4 sm:py-5 md:py-6 bg-white dark:bg-gray-900 border-y border-gray-100 dark:border-gray-800 overflow-x-hidden relative z-0">
         <div className="container mx-auto px-3 sm:px-4">
           <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 md:gap-8 lg:gap-16">
             {trustFeatures.map((feature, i) => (
@@ -468,7 +468,7 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Feature Bar */}
-      <section className="py-3 sm:py-4 bg-primary overflow-x-hidden">
+      <section className="py-3 sm:py-4 bg-primary overflow-x-hidden relative z-10">
         <div className="container mx-auto px-3 sm:px-4">
           <div className="flex items-center justify-center gap-4 sm:gap-6 md:gap-8 lg:gap-12 flex-wrap">
             {featureBar.map((feature, i) => (
