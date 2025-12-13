@@ -316,9 +316,40 @@ const ContactSitterPage: React.FC = () => {
         return Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
     }, [startDate, endDate]);
 
+    // Calendar availability - MOVED TO TOP LEVEL TO FIX HOOK ERROR
+    const calendar = useMemo(() => {
+        if (!sitter) return null;
+        return getMonthlyAvailability(sitter, monthOffset, []);
+    }, [sitter, monthOffset]);
+
+    const calendarDays = useMemo(() => {
+        if (!calendar) return [];
+        const days: (number | null)[] = [];
+        // Add empty cells for days before the first day of the month
+        for (let i = 0; i < calendar.startDayOfWeek; i++) {
+            days.push(null);
+        }
+        // Add the days of the month
+        for (let day = 1; day <= calendar.daysInMonth; day++) {
+            days.push(day);
+        }
+        return days;
+    }, [calendar]);
+
     // Handle send message
     const handleSendMessage = async () => {
-        if (!message.trim() || !sitter || !user) return;
+        console.log('handleSendMessage clicked');
+        console.log('Validation:', {
+            hasMessage: !!message.trim(),
+            hasSitter: !!sitter,
+            hasUser: !!user,
+            isSending
+        });
+
+        if (!message.trim() || !sitter || !user) {
+            console.warn('Validation failed: Missing requirements');
+            return;
+        }
 
         setIsSending(true);
         try {
@@ -506,7 +537,7 @@ const ContactSitterPage: React.FC = () => {
     const steps = [
         { number: 1, label: 'Service', completed: !!selectedService },
         { number: 2, label: 'Dates', completed: !!startDate && !!endDate },
-        { number: 3, label: 'Pets', completed: selectedPetIds.length > 0 },
+        { number: 3, label: 'Pets', completed: selectedPetIds.length > 0 || petCounts.dogs > 0 || petCounts.cats > 0 },
         { number: 4, label: 'Message', completed: !!message.trim() },
     ];
 
@@ -913,7 +944,7 @@ const ContactSitterPage: React.FC = () => {
                                                     <PawPrint className="w-8 h-8 text-gray-400" />
                                                 </div>
                                                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No pets found</h3>
-                                                <p className="text-gray-500 mb-6">You need to create a pet profile before booking.</p>
+                                                <p className="text-gray-500 mb-6">Create a profile for faster booking, or use the manual entry above.</p>
                                                 <Button onClick={() => navigate('/pet-profile', { state: { returnUrl: location.pathname + location.search } })} variant="outline">
                                                     <Plus className="w-4 h-4 mr-2" />
                                                     Add Pet
@@ -1206,111 +1237,97 @@ const ContactSitterPage: React.FC = () => {
                                     </h3>
 
                                     {/* Calendar View */}
-                                    {(() => {
-                                        const calendar = useMemo(() => getMonthlyAvailability(sitter, monthOffset, []), [sitter, monthOffset]);
-                                        const calendarDays: (number | null)[] = [];
+                                    {/* Calendar View */}
+                                    {calendar && (
+                                        <div className="space-y-4">
+                                            {/* Month Navigation */}
+                                            <div className="flex items-center justify-between mb-3">
+                                                <button
+                                                    onClick={() => setMonthOffset(prev => prev - 1)}
+                                                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                                                    aria-label="Previous month"
+                                                >
+                                                    <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400 rotate-180" />
+                                                </button>
+                                                <h4 className="text-sm font-bold text-gray-900 dark:text-white">
+                                                    {calendar.monthName}
+                                                </h4>
+                                                <button
+                                                    onClick={() => setMonthOffset(prev => prev + 1)}
+                                                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                                                    aria-label="Next month"
+                                                >
+                                                    <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                                                </button>
+                                            </div>
 
-                                        // Add empty cells for days before the first day of the month
-                                        for (let i = 0; i < calendar.startDayOfWeek; i++) {
-                                            calendarDays.push(null);
-                                        }
-
-                                        // Add the days of the month
-                                        for (let day = 1; day <= calendar.daysInMonth; day++) {
-                                            calendarDays.push(day);
-                                        }
-
-                                        return (
-                                            <div className="space-y-4">
-                                                {/* Month Navigation */}
-                                                <div className="flex items-center justify-between mb-3">
-                                                    <button
-                                                        onClick={() => setMonthOffset(prev => prev - 1)}
-                                                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                                                        aria-label="Previous month"
-                                                    >
-                                                        <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400 rotate-180" />
-                                                    </button>
-                                                    <h4 className="text-sm font-bold text-gray-900 dark:text-white">
-                                                        {calendar.monthName}
-                                                    </h4>
-                                                    <button
-                                                        onClick={() => setMonthOffset(prev => prev + 1)}
-                                                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                                                        aria-label="Next month"
-                                                    >
-                                                        <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                                                    </button>
+                                            {/* Legend */}
+                                            <div className="flex items-center gap-3 text-xs mb-3">
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className="w-3 h-3 rounded-full bg-green-100 dark:bg-green-900/30 border-2 border-green-500" />
+                                                    <span className="text-gray-600 dark:text-gray-400">Available</span>
                                                 </div>
-
-                                                {/* Legend */}
-                                                <div className="flex items-center gap-3 text-xs mb-3">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <div className="w-3 h-3 rounded-full bg-green-100 dark:bg-green-900/30 border-2 border-green-500" />
-                                                        <span className="text-gray-600 dark:text-gray-400">Available</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5">
-                                                        <div className="w-3 h-3 rounded-full bg-amber-100 dark:bg-amber-900/30 border-2 border-amber-500" />
-                                                        <span className="text-gray-600 dark:text-gray-400">Booked</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5">
-                                                        <div className="w-3 h-3 rounded-full bg-gray-100 dark:bg-gray-800 opacity-40" />
-                                                        <span className="text-gray-600 dark:text-gray-400">Not available</span>
-                                                    </div>
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className="w-3 h-3 rounded-full bg-amber-100 dark:bg-amber-900/30 border-2 border-amber-500" />
+                                                    <span className="text-gray-600 dark:text-gray-400">Booked</span>
                                                 </div>
-
-                                                {/* Calendar Grid */}
-                                                <div className="grid grid-cols-7 gap-1">
-                                                    {/* Day headers */}
-                                                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                                                        <div key={i} className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 pb-1">
-                                                            {day}
-                                                        </div>
-                                                    ))}
-
-                                                    {/* Calendar days */}
-                                                    {calendarDays.map((day, index) => {
-                                                        if (day === null) {
-                                                            return <div key={`empty-${index}`} className="aspect-square" />;
-                                                        }
-
-                                                        const isAvailable = calendar.availableDays.has(day);
-                                                        const isBooked = calendar.bookedDays.has(day);
-                                                        const isToday = monthOffset === 0 && day === new Date().getDate();
-
-                                                        return (
-                                                            <div
-                                                                key={day}
-                                                                className={cn(
-                                                                    "aspect-square rounded-full flex items-center justify-center text-xs font-medium transition-all",
-                                                                    isAvailable && "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-2 border-green-500",
-                                                                    isBooked && "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-2 border-amber-500",
-                                                                    !isAvailable && !isBooked && "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 opacity-40",
-                                                                    isToday && "ring-2 ring-primary ring-offset-2 dark:ring-offset-gray-900"
-                                                                )}
-                                                            >
-                                                                {day}
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-
-                                                {/* Footer Info */}
-                                                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
-                                                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                                                        <CheckCircle className="w-3.5 h-3.5 text-green-500" />
-                                                        <span>Updated {calendar.lastUpdated === 0 ? 'today' : `${calendar.lastUpdated} day${calendar.lastUpdated === 1 ? '' : 's'} ago`}</span>
-                                                    </div>
-                                                    {sitter.cancellationPolicy && (
-                                                        <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-                                                            <Info className="w-3.5 h-3.5 text-gray-400" />
-                                                            <span>Cancellation: <span className="font-medium text-primary">{sitter.cancellationPolicy || 'flexible'}</span></span>
-                                                        </div>
-                                                    )}
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className="w-3 h-3 rounded-full bg-gray-100 dark:bg-gray-800 opacity-40" />
+                                                    <span className="text-gray-600 dark:text-gray-400">Not available</span>
                                                 </div>
                                             </div>
-                                        );
-                                    })()}
+
+                                            {/* Calendar Grid */}
+                                            <div className="grid grid-cols-7 gap-1">
+                                                {/* Day headers */}
+                                                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                                                    <div key={i} className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 pb-1">
+                                                        {day}
+                                                    </div>
+                                                ))}
+
+                                                {/* Calendar days */}
+                                                {calendarDays.map((day, index) => {
+                                                    if (day === null) {
+                                                        return <div key={`empty-${index}`} className="aspect-square" />;
+                                                    }
+
+                                                    const isAvailable = calendar.availableDays.has(day);
+                                                    const isBooked = calendar.bookedDays.has(day);
+                                                    const isToday = monthOffset === 0 && day === new Date().getDate();
+
+                                                    return (
+                                                        <div
+                                                            key={day}
+                                                            className={cn(
+                                                                "aspect-square rounded-full flex items-center justify-center text-xs font-medium transition-all",
+                                                                isAvailable && "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-2 border-green-500",
+                                                                isBooked && "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-2 border-amber-500",
+                                                                !isAvailable && !isBooked && "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 opacity-40",
+                                                                isToday && "ring-2 ring-primary ring-offset-2 dark:ring-offset-gray-900"
+                                                            )}
+                                                        >
+                                                            {day}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+
+                                            {/* Footer Info */}
+                                            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                                                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                                    <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                                                    <span>Updated {calendar.lastUpdated === 0 ? 'today' : `${calendar.lastUpdated} day${calendar.lastUpdated === 1 ? '' : 's'} ago`}</span>
+                                                </div>
+                                                {sitter.cancellationPolicy && (
+                                                    <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                                                        <Info className="w-3.5 h-3.5 text-gray-400" />
+                                                        <span>Cancellation: <span className="font-medium text-primary">{sitter.cancellationPolicy || 'flexible'}</span></span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </CardContent>
                             </Card>
                         </motion.div>
