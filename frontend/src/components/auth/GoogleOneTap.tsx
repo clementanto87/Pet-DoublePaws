@@ -22,9 +22,6 @@ const GoogleOneTap: React.FC = () => {
         onError: () => {
             console.error('GoogleOneTap: Sign-in Failed (onError callback triggered)');
         },
-        onMomentumIncorrect: (promptMomentum) => {
-            console.log('GoogleOneTap: Momentum Incorrect:', promptMomentum);
-        },
         disabled: isAuthenticated,
         auto_select: false,
     });
