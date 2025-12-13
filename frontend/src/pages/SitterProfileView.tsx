@@ -23,7 +23,8 @@ import {
     Baby,
     TreeDeciduous,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    Image as ImageIcon
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
@@ -350,6 +351,29 @@ const SitterProfileView: React.FC = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-4 sm:space-y-5 md:space-y-6">
+                        {/* Gallery Section */}
+                        {sitter.galleryImages && sitter.galleryImages.length > 0 && (
+                            <Card>
+                                <CardContent className="p-6">
+                                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                                        <ImageIcon className="w-5 h-5 text-primary" />
+                                        Photo Gallery
+                                    </h2>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                        {sitter.galleryImages.map((img: string, index: number) => (
+                                            <div key={index} className="aspect-square rounded-xl overflow-hidden bg-muted relative group">
+                                                <img
+                                                    src={img}
+                                                    alt={`Gallery ${index + 1}`}
+                                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        )}
+
                         {/* About */}
                         <Card>
                             <CardContent className="p-6">

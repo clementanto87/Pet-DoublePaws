@@ -39,6 +39,9 @@ import { useToast } from '../components/ui/Toast';
 import { AvailabilityCalendar } from '../components/sitter/AvailabilityCalendar';
 
 // Service name mapping
+import { ImageUpload } from '../components/common/ImageUpload';
+
+// Service name mapping
 const serviceNames: Record<string, string> = {
     boarding: 'Boarding',
     houseSitting: 'House Sitting',
@@ -156,14 +159,17 @@ const SitterDashboard: React.FC = () => {
     });
 
     // Form data state for editing
-    const [editFormData, setEditFormData] = useState<Partial<SitterProfile>>({});
+    const [editFormData, setEditFormData] = useState<Partial<SitterProfile> & { profileImage?: string }>({});
 
     // Tab state for bookings
     const [activeTab, setActiveTab] = useState<'upcoming' | 'history'>('upcoming');
 
     // Open edit modal
     const openEditModal = (section: string) => {
-        setEditFormData(profile || {});
+        setEditFormData({
+            ...profile,
+            profileImage: user?.profileImage
+        });
         setEditModal({ isOpen: true, section });
     };
 
@@ -1079,6 +1085,29 @@ const SitterDashboard: React.FC = () => {
                 >
                     <div className="space-y-4">
                         <div>
+                            <Label className="mb-2 block">Profile Photo</Label>
+                            <ImageUpload
+                                value={editFormData.profileImage}
+                                onChange={(value) => setEditFormData({
+                                    ...editFormData,
+                                    profileImage: value as string
+                                })}
+                            />
+                        </div>
+
+                        <div>
+                            <Label className="mb-2 block">Gallery Images</Label>
+                            <ImageUpload
+                                value={editFormData.galleryImages}
+                                onChange={(value) => setEditFormData({
+                                    ...editFormData,
+                                    galleryImages: value as string[]
+                                })}
+                                multiple={true}
+                                maxFiles={6}
+                            />
+                        </div>
+                        <div>
                             <Label>Phone Number</Label>
                             <Input
                                 value={editFormData.phone || ''}
@@ -1442,15 +1471,15 @@ const SitterDashboard: React.FC = () => {
                                             onChange={(e) => {
                                                 const current = editFormData.availability?.general || [];
                                                 let updated: string[];
-                                                
+
                                                 const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
                                                 const weekends = ['Sat', 'Sun'];
                                                 const allDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                                                
+
                                                 if (e.target.checked) {
                                                     // Adding a day/option
                                                     updated = [...current, day];
-                                                    
+
                                                     // If checking "Weekdays", add all weekdays
                                                     if (day === 'Weekdays') {
                                                         weekdays.forEach(d => {
@@ -1501,7 +1530,7 @@ const SitterDashboard: React.FC = () => {
                                                 } else {
                                                     // Removing a day/option
                                                     updated = current.filter(d => d !== day);
-                                                    
+
                                                     // If unchecking "Weekdays", remove all weekdays
                                                     if (day === 'Weekdays') {
                                                         updated = updated.filter(d => !weekdays.includes(d));
@@ -1540,7 +1569,7 @@ const SitterDashboard: React.FC = () => {
                                                         }
                                                     }
                                                 }
-                                                
+
                                                 setEditFormData({
                                                     ...editFormData,
                                                     availability: { ...(editFormData.availability || { general: [], blockedDates: [] }), general: updated }
@@ -1579,4 +1608,3 @@ const SitterDashboard: React.FC = () => {
 };
 
 export default SitterDashboard;
-

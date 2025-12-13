@@ -34,6 +34,9 @@ export class SitterProfile {
     @Column({ nullable: true })
     governmentIdUrl?: string;
 
+    @Column('simple-array', { nullable: true })
+    galleryImages?: string[];
+
     @Column({ default: false })
     isVerified!: boolean;
 

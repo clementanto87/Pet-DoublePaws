@@ -42,6 +42,25 @@ export interface SitterProfile {
         blockedDates: string[];
     };
     noticePeriod?: string;
+    cancellationPolicy?: string;
+    galleryImages?: string[];
+    user?: {
+        id: string;
+        firstName: string;
+        lastName: string;
+        profileImage?: string;
+    };
+    reviews?: Array<{
+        id: string;
+        rating: number;
+        comment: string;
+        user: {
+            firstName: string;
+            lastName: string;
+            profileImage?: string;
+        };
+        createdAt: string;
+    }>;
     bankDetails?: {
         accountHolderName: string;
         bankName: string;

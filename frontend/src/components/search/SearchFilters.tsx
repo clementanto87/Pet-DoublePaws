@@ -20,6 +20,7 @@ interface SearchFiltersProps {
         verifiedOnly: boolean;
         hasReviews: boolean;
         selectedServiceTypes: Set<string>;
+        petSizes?: string[];
     };
     onFilterChange: (filters: any) => void;
     serviceOptions: any[];
@@ -40,6 +41,7 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
     const [maxDistance, setMaxDistance] = useState(initialFilters.maxDistance);
     const [verifiedOnly, setVerifiedOnly] = useState(initialFilters.verifiedOnly);
     const [hasReviews, setHasReviews] = useState(initialFilters.hasReviews);
+    const [selectedPetSizes, setSelectedPetSizes] = useState<string[]>(initialFilters.petSizes || []);
 
     // Debounce timer ref
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -63,7 +65,8 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
         minRating,
         maxDistance,
         verifiedOnly,
-        hasReviews
+        hasReviews,
+        petSizes: selectedPetSizes
     });
 
     // Handle initial filters updates (e.g., if page refreshes or props change)
@@ -75,7 +78,8 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
         setMaxDistance(initialFilters.maxDistance);
         setVerifiedOnly(initialFilters.verifiedOnly);
         setHasReviews(initialFilters.hasReviews);
-    }, [initialFilters.location, initialFilters.service]); // Only essential changes
+        setSelectedPetSizes(initialFilters.petSizes || []);
+    }, [initialFilters]); // Watch all initialFilters changes
 
 
 
@@ -112,6 +116,7 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
                             setVerifiedOnly(false);
                             setHasReviews(false);
                             setSelectedService(initialFilters.service);
+                            setSelectedPetSizes([]);
                             onFilterChange({
                                 ...getCurrentFilters(),
                                 priceRange: defaultRange,
@@ -119,7 +124,8 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
                                 maxDistance: 50,
                                 verifiedOnly: false,
                                 hasReviews: false,
-                                service: initialFilters.service
+                                service: initialFilters.service,
+                                petSizes: []
                             });
                         }}
                     >
@@ -194,6 +200,47 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
                                 >
                                     <Icon className={`w-6 h-6 mb-2 ${isSelected ? 'text-primary' : 'text-gray-400'}`} />
                                     <span className="text-xs font-semibold">{option.label}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </section>
+
+                {/* Pet Size Section */}
+                <section>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Pet Size</label>
+                    <div className="grid grid-cols-2 gap-2">
+                        {[
+                            { id: 'Small', label: 'Small', sub: '0-7kg' },
+                            { id: 'Medium', label: 'Medium', sub: '7-18kg' },
+                            { id: 'Large', label: 'Large', sub: '18-45kg' },
+                            { id: 'Giant', label: 'Giant', sub: '45kg+' }
+                        ].map((size) => {
+                            const isSelected = selectedPetSizes.includes(size.id);
+                            return (
+                                <button
+                                    key={size.id}
+                                    onClick={() => {
+                                        const newSizes = isSelected
+                                            ? selectedPetSizes.filter((s: string) => s !== size.id)
+                                            : [...selectedPetSizes, size.id];
+                                        setSelectedPetSizes(newSizes);
+                                        // Update parent immediately or debounced?
+                                        // Filter updates are usually debounced, as per handleFilterUpdate.
+                                        // But here we might want immediate feedback for checkbox-like UI.
+                                        // Let's use handleFilterUpdate to be consistent.
+                                        handleFilterUpdate({ ...getCurrentFilters(), petSizes: newSizes });
+                                    }}
+                                    className={`
+                                        flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-200 text-center
+                                        ${isSelected
+                                            ? 'bg-primary/5 border-primary text-primary shadow-sm'
+                                            : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-primary/50 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                                        }
+                                    `}
+                                >
+                                    <span className="text-sm font-semibold">{size.label}</span>
+                                    <span className="text-[10px] opacity-70">{size.sub}</span>
                                 </button>
                             );
                         })}

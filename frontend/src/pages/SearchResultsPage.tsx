@@ -247,6 +247,13 @@ interface SitterData {
         general?: string[];
         blockedDates?: string[];
     };
+    preferences?: {
+        acceptedPetTypes?: string[];
+        acceptedPetSizes?: string[];
+    };
+    certifications?: string[];
+    noticePeriod?: number;
+    cancellationPolicy?: string;
     updatedAt?: string;
     reviews?: any[]; // Reviews array for rating and review count
 }
@@ -289,6 +296,7 @@ const SearchResultsPage: React.FC = () => {
         minExperience: 0,
         verifiedOnly: false,
         hasReviews: false,
+        petSizes: [] as string[],
         selectedServiceTypes: new Set<string>()
     });
 
@@ -302,13 +310,15 @@ const SearchResultsPage: React.FC = () => {
         const service = searchParams.get('service') || 'boarding';
         const lat = parseFloat(searchParams.get('latitude') || '0');
         const lng = parseFloat(searchParams.get('longitude') || '0');
+        const petSizes = searchParams.get('petSizes') ? searchParams.get('petSizes')?.split(',') : [];
 
         setFilters(prev => ({
             ...prev,
             location,
             service,
             latitude: lat || prev.latitude,
-            longitude: lng || prev.longitude
+            longitude: lng || prev.longitude,
+            petSizes: petSizes || prev.petSizes
         }));
     }, [searchParams]);
 
@@ -358,6 +368,11 @@ const SearchResultsPage: React.FC = () => {
                 apiParams.serviceType = serviceMap[currentFilters.service] || currentFilters.service;
             }
 
+            // Pet Sizes
+            if (currentFilters.petSizes && currentFilters.petSizes.length > 0) {
+                apiParams.petSizes = currentFilters.petSizes;
+            }
+
             // Advanced Filters
             if (currentFilters.priceRange) {
                 if (currentFilters.priceRange[0] > 0) apiParams.minPrice = currentFilters.priceRange[0].toString();
@@ -387,6 +402,10 @@ const SearchResultsPage: React.FC = () => {
                 housing: profile.housing,
                 distance: profile.distance,
                 availability: profile.availability,
+                preferences: profile.preferences,
+                certifications: profile.certifications,
+                noticePeriod: profile.noticePeriod,
+                cancellationPolicy: profile.cancellationPolicy,
                 updatedAt: profile.updatedAt,
                 reviews: profile.reviews || [],
             }));
@@ -420,6 +439,7 @@ const SearchResultsPage: React.FC = () => {
             service: searchParams.get('service') || 'boarding',
             latitude: parseFloat(searchParams.get('latitude') || '0'),
             longitude: parseFloat(searchParams.get('longitude') || '0'),
+            petSizes: searchParams.get('petSizes')?.split(',') || [],
             maxDistance: 50,
             priceRange: [0, 200],
             // ... other defaults
@@ -451,6 +471,8 @@ const SearchResultsPage: React.FC = () => {
                 if (updated.service) newParams.set('service', updated.service);
                 if (updated.latitude) newParams.set('latitude', updated.latitude.toString());
                 if (updated.longitude) newParams.set('longitude', updated.longitude.toString());
+                if (updated.petSizes && updated.petSizes.length > 0) newParams.set('petSizes', updated.petSizes.join(','));
+                else newParams.delete('petSizes');
 
                 // Use replace to avoid triggering the useEffect
                 setSearchParams(newParams, { replace: true });

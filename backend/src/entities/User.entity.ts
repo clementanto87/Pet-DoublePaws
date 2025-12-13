@@ -24,6 +24,9 @@ export class User {
     @Column({ nullable: true, unique: true })
     googleId?: string;
 
+    @Column({ nullable: true })
+    profileImage?: string;
+
     @CreateDateColumn()
     createdAt!: Date;
     @UpdateDateColumn()

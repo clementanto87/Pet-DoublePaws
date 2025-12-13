@@ -7,7 +7,7 @@ import { AuthRequest } from '../middleware/auth.middleware';
 export const createOrUpdateSitterProfile = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user.id;
-        const profileData = req.body;
+        const { profileImage, ...otherProfileData } = req.body;
 
         const sitterRepository = AppDataSource.getRepository(SitterProfile);
         const userRepository = AppDataSource.getRepository(User);
@@ -21,11 +21,21 @@ export const createOrUpdateSitterProfile = async (req: AuthRequest, res: Respons
         let profile: SitterProfile | null = await sitterRepository.findOneBy({ userId });
 
         if (profile) {
-            sitterRepository.merge(profile, profileData);
+            if (profileImage) {
+                user.profileImage = profileImage;
+                await userRepository.save(user);
+            }
+
+            sitterRepository.merge(profile, otherProfileData);
         } else {
+            if (profileImage) {
+                user.profileImage = profileImage;
+                await userRepository.save(user);
+            }
+
             profile = sitterRepository.create();
             sitterRepository.merge(profile, {
-                ...profileData,
+                ...otherProfileData,
                 user,
                 userId
             });
@@ -60,7 +70,8 @@ export const searchSitters = async (req: AuthRequest, res: Response): Promise<vo
             minExperience,
             verifiedOnly,
             hasReviews,
-            serviceTypes // Comma-separated list
+            serviceTypes, // Comma-separated list
+            petSizes // Comma-separated list
         } = req.body;
 
         const sitterRepository = AppDataSource.getRepository(SitterProfile);
@@ -146,7 +157,7 @@ export const searchSitters = async (req: AuthRequest, res: Response): Promise<vo
                 if (!sitter.preferences?.acceptedPetTypes?.includes(type)) return false;
             }
 
-            // Pet Size Filter
+            // Pet Size Filter (Legacy Weight-based)
             if (weight) {
                 const weights = Array.isArray(weight) ? weight : [weight];
                 const requiredSizes = new Set<string>();
@@ -165,6 +176,26 @@ export const searchSitters = async (req: AuthRequest, res: Response): Promise<vo
                 for (const size of requiredSizes) {
                     if (!sitter.preferences?.acceptedPetSizes?.includes(size)) {
                         return false;
+                    }
+                }
+            }
+
+            // Pet Size Filter (Explicit Selection)
+            if (petSizes) {
+                const sizes = Array.isArray(petSizes)
+                    ? petSizes
+                    : (petSizes as string).split(',').map(s => s.trim());
+                if (sizes.length > 0) {
+                    // Check if sitter accepts ALL selected sizes? Or ANY? 
+                    // Usually "I have a Small dog AND a Large dog" -> Sitter must accept BOTH.
+                    // But "I have a Small dog OR a Large dog" is weird.
+                    // Let's assume AND logical for the searcher's needs. 
+                    // If I select "Small" and "Large", I probably have pets of those sizes and need a sitter who takes both.
+
+                    for (const size of sizes) {
+                        if (!sitter.preferences?.acceptedPetSizes?.includes(size)) {
+                            return false;
+                        }
                     }
                 }
             }
