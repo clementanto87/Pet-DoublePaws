@@ -125,12 +125,12 @@ const FindSitterSearchBox: React.FC<FindSitterSearchBoxProps> = ({
                 : 'border-gray-100 dark:border-gray-700'
                 }`}>
                 {/* Service Selection - Compact Grid Design for Mobile */}
-                <div className="p-2.5 sm:p-3 md:p-6 pb-2 sm:pb-2.5 md:pb-4 border-b border-gray-100 dark:border-gray-700">
-                    <p className="text-[10px] sm:text-xs md:text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1.5 sm:mb-2 md:mb-4 flex items-center gap-1 sm:gap-1.5 md:gap-2 px-1">
+                <div className="p-2.5 sm:p-3 md:p-6 pb-2 sm:pb-2.5 md:pb-4 border-b border-gray-100 dark:border-gray-700 [@media(max-height:750px)]:p-2 [@media(max-height:750px)]:pb-1.5">
+                    <p className="text-[10px] sm:text-xs md:text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1.5 sm:mb-2 md:mb-4 flex items-center gap-1 sm:gap-1.5 md:gap-2 px-1 [@media(max-height:750px)]:mb-1">
                         <span className="text-xs sm:text-sm md:text-lg">🎯</span> <span className="truncate">{t('landing.whatServiceNeeded')}</span>
                     </p>
                     {/* Flex Layout for centered items - 3 columns mobile, 5 desktop */}
-                    <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 md:gap-3">
+                    <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 md:gap-3 [@media(max-height:750px)]:gap-1">
                         {serviceOptions.map((service, index) => (
                             <motion.button
                                 key={service.id}
@@ -140,7 +140,7 @@ const FindSitterSearchBox: React.FC<FindSitterSearchBoxProps> = ({
                                 whileHover={{ scale: 1.03, y: -3 }}
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => setSelectedService(service.id)}
-                                className={`relative w-[calc(33.333%-4px)] sm:w-[31%] lg:w-[18%] p-1.5 sm:p-2 md:p-4 rounded-md sm:rounded-lg md:rounded-2xl text-left transition-all duration-300 overflow-hidden group flex flex-col justify-center items-center md:items-start min-h-[70px] sm:min-h-[80px] md:aspect-square ${selectedService === service.id
+                                className={`relative w-[calc(33.333%-4px)] sm:w-[31%] lg:w-[18%] p-1.5 sm:p-2 md:p-4 rounded-md sm:rounded-lg md:rounded-2xl text-left transition-all duration-300 overflow-hidden group flex flex-col justify-center items-center md:items-start min-h-[70px] sm:min-h-[80px] md:aspect-square [@media(max-height:750px)]:min-h-[58px] [@media(max-height:750px)]:p-1 ${selectedService === service.id
                                     ? 'bg-gradient-to-br ' + service.color + ' text-white shadow-md md:shadow-lg ring-1 md:ring-2 ring-offset-0 md:ring-offset-2 ring-primary/50'
                                     : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm md:hover:shadow-md border border-transparent hover:border-gray-200 dark:hover:border-gray-600'
                                     }`}
@@ -150,20 +150,20 @@ const FindSitterSearchBox: React.FC<FindSitterSearchBoxProps> = ({
 
                                 <div className="relative z-10 flex flex-col items-center md:items-start w-full">
                                     {/* Icon Circle - Smaller on mobile */}
-                                    <div className={`w-6 h-6 sm:w-8 sm:h-8 md:w-12 md:h-12 rounded-full flex items-center justify-center mb-1 sm:mb-1.5 md:mb-3 transition-all flex-shrink-0 ${selectedService === service.id
+                                    <div className={`w-6 h-6 sm:w-8 sm:h-8 md:w-12 md:h-12 rounded-full flex items-center justify-center mb-1 sm:mb-1.5 md:mb-3 transition-all flex-shrink-0 [@media(max-height:750px)]:mb-0.5 ${selectedService === service.id
                                         ? 'bg-white/20'
                                         : 'bg-gray-100 dark:bg-gray-600'
                                         }`}>
-                                        <span className="text-sm sm:text-lg md:text-2xl">{service.icon}</span>
+                                        <span className="text-sm sm:text-lg md:text-2xl [@media(max-height:750px)]:text-xs">{service.icon}</span>
                                     </div>
 
                                     {/* Text Content - Compact on mobile */}
                                     <div className="flex flex-col items-center md:items-start text-center md:text-left w-full">
-                                        <p className={`font-bold text-[9px] sm:text-[10px] md:text-sm mb-0.5 md:mb-1 leading-tight ${selectedService === service.id ? 'text-white' : 'text-gray-900 dark:text-white'
+                                        <p className={`font-bold text-[9px] sm:text-[10px] md:text-sm mb-0.5 md:mb-1 leading-tight [@media(max-height:750px)]:text-[8px] [@media(max-height:750px)]:mb-0 ${selectedService === service.id ? 'text-white' : 'text-gray-900 dark:text-white'
                                             }`}>
                                             {service.label}
                                         </p>
-                                        <p className={`text-[8px] sm:text-[9px] md:text-xs leading-tight md:leading-snug line-clamp-2 ${selectedService === service.id ? 'text-white/90' : 'text-gray-500 dark:text-gray-400'
+                                        <p className={`text-[8px] sm:text-[9px] md:text-xs leading-tight md:leading-snug line-clamp-2 [@media(max-height:750px)]:hidden ${selectedService === service.id ? 'text-white/90' : 'text-gray-500 dark:text-gray-400'
                                             }`}>
                                             {service.desc}
                                         </p>
@@ -192,8 +192,8 @@ const FindSitterSearchBox: React.FC<FindSitterSearchBoxProps> = ({
                 </div>
 
                 {/* Location Search - Improved for mobile */}
-                <div className="p-3 sm:p-4 md:p-6 pt-2.5 sm:pt-3 md:pt-5 overflow-visible">
-                    <p className="text-[10px] sm:text-xs md:text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2 sm:mb-3 md:mb-4 flex items-center gap-1.5 sm:gap-2 px-1">
+                <div className="p-3 sm:p-4 md:p-6 pt-2.5 sm:pt-3 md:pt-5 overflow-visible [@media(max-height:750px)]:p-2 [@media(max-height:750px)]:pt-2">
+                    <p className="text-[10px] sm:text-xs md:text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2 sm:mb-3 md:mb-4 flex items-center gap-1.5 sm:gap-2 px-1 [@media(max-height:750px)]:mb-1.5">
                         <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 text-primary flex-shrink-0" /> <span className="truncate">{t('landing.whereNeedCare')}</span>
                     </p>
 
@@ -204,7 +204,7 @@ const FindSitterSearchBox: React.FC<FindSitterSearchBoxProps> = ({
                             handleSearch();
                             return false;
                         }}
-                        className="flex flex-col md:flex-row gap-2 sm:gap-2.5 md:gap-3 relative"
+                        className="flex flex-col md:flex-row gap-2 sm:gap-2.5 md:gap-3 relative [@media(max-height:750px)]:gap-1.5"
                     >
                         {/* Beautiful Location Input with Autocomplete */}
                         <div className="flex-1 relative min-w-0">
@@ -295,7 +295,7 @@ const FindSitterSearchBox: React.FC<FindSitterSearchBoxProps> = ({
                                 handleSearch();
                             }}
                             type="button"
-                            className="relative h-10 sm:h-12 md:h-14 w-full md:w-auto px-4 sm:px-6 md:px-8 lg:px-10 rounded-full bg-gradient-to-r from-primary to-amber-500 text-white font-bold text-xs sm:text-sm md:text-base shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all overflow-hidden group cursor-pointer"
+                            className="relative h-10 sm:h-12 md:h-14 w-full md:w-auto px-4 sm:px-6 md:px-8 lg:px-10 rounded-full bg-gradient-to-r from-primary to-amber-500 text-white font-bold text-xs sm:text-sm md:text-base shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all overflow-hidden group cursor-pointer [@media(max-height:750px)]:h-9"
                         >
                             {/* Animated Shine */}
                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />

@@ -5,6 +5,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../services/api_service.dart';
 import '../config/google_auth_config.dart';
 
+import '../services/notification_service.dart';
+
 class AuthProvider with ChangeNotifier {
   final ApiService _apiService = ApiService();
   
@@ -16,11 +18,15 @@ class AuthProvider with ChangeNotifier {
       return GoogleSignIn(
         scopes: ['email', 'profile'],
         clientId: GoogleAuthConfig.iosClientId,
+        // serverClientId should be the Web client id (used to mint idToken for backend verification)
+        serverClientId: GoogleAuthConfig.webClientId,
       );
-    } else if (Platform.isAndroid && GoogleAuthConfig.androidClientId != null) {
+    } else if (Platform.isAndroid) {
       return GoogleSignIn(
         scopes: ['email', 'profile'],
-        serverClientId: GoogleAuthConfig.androidClientId,
+        // IMPORTANT: this must be the *Web* client id. Do NOT use the Android client id here.
+        // Using a WEB client id as an iOS client id causes: "Custom scheme URIs are not allowed for 'WEB' client type."
+        serverClientId: GoogleAuthConfig.webClientId,
       );
     } else {
       // Default configuration (will use default client ID from google-services.json or GoogleService-Info.plist)
@@ -55,9 +61,30 @@ class AuthProvider with ChangeNotifier {
     if (savedToken != null && savedUserJson != null) {
       _token = savedToken;
       // User data will be loaded from API when needed
-      _user = {};
+      // TODO: Fetch full user profile to get ID if not stored
+      // For now we assume we might need to fetch profile if we don't store ID in shared prefs
+      // Or we can rely on login response to store user data properly
+      
+      // Attempt to load user from saved json if meaningful (logic simplified here)
+      // Ideally we should do: _user = jsonDecode(savedUserJson); 
+      // But _user was initialized to {} in previous code.
+      // Let's assume we can fetch profile or try to connect if we have ID.
+      
+      _user = {}; 
       _isAuthenticated = true;
       _apiService.setToken(savedToken);
+      
+      // Ideally fetch profile here to get ID for socket
+       try {
+         final profile = await _apiService.getUserProfile();
+         if (profile != null) {
+           _user = profile;
+           NotificationService().connect(_user!['id']);
+         }
+       } catch (e) {
+         print("Error fetching profile on load: $e");
+       }
+      
       notifyListeners();
     }
   }
@@ -80,6 +107,12 @@ class AuthProvider with ChangeNotifier {
         // User data will be stored as needed
         
         _apiService.setToken(_token!);
+        
+        // Connect Socket
+        if (_user != null && _user!['id'] != null) {
+           NotificationService().connect(_user!['id']);
+        }
+        
         _isLoading = false;
         notifyListeners();
         return true;
@@ -115,6 +148,12 @@ class AuthProvider with ChangeNotifier {
         // User data will be stored as needed
         
         _apiService.setToken(_token!);
+        
+        // Connect Socket
+        if (_user != null && _user!['id'] != null) {
+           NotificationService().connect(_user!['id']);
+        }
+
         _isLoading = false;
         notifyListeners();
         return true;
@@ -151,15 +190,17 @@ class AuthProvider with ChangeNotifier {
       // Get the authentication token
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
-      if (googleAuth.accessToken == null) {
-        _error = 'Failed to get Google access token';
+      // Some platforms/configs return only idToken. Backend supports both.
+      final tokenToSend = googleAuth.idToken ?? googleAuth.accessToken;
+      if (tokenToSend == null) {
+        _error = 'Failed to get Google token (idToken/accessToken)';
         _isLoading = false;
         notifyListeners();
         return false;
       }
 
-      // Send access token to backend for verification
-      final response = await _apiService.googleLogin(googleAuth.accessToken!);
+      // Send token to backend for verification (accepts idToken or accessToken)
+      final response = await _apiService.googleLogin(tokenToSend);
       
       if (response['success'] == true) {
         _token = response['token'];
@@ -170,6 +211,12 @@ class AuthProvider with ChangeNotifier {
         await prefs.setString('auth_token', _token!);
         
         _apiService.setToken(_token!);
+        
+        // Connect Socket
+        if (_user != null && _user!['id'] != null) {
+           NotificationService().connect(_user!['id']);
+        }
+
         _isLoading = false;
         notifyListeners();
         return true;
@@ -190,6 +237,8 @@ class AuthProvider with ChangeNotifier {
   Future<void> logout() async {
     await _googleSignIn.signOut();
     
+    NotificationService().disconnect();
+
     _isAuthenticated = false;
     _token = null;
     _user = null;

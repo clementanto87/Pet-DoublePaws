@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 import '../services/api_service.dart';
 import '../providers/auth_provider.dart';
 import 'package:intl/intl.dart';
+import 'dart:async';
+import '../services/notification_service.dart';
 
 class ChatScreen extends StatefulWidget {
   final Map<String, dynamic> otherUser;
@@ -23,14 +25,48 @@ class _ChatScreenState extends State<ChatScreen> {
   
   List<dynamic> _messages = [];
   bool _isLoading = true;
+
   late String _currentUserId;
+  StreamSubscription? _messageSubscription;
 
   @override
   void initState() {
     super.initState();
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     _currentUserId = authProvider.user?['id'] ?? '';
+    
+    // Set current chat partner for notification filtering
+    NotificationService().currentChatPartnerId = widget.otherUser['id'];
+    
+    // Subscribe to real-time messages
+    _messageSubscription = NotificationService().messageStream.listen((data) {
+      if (data['senderId'] == widget.otherUser['id']) {
+        if (mounted) {
+          setState(() {
+            _messages.add({
+              'senderId': data['senderId'],
+              'content': data['message'],
+              // Use current time or pass timestamp from backend if available in data
+              'createdAt': DateTime.now().toIso8601String(), 
+              'imageUrl': null, // Handle image from socket data if sent
+            });
+          });
+          _scrollToBottom();
+        }
+      }
+    });
+
     _fetchMessages();
+  }
+
+  @override
+  void dispose() {
+    // Clear chat partner to resume notifications
+    NotificationService().currentChatPartnerId = null;
+    _messageSubscription?.cancel();
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchMessages() async {

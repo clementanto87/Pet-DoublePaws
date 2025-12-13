@@ -51,5 +51,19 @@
 	<string>We need access to your camera to take photos and send them in chat.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>We need access to your microphone for video recording.</string>
+	<!-- Google Sign-In redirect (required when not using GoogleService-Info.plist) -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- IMPORTANT: This must match your iOS OAuth Client ID prefix (NOT the web client id). -->
+				<!-- Example: if iOS client id is 1234-abc.apps.googleusercontent.com, scheme must be com.googleusercontent.apps.1234-abc -->
+				<string>com.googleusercontent.apps.YOUR_IOS_CLIENT_ID_PREFIX</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

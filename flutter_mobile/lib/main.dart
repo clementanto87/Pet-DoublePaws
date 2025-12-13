@@ -13,8 +13,15 @@ import 'screens/sitter_profile_screen.dart';
 import 'screens/booking_process_screen.dart';
 import 'screens/messages_screen.dart';
 import 'screens/chat_screen.dart';
+import 'screens/my_pets_screen.dart';
+import 'screens/sitter_dashboard_screen.dart';
+import 'widgets/main_scaffold.dart';
 
-void main() {
+import 'services/notification_service.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService().init();
   runApp(const MyApp());
 }
 
@@ -48,7 +55,11 @@ class MyApp extends StatelessWidget {
   }
 }
 
+final _rootNavigatorKey = GlobalKey<NavigatorState>();
+final _shellNavigatorKey = GlobalKey<NavigatorState>();
+
 final GoRouter _router = GoRouter(
+  navigatorKey: _rootNavigatorKey,
   initialLocation: '/login',
   routes: [
     GoRoute(
@@ -59,9 +70,29 @@ final GoRouter _router = GoRouter(
       path: '/signup',
       builder: (context, state) => const SignupScreen(),
     ),
-    GoRoute(
-      path: '/home',
-      builder: (context, state) => const HomeScreen(),
+    ShellRoute(
+      navigatorKey: _shellNavigatorKey,
+      builder: (context, state, child) {
+        return MainScaffold(child: child);
+      },
+      routes: [
+        GoRoute(
+          path: '/home',
+          builder: (context, state) => const HomeScreen(),
+        ),
+        GoRoute(
+          path: '/bookings',
+          builder: (context, state) => const BookingsScreen(),
+        ),
+        GoRoute(
+          path: '/profile',
+          builder: (context, state) => const ProfileScreen(),
+        ),
+        GoRoute(
+          path: '/messages',
+          builder: (context, state) => const MessagesScreen(),
+        ),
+      ],
     ),
     GoRoute(
       path: '/search',
@@ -69,14 +100,6 @@ final GoRouter _router = GoRouter(
         final extra = state.extra as Map<String, dynamic>?;
         return SearchScreen(searchParams: extra);
       },
-    ),
-    GoRoute(
-      path: '/bookings',
-      builder: (context, state) => const BookingsScreen(),
-    ),
-    GoRoute(
-      path: '/profile',
-      builder: (context, state) => const ProfileScreen(),
     ),
     GoRoute(
       path: '/sitter-profile',
@@ -91,10 +114,6 @@ final GoRouter _router = GoRouter(
         final sitter = state.extra as Map<String, dynamic>;
         return BookingProcessScreen(sitter: sitter);
       },
-    ),
-    GoRoute(
-      path: '/messages',
-      builder: (context, state) => const MessagesScreen(),
     ),
     GoRoute(
       path: '/chat',
@@ -112,6 +131,14 @@ final GoRouter _router = GoRouter(
           booking: extras['booking'],
         );
       },
+    ),
+    GoRoute(
+      path: '/my-pets',
+      builder: (context, state) => const MyPetsScreen(),
+    ),
+    GoRoute(
+      path: '/sitter-dashboard',
+      builder: (context, state) => const SitterDashboardScreen(),
     ),
   ],
 );

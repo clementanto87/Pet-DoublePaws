@@ -170,7 +170,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(context),
     );
   }
 
@@ -626,31 +625,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             ),
           ],
         ),
-        const SizedBox(height: 24),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                const Color(0xFFF97316).withOpacity(0.08),
-                const Color(0xFFF97316).withOpacity(0.03),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: const Color(0xFFF97316).withOpacity(0.1),
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildFooterFeature(Icons.verified_user, 'Verified\nSitters'),
-              _buildFooterFeature(Icons.shield_outlined, 'Pet\nInsurance'),
-              _buildFooterFeature(Icons.support_agent, '24/7\nSupport'),
-            ],
-          ),
-        ),
+        const SizedBox(height: 8),
       ],
     );
   }
@@ -889,53 +864,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             color: Color(0xFFF97316),
           ),
           textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBottomNav(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: 0,
-      selectedItemColor: const Color(0xFFF97316),
-      unselectedItemColor: Colors.grey,
-      type: BottomNavigationBarType.fixed,
-      elevation: 0,
-      backgroundColor: Colors.white,
-      selectedFontSize: 12,
-      unselectedFontSize: 12,
-      onTap: (index) {
-        switch (index) {
-          case 0:
-            context.go('/home');
-            break;
-          case 1:
-            context.go('/messages');
-            break;
-          case 2:
-            context.go('/bookings');
-            break;
-          case 3:
-            context.go('/profile');
-            break;
-        }
-      },
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_rounded),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.chat_bubble_rounded),
-          label: 'Messages',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.calendar_today_rounded),
-          label: 'Bookings',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person_rounded),
-          label: 'Profile',
         ),
       ],
     );

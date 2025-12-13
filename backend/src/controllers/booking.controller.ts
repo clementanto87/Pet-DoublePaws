@@ -4,6 +4,7 @@ import { Booking, BookingStatus } from '../entities/Booking.entity';
 import { SitterProfile } from '../entities/SitterProfile.entity';
 import { User } from '../entities/User.entity';
 import { Message } from '../entities/Message.entity';
+import { getIO } from '../socket';
 
 const bookingRepository = AppDataSource.getRepository(Booking);
 const sitterRepository = AppDataSource.getRepository(SitterProfile);
@@ -33,6 +34,19 @@ export const createBooking = async (req: Request, res: Response) => {
         });
 
         await bookingRepository.save(booking);
+
+        // Notify Sitter via Socket
+        try {
+            const io = getIO();
+            io.to(sitter.userId).emit('new_booking', {
+                message: 'You have a new booking request!',
+                bookingId: booking.id,
+                serviceType: booking.serviceType
+            });
+            console.log(`Notification sent to sitter ${sitter.userId}`);
+        } catch (socketError) {
+            console.error('Socket notification failed:', socketError);
+        }
 
         // If a message was provided, create a conversation entry
         if (message && message.trim()) {

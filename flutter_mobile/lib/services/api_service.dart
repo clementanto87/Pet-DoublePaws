@@ -97,13 +97,13 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> googleLogin(String accessToken) async {
+  Future<Map<String, dynamic>> googleLogin(String token) async {
     try {
       final response = await http.post(
         Uri.parse('${ApiService.baseUrl}/auth/google'),
         headers: _headers,
         body: jsonEncode({
-          'token': accessToken,
+          'token': token,
         }),
       );
 
@@ -134,16 +134,44 @@ class ApiService {
     String? service,
     double? latitude,
     double? longitude,
+    double? minPrice,
+    double? maxPrice,
+    double? minRating,
+    double? maxDistance,
+    double? minExperience,
+    bool? verifiedOnly,
+    bool? hasReviews,
+    List<String>? serviceTypes,
   }) async {
     try {
+      // Match the web portal + backend expectations.
+      // For single serviceType, we send the backend key directly so filtering works reliably.
+      const serviceTypeMap = <String, String>{
+        'boarding': 'boarding',
+        'housesitting': 'houseSitting',
+        'visits': 'dropInVisits',
+        'daycare': 'doggyDayCare',
+        'walking': 'dogWalking',
+      };
+
       final response = await http.post(
         Uri.parse('${ApiService.baseUrl}/sitters/search'),
         headers: _headers,
         body: jsonEncode({
           if (location != null) 'location': location,
-          if (service != null) 'serviceType': service,
+          if (service != null) 'serviceType': serviceTypeMap[service] ?? service,
           if (latitude != null) 'latitude': latitude,
           if (longitude != null) 'longitude': longitude,
+          // Advanced filters (same contract as web)
+          if (minPrice != null) 'minPrice': minPrice,
+          if (maxPrice != null) 'maxPrice': maxPrice,
+          if (minRating != null) 'minRating': minRating,
+          if (maxDistance != null) 'maxDistance': maxDistance,
+          if (minExperience != null) 'minExperience': minExperience,
+          if (verifiedOnly == true) 'verifiedOnly': 'true',
+          if (hasReviews == true) 'hasReviews': 'true',
+          if (serviceTypes != null && serviceTypes.isNotEmpty)
+            'serviceTypes': serviceTypes.join(','),
         }),
       );
 
@@ -268,6 +296,59 @@ class ApiService {
     } catch (e) {
       debugPrint('Error sending message: $e');
       return false;
+    }
+  }
+  Future<List<dynamic>> getPets() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiService.baseUrl}/pets'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        return List<dynamic>.from(jsonDecode(response.body));
+      } else {
+        return [];
+      }
+    } catch (e) {
+      debugPrint('Error fetching pets: $e');
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>?> getUserProfile() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiService.baseUrl}/auth/me'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return null; // Token might be invalid or expired
+      }
+    } catch (e) {
+      debugPrint('Error fetching user profile: $e');
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getSitterProfile() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiService.baseUrl}/sitters/me'),
+        headers: _headers,
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return null;
+      }
+    } catch (e) {
+      debugPrint('Error fetching sitter profile: $e');
+      return null;
     }
   }
 }

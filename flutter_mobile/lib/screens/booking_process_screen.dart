@@ -26,20 +26,43 @@ class _BookingProcessScreenState extends State<BookingProcessScreen> {
   int _catCount = 0;
   final _messageController = TextEditingController();
   
-  final List<Map<String, dynamic>> _services = [
-    {'id': 'boarding', 'label': 'Boarding', 'icon': Icons.home},
-    {'id': 'house-sitting', 'label': 'House Sitting', 'icon': Icons.bedroom_parent},
-    {'id': 'drop-in', 'label': 'Drop-in Visits', 'icon': Icons.wb_sunny},
-    {'id': 'day-care', 'label': 'Doggy Day Care', 'icon': Icons.pets},
-    {'id': 'walking', 'label': 'Dog Walking', 'icon': Icons.directions_walk},
+  // Master list of services with backend keys
+  final List<Map<String, dynamic>> _allServices = [
+    {'id': 'boarding', 'label': 'Boarding', 'icon': Icons.home, 'backendKey': 'boarding'},
+    {'id': 'house-sitting', 'label': 'House Sitting', 'icon': Icons.bedroom_parent, 'backendKey': 'houseSitting'},
+    {'id': 'drop-in', 'label': 'Drop-in Visits', 'icon': Icons.wb_sunny, 'backendKey': 'dropInVisits'},
+    {'id': 'day-care', 'label': 'Doggy Day Care', 'icon': Icons.pets, 'backendKey': 'doggyDayCare'},
+    {'id': 'walking', 'label': 'Dog Walking', 'icon': Icons.directions_walk, 'backendKey': 'dogWalking'},
   ];
+
+  // List to store only available services for this sitter
+  List<Map<String, dynamic>> _availableServices = [];
 
   @override
   void initState() {
     super.initState();
+    _filterAvailableServices();
+    
+    // If we have a pre-filled booking, use that data
     if (widget.booking != null) {
       _initializeFromBooking();
+    } else {
+      // Default selection to first available service if possible
+      if (_availableServices.isNotEmpty && !_availableServices.any((s) => s['id'] == _selectedService)) {
+        _selectedService = _availableServices.first['id'];
+      }
     }
+  }
+
+  void _filterAvailableServices() {
+    final sitterServices = widget.sitter['services'] as Map<String, dynamic>? ?? {};
+    
+    _availableServices = _allServices.where((service) {
+      final backendKey = service['backendKey'];
+      final serviceData = sitterServices[backendKey] as Map<String, dynamic>?;
+      // Check if service exists and is active
+      return serviceData != null && serviceData['active'] == true;
+    }).toList();
   }
 
   void _initializeFromBooking() {
@@ -53,10 +76,10 @@ class _BookingProcessScreenState extends State<BookingProcessScreen> {
     }
     // Constants for demo - in real app, parse from booking
     _selectedService = b['service']?.toString().toLowerCase().replaceAll(' ', '-') ?? 'boarding';
-    // Match service ID
-    if (!_services.any((s) => s['id'] == _selectedService)) {
-       // fallback if format doesn't match
-       _selectedService = 'boarding';
+    
+    // If filtered services list is not empty and selected service isn't in it, fallback
+    if (_availableServices.isNotEmpty && !_availableServices.any((s) => s['id'] == _selectedService)) {
+       _selectedService = _availableServices.first['id'];
     }
     
     // Assume booking data has pets/message
@@ -75,14 +98,14 @@ class _BookingProcessScreenState extends State<BookingProcessScreen> {
   Widget build(BuildContext context) {
     final user = widget.sitter['user'] ?? {};
     final firstName = user['firstName'] ?? 'Sitter';
-    // Extract price from services based on selected service
     final services = widget.sitter['services'] as Map<String, dynamic>? ?? {};
-    // Map frontend service ID to backend key if necessary (simple mapping for now)
-    String backendServiceKey = _selectedService;
-    if (_selectedService == 'house-sitting') backendServiceKey = 'houseSitting';
-    if (_selectedService == 'drop-in') backendServiceKey = 'dropInVisits';
-    if (_selectedService == 'day-care') backendServiceKey = 'doggyDayCare';
-    if (_selectedService == 'walking') backendServiceKey = 'dogWalking';
+    
+    // Find current service object to get backend key
+    final currentServiceObj = _allServices.firstWhere(
+      (s) => s['id'] == _selectedService, 
+      orElse: () => _allServices.first
+    );
+    final backendServiceKey = currentServiceObj['backendKey'];
     
     final serviceData = services[backendServiceKey] as Map<String, dynamic>?;
     final priceInt = (serviceData?['rate'] as num?)?.toInt() ?? 30; // Default 30 if not found
@@ -145,7 +168,7 @@ class _BookingProcessScreenState extends State<BookingProcessScreen> {
                         ),
                       ),
                       Text(
-                        _services.firstWhere((s) => s['id'] == _selectedService)['label'],
+                        _allServices.firstWhere((s) => s['id'] == _selectedService, orElse: () => _allServices.first)['label'],
                         style: TextStyle(color: Colors.grey.shade600),
                       ),
                     ],
@@ -162,14 +185,31 @@ class _BookingProcessScreenState extends State<BookingProcessScreen> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
+            
+            if (_availableServices.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.grey),
+                    SizedBox(width: 8),
+                    Expanded(child: Text('This sitter has no active services listed.')),
+                  ],
+                ),
+              )
+            else
             SizedBox(
               height: 100,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: _services.length,
+                itemCount: _availableServices.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 12),
                 itemBuilder: (context, index) {
-                  final service = _services[index];
+                  final service = _availableServices[index];
                   final isSelected = _selectedService == service['id'];
                   return GestureDetector(
                     onTap: () => setState(() => _selectedService = service['id']),
@@ -421,7 +461,7 @@ class _BookingProcessScreenState extends State<BookingProcessScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: (_selectedDateRange == null || _isLoading) ? null : _submitBooking,
+                onPressed: (_selectedDateRange == null || _isLoading || _availableServices.isEmpty) ? null : _submitBooking,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFF97316),
                   foregroundColor: Colors.white,
@@ -457,12 +497,6 @@ class _BookingProcessScreenState extends State<BookingProcessScreen> {
   Future<void> _submitBooking() async {
     setState(() => _isLoading = true);
     
-    // Prepare data
-    // Assuming sitter object has an 'id'. If not, we need to handle it.
-    // In search_screen, we might be passing full sitter object.
-    // The previous code suggests 'id' might be implicit or in the map.
-    // Let's assume widget.sitter['id'] exists.
-    
     // Calculate days
     final days = _selectedDateRange!.end.difference(_selectedDateRange!.start).inDays + 1;
     
@@ -474,10 +508,6 @@ class _BookingProcessScreenState extends State<BookingProcessScreen> {
       'petIds': [], // Sending empty list as we don't have pet selection yet
       'message': _messageController.text,
       'totalPrice': _calculateTotalPrice(),
-      // Add pet counts as metadata in message if backend doesn't support them specifically
-      // or we rely on backend extracting it? 
-      // For now, let's append to message for clarity if needed:
-      // 'message': "${_messageController.text}\n(Pets: $_dogCount Dogs, $_catCount Cats)",
     };
 
     final apiService = Provider.of<ApiService>(context, listen: false);
@@ -507,11 +537,12 @@ class _BookingProcessScreenState extends State<BookingProcessScreen> {
 
   double _calculateTotalPrice() {
     final services = widget.sitter['services'] as Map<String, dynamic>? ?? {};
-    String backendServiceKey = _selectedService;
-    if (_selectedService == 'house-sitting') backendServiceKey = 'houseSitting';
-    if (_selectedService == 'drop-in') backendServiceKey = 'dropInVisits';
-    if (_selectedService == 'day-care') backendServiceKey = 'doggyDayCare';
-    if (_selectedService == 'walking') backendServiceKey = 'dogWalking';
+    
+    final currentServiceObj = _allServices.firstWhere(
+      (s) => s['id'] == _selectedService, 
+      orElse: () => _allServices.first
+    );
+    final backendServiceKey = currentServiceObj['backendKey'];
 
     final serviceData = services[backendServiceKey] as Map<String, dynamic>?;
     final priceInt = (serviceData?['rate'] as num?)?.toInt() ?? 30;
