@@ -196,9 +196,11 @@ export const searchSitters = async (req: AuthRequest, res: Response): Promise<vo
             // Minimum Rating Filter
             if (minRating) {
                 const reviews = sitter.reviews || [];
-                if (reviews.length === 0) return false;
+                // Treat 0 reviews as 5.0 stars (matching UI)
+                const avgRating = reviews.length > 0
+                    ? reviews.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) / reviews.length
+                    : 5.0;
 
-                const avgRating = reviews.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) / reviews.length;
                 const threshold = parseFloat(minRating as string);
 
                 if (avgRating < threshold) return false;

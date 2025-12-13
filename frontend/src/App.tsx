@@ -22,23 +22,29 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import ToastProvider from './components/ui/Toast';
+import GoogleOneTap from './components/auth/GoogleOneTap';
 
 // Create a client for React Query
 const queryClient = new QueryClient();
 
-// Replace with your actual Google Client ID
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
+// Google Client ID (NOT a secret). Prefer setting `VITE_GOOGLE_CLIENT_ID` in your environment.
+// Fallback is kept for local dev convenience.
+const GOOGLE_CLIENT_ID =
+  import.meta.env.VITE_GOOGLE_CLIENT_ID ||
+  '148696767812-0m22i59jnp90ejdr9gp6itg52svthbqg.apps.googleusercontent.com';
+console.log("App: Initializing with Google Client ID:", GOOGLE_CLIENT_ID?.substring(0, 10) + "...");
 
 function App() {
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
+          <GoogleOneTap />
           <ToastProvider>
             <Router>
-              <div className="min-h-screen flex flex-col bg-background text-foreground font-sans">
+              <div className="min-h-screen flex flex-col bg-background text-foreground font-sans overflow-x-hidden">
                 <Navbar />
-                <main className="flex-1">
+                <main className="flex-1 w-full overflow-x-hidden">
                   <Routes>
                     <Route path="/" element={<LandingPage />} />
                     <Route

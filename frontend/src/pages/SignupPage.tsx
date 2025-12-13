@@ -38,6 +38,7 @@ const SignupPage: React.FC = () => {
     };
 
     const googleSignupAction = useGoogleLogin({
+        scope: 'openid profile email',
         onSuccess: async (tokenResponse) => {
             try {
                 await googleLogin(tokenResponse.access_token);

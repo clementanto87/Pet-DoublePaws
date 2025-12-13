@@ -9,6 +9,7 @@ interface AddressAutocompleteProps {
     onChange: (value: string, address?: Address) => void;
     onFocus?: () => void;
     onBlur?: () => void;
+    onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
     placeholder?: string;
     className?: string;
 }
@@ -18,6 +19,7 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
     onChange,
     onFocus,
     onBlur,
+    onKeyDown,
     placeholder = 'Search by zip code or address...',
     className = '',
 }) => {
@@ -27,6 +29,7 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const isSelectingRef = useRef(false);
+    const isUserTypingRef = useRef(false);
 
     useEffect(() => {
         // Skip search if value was set programmatically (from selection)
@@ -38,6 +41,12 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
         // Debounce address search
         if (debounceTimer.current) {
             clearTimeout(debounceTimer.current);
+        }
+
+
+        // Only search if the user is actively typing
+        if (!isUserTypingRef.current) {
+            return;
         }
 
         if (value.length >= 3) {
@@ -69,8 +78,9 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
 
     const handleSelectAddress = (address: Address) => {
         const formattedAddress = formatAddressShort(address);
-        // Mark that we're selecting to prevent triggering new search
+        // Mark that we're selecting and NOT typing
         isSelectingRef.current = true;
+        isUserTypingRef.current = false;
         // Clear suggestions immediately
         setShowSuggestions(false);
         setSuggestions([]);
@@ -79,21 +89,50 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        isUserTypingRef.current = true;
         onChange(e.target.value);
     };
 
-    const handleFocus = () => {
+    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+        // Ensure input maintains focus
+        e.stopPropagation();
+        if (inputRef.current) {
+            // Use setTimeout to ensure focus happens after any other handlers
+            setTimeout(() => {
+                if (inputRef.current && document.activeElement !== inputRef.current) {
+                    inputRef.current.focus();
+                }
+            }, 0);
+        }
         // Don't automatically show suggestions on focus
         // Suggestions will appear when user types (via useEffect)
         onFocus?.();
     };
 
-    const handleBlur = () => {
-        // Delay to allow click on suggestion
+    const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+        // Check if focus is moving to a suggestion or staying within the component
+        const relatedTarget = e.relatedTarget as HTMLElement;
+        const isClickingSuggestion = relatedTarget?.closest('.suggestion-item');
+        
+        // If clicking on suggestion, don't blur
+        if (isClickingSuggestion) {
+            return;
+        }
+        
+        // Delay to allow click on suggestion or other elements
         setTimeout(() => {
-            setShowSuggestions(false);
-            onBlur?.();
-        }, 200);
+            // Double check that input is still not focused and not clicking on suggestions
+            const currentActive = document.activeElement as HTMLElement;
+            const isClickingSuggestionNow = currentActive?.closest('.suggestion-item');
+            
+            if (document.activeElement !== inputRef.current && !isClickingSuggestionNow) {
+                setShowSuggestions(false);
+                onBlur?.();
+            } else if (document.activeElement === inputRef.current) {
+                // If input is focused again, don't blur
+                return;
+            }
+        }, 300);
     };
 
     return (
@@ -106,6 +145,39 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
                     onChange={handleInputChange}
                     onFocus={handleFocus}
                     onBlur={handleBlur}
+                    onKeyDown={(e) => {
+                        // Prevent form submission on Enter unless explicitly handled
+                        if (e.key === 'Enter' && onKeyDown) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onKeyDown(e);
+                        } else if (e.key === 'Enter') {
+                            // If no onKeyDown handler, prevent default form submission
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }
+                    }}
+                    onMouseDown={(e) => {
+                        // Prevent default to avoid losing focus
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Focus the input
+                        if (inputRef.current) {
+                            inputRef.current.focus();
+                        }
+                    }}
+                    onClick={(e) => {
+                        // Ensure input gets focus when clicked
+                        e.stopPropagation();
+                        if (inputRef.current) {
+                            // Use setTimeout to ensure focus happens
+                            setTimeout(() => {
+                                if (inputRef.current && document.activeElement !== inputRef.current) {
+                                    inputRef.current.focus();
+                                }
+                            }, 0);
+                        }
+                    }}
                     placeholder={placeholder}
                     className={className}
                     autoComplete="off"
@@ -137,9 +209,14 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
                                 key={index}
                                 onMouseDown={(e) => {
                                     e.preventDefault();
+                                    e.stopPropagation();
                                     handleSelectAddress(address);
+                                    // Keep focus on input after selection
+                                    setTimeout(() => {
+                                        inputRef.current?.focus();
+                                    }, 0);
                                 }}
-                                className="w-full px-4 py-3 flex items-start gap-3 hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors text-left group"
+                                className="suggestion-item w-full px-4 py-3 flex items-start gap-3 hover:bg-primary/5 dark:hover:bg-primary/10 transition-colors text-left group"
                             >
                                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary transition-colors flex-shrink-0 mt-0.5">
                                     <MapPin className="w-4 h-4 text-primary group-hover:text-white transition-colors" />

@@ -39,6 +39,7 @@ const LoginPage: React.FC = () => {
     };
 
     const googleLoginAction = useGoogleLogin({
+        scope: 'openid profile email',
         onSuccess: async (tokenResponse) => {
             try {
                 await googleLogin(tokenResponse.access_token);

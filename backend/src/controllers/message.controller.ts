@@ -4,6 +4,7 @@ import { Message } from '../entities/Message.entity';
 import { User } from '../entities/User.entity';
 import { Booking } from '../entities/Booking.entity';
 import { In } from 'typeorm';
+import { getIO } from '../socket';
 
 const messageRepository = AppDataSource.getRepository(Message);
 const userRepository = AppDataSource.getRepository(User);
@@ -37,6 +38,22 @@ export const sendMessage = async (req: Request, res: Response) => {
         }
 
         await messageRepository.save(message);
+
+        // Notify Receiver via Socket
+        try {
+            const io = getIO();
+            // Fetch sender details for the notification
+            const sender = await userRepository.findOne({ where: { id: senderId } });
+
+            io.to(receiverId).emit('new_message', {
+                message: content || 'New image received',
+                senderId: senderId,
+                senderName: sender ? `${sender.firstName} ${sender.lastName}` : 'Someone',
+                messageId: message.id
+            });
+        } catch (socketError) {
+            console.error('Socket notification failed:', socketError);
+        }
 
         return res.status(201).json(message);
     } catch (error) {

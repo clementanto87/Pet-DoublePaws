@@ -576,31 +576,31 @@ const ContactSitterPage: React.FC = () => {
                 </div>
             </div>
 
-            <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="relative z-10 max-w-6xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 overflow-x-hidden">
                 {/* Page Header */}
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-center mb-8"
+                    className="text-center mb-4 sm:mb-6 md:mb-8"
                 >
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 rounded-full shadow-sm border border-gray-100 dark:border-gray-700 mb-4">
-                        <MessageCircle className="w-4 h-4 text-primary" />
-                        <span className="text-sm font-semibold text-primary">Contact Sitter</span>
+                    <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-white dark:bg-gray-800 rounded-full shadow-sm border border-gray-100 dark:border-gray-700 mb-3 sm:mb-4">
+                        <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
+                        <span className="text-xs sm:text-sm font-semibold text-primary">Contact Sitter</span>
                     </div>
-                    <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                    <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-2 px-2">
                         Send a Message to{' '}
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-amber-500">
                             {sitter.user?.firstName}
                         </span>
                     </h1>
-                    <p className="text-gray-500 dark:text-gray-400 max-w-lg mx-auto">
+                    <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 max-w-lg mx-auto px-2">
                         Introduce yourself and tell them about your pet care needs
                     </p>
                 </motion.div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
                     {/* Main Form */}
-                    <div className="lg:col-span-2 space-y-6">
+                    <div className="lg:col-span-2 space-y-4 sm:space-y-5 md:space-y-6">
                         {/* Service Selection */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
@@ -625,7 +625,7 @@ const ContactSitterPage: React.FC = () => {
                                         )}
                                     </div>
 
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                                         {availableServices.map((service) => {
                                             const isSelected = selectedService === service.id;
                                             const rate = getServiceRate(service.id);

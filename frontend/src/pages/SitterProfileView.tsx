@@ -248,19 +248,19 @@ const SitterProfileView: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-background-alt-dark">
             {/* Header with Back Button */}
-            <div className="bg-white dark:bg-card border-b border-gray-100 dark:border-gray-800 sticky top-0 z-40">
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="bg-white dark:bg-card border-b border-gray-100 dark:border-gray-800 sticky top-0 z-40 overflow-x-hidden">
+                <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4">
                     <button
                         onClick={() => navigate(-1)}
-                        className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                        className="flex items-center gap-1.5 sm:gap-2 text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
                     >
-                        <ArrowLeft className="w-5 h-5" />
-                        <span className="font-medium">Back to Results</span>
+                        <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                        <span className="font-medium text-sm sm:text-base">Back to Results</span>
                     </button>
                 </div>
             </div>
 
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 overflow-x-hidden">
                 {/* Profile Header */}
                 <div className="bg-white dark:bg-card rounded-3xl shadow-lg overflow-hidden mb-6">
                     {/* Cover gradient */}
@@ -347,9 +347,9 @@ const SitterProfileView: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
                     {/* Main Content */}
-                    <div className="lg:col-span-2 space-y-6">
+                    <div className="lg:col-span-2 space-y-4 sm:space-y-5 md:space-y-6">
                         {/* About */}
                         <Card>
                             <CardContent className="p-6">
