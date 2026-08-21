@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { MapPin, Loader2 } from 'lucide-react';
 import { searchAddresses, formatAddressShort } from '../../utils/geocoding';
 import type { Address } from '../../utils/geocoding';
@@ -28,8 +29,33 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
     const [isLoading, setIsLoading] = useState(false);
     const debounceTimer = useRef<NodeJS.Timeout | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const isSelectingRef = useRef(false);
     const isUserTypingRef = useRef(false);
+
+    // The dropdown is rendered in a portal on <body> with fixed positioning so it
+    // can never be clipped by an ancestor's overflow (the page uses overflow-x-hidden,
+    // which forces overflow-y to `auto` and would otherwise cut off later suggestions).
+    const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
+
+    const updatePosition = useCallback(() => {
+        if (containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            setDropdownPos({ top: rect.bottom + 8, left: rect.left, width: rect.width });
+        }
+    }, []);
+
+    // Keep the dropdown anchored to the input while it is open (scroll / resize / new results).
+    useEffect(() => {
+        if (!showSuggestions || suggestions.length === 0) return;
+        updatePosition();
+        window.addEventListener('scroll', updatePosition, true);
+        window.addEventListener('resize', updatePosition);
+        return () => {
+            window.removeEventListener('scroll', updatePosition, true);
+            window.removeEventListener('resize', updatePosition);
+        };
+    }, [showSuggestions, suggestions.length, updatePosition]);
 
     useEffect(() => {
         // Skip search if value was set programmatically (from selection)
@@ -136,7 +162,7 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
     };
 
     return (
-        <div className="relative flex-1 overflow-visible">
+        <div ref={containerRef} className="relative flex-1 overflow-visible">
             <div className="relative overflow-visible">
                 <input
                     ref={inputRef}
@@ -189,15 +215,23 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
                 )}
             </div>
 
-            {/* Suggestions Dropdown */}
-            <AnimatePresence>
-                {showSuggestions && suggestions.length > 0 && (
+            {/* Suggestions Dropdown — portaled to <body> with fixed positioning so it is
+                never clipped by an overflow ancestor or trapped under another section. */}
+            {createPortal(
+                <AnimatePresence>
+                {showSuggestions && suggestions.length > 0 && dropdownPos && (
                     <motion.div
                         initial={{ opacity: 0, y: -10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-[100] max-h-[300px] overflow-y-auto"
+                        style={{
+                            position: 'fixed',
+                            top: dropdownPos.top,
+                            left: dropdownPos.left,
+                            width: dropdownPos.width,
+                        }}
+                        className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-[9999] max-h-[300px] overflow-y-auto"
                     >
                         <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/30">
                             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
@@ -233,7 +267,9 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
                         ))}
                     </motion.div>
                 )}
-            </AnimatePresence>
+                </AnimatePresence>,
+                document.body
+            )}
         </div>
     );
 };
