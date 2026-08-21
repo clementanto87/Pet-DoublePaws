@@ -1207,7 +1207,10 @@ const ContactSitterPage: React.FC = () => {
 
                                     {/* Calendar View */}
                                     {(() => {
-                                        const calendar = useMemo(() => getMonthlyAvailability(sitter, monthOffset, []), [sitter, monthOffset]);
+                                        // NOTE: must be a plain call, not useMemo — this runs inside an
+                                        // IIFE in JSX and after early returns, so a Hook here violates
+                                        // the Rules of Hooks (caused React error #300 / blank page).
+                                        const calendar = getMonthlyAvailability(sitter, monthOffset, []);
                                         const calendarDays: (number | null)[] = [];
 
                                         // Add empty cells for days before the first day of the month
