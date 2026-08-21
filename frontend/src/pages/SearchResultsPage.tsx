@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     MapPin, Star, Shield, Heart, Grid3X3,
     List, Map as MapIcon, ChevronDown, X,
-    Home, SlidersHorizontal, Sparkles,
+    Home, SlidersHorizontal,
     Award, CheckCircle2, ArrowUpDown, Search,
     Calendar, PawPrint, Sun, Building2,
     ChevronLeft, ChevronRight, MessageCircle
@@ -886,6 +886,7 @@ const SearchResultsPage: React.FC = () => {
         const isHovered = hoveredSitter === sitter.id;
         const isSelected = selectedSitter === sitter.id;
         const isFavorite = favorites.has(sitter.id);
+        const activeServiceTags = useMemo(() => getActiveServiceTags(sitter), [sitter]);
 
         return (
             <div
@@ -893,11 +894,11 @@ const SearchResultsPage: React.FC = () => {
                 onMouseLeave={() => setHoveredSitter(null)}
                 onClick={() => setSelectedSitter(sitter.id === selectedSitter ? null : sitter.id)}
                 className={`
-                    relative bg-white dark:bg-gray-800 rounded-xl overflow-hidden
-                    border transition-colors duration-200 cursor-pointer shadow-sm
+                    relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden
+                    border transition-all duration-200 cursor-pointer
                     ${isHovered || isSelected
-                        ? 'border-primary/50 shadow-md'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                        ? 'border-primary/50 shadow-lg shadow-primary/10 -translate-y-0.5'
+                        : 'border-gray-200 dark:border-gray-700 shadow-sm hover:border-gray-300 hover:shadow-md'
                     }
                 `}
             >
@@ -932,43 +933,81 @@ const SearchResultsPage: React.FC = () => {
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between">
-                            <h3 className="text-sm font-bold text-gray-900 dark:text-white truncate">
-                                {sitter.user?.firstName} {sitter.user?.lastName?.[0]}.
-                            </h3>
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                                <h3 className="text-base font-bold text-gray-900 dark:text-white truncate flex items-center gap-1.5">
+                                    {sitter.user?.firstName} {sitter.user?.lastName?.[0]}.
+                                    {(sitter.yearsExperience || 0) >= 5 && (
+                                        <Award className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+                                    )}
+                                </h3>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{sitter.headline || 'Trusted Pet Care Specialist'}</p>
+                            </div>
                             <button
                                 onClick={(e) => { e.stopPropagation(); toggleFavorite(sitter.id); }}
-                                className="p-1 flex-shrink-0"
+                                className="p-1 -mt-0.5 -mr-0.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
                             >
                                 <Heart
-                                    className={`w-4 h-4 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-300'}`}
+                                    className={`w-4 h-4 transition-colors ${isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-300 hover:text-red-400'}`}
                                 />
                             </button>
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{sitter.headline || 'Pet Sitter'}</p>
 
-                        <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-                            <MapPin className="w-3 h-3" />
-                            <span className="truncate">{sitter.address?.split(',').slice(-2, -1)[0]?.trim() || 'Nearby'}</span>
+                        {/* Meta row */}
+                        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-2 text-xs">
+                            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/20">
+                                <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                                <span className="font-bold text-gray-900 dark:text-white">{getSitterRating(sitter).toFixed(1)}</span>
+                                <span className="text-gray-400">({sitter.reviews?.length || 0})</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400 min-w-0">
+                                <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                                <span className="truncate">{sitter.address?.split(',').slice(-2, -1)[0]?.trim() || 'Nearby'}</span>
+                            </div>
+                            {typeof sitter.distance === 'number' && sitter.distance > 0 && (
+                                <span className="text-gray-400 flex-shrink-0">· {sitter.distance.toFixed(1)} km</span>
+                            )}
                         </div>
 
-                        <div className="flex items-center gap-1 mt-1">
-                            <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                            <span className="text-xs font-semibold">5.0</span>
-                            <span className="text-xs text-gray-400">(0)</span>
-                        </div>
+                        {/* Service chips */}
+                        {activeServiceTags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                                {activeServiceTags.slice(0, 3).map((tag) => (
+                                    <span
+                                        key={tag}
+                                        className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-primary/5 text-primary border border-primary/10"
+                                    >
+                                        {tag}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
 
-                        <Button
-                            size="sm"
-                            className="w-full mt-3 h-8 text-xs"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/sitter/${sitter.id}${searchParamsString ? `?${searchParamsString}` : ''}`, { state: { sitter } });
-                            }}
-                        >
-                            View Profile
-                            <Sparkles className="w-3 h-3 ml-1" />
-                        </Button>
+                        {/* Actions */}
+                        <div className="flex gap-2 mt-3">
+                            <Button
+                                size="sm"
+                                variant="secondary"
+                                className="flex-1 h-8 text-xs px-2"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/contact-sitter/${sitter.id}${searchParamsString ? `?${searchParamsString}` : ''}`, { state: { sitter } });
+                                }}
+                            >
+                                <MessageCircle className="w-3 h-3 mr-1" />
+                                Message
+                            </Button>
+                            <Button
+                                size="sm"
+                                className="flex-1 h-8 text-xs px-2"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/sitter/${sitter.id}${searchParamsString ? `?${searchParamsString}` : ''}`, { state: { sitter } });
+                                }}
+                            >
+                                View Profile
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </div>
