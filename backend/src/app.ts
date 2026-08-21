@@ -16,9 +16,16 @@ import reviewRoutes from './routes/review.routes';
 import messageRoutes from './routes/message.routes';
 
 // Middleware
-// Middleware
+import { isAllowedOrigin } from './config/cors';
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.replace(/\/$/, '') : '*',
+  origin: (origin, callback) => {
+    // Allow non-browser clients (curl, mobile apps, server-to-server) with no Origin header
+    if (!origin || isAllowedOrigin(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`Origin ${origin} not allowed by CORS`));
+  },
   credentials: true
 }));
 app.use(express.json({ limit: '50mb' }));
