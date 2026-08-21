@@ -262,6 +262,21 @@ const serviceOptions = [
     { id: 'walking', icon: Calendar, emoji: '🦮', label: 'Walking', desc: 'Daily walks' },
 ];
 
+// Map raw backend service keys to short, human labels for the result cards.
+const serviceTagLabels: Record<string, string> = {
+    boarding: 'Boarding',
+    houseSitting: 'House Sitting',
+    dropInVisits: 'Drop-In Visits',
+    doggyDayCare: 'Day Care',
+    dogWalking: 'Dog Walking',
+};
+
+const getActiveServiceTags = (sitter: SitterData): string[] =>
+    Object.entries(sitter.services || {})
+        .filter(([, v]) => v?.active)
+        .map(([k]) => serviceTagLabels[k])
+        .filter(Boolean);
+
 const SearchResultsPage: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
@@ -570,6 +585,7 @@ const SearchResultsPage: React.FC = () => {
         const currentMonthOffset = weekOffset[sitter.id] || 0;
         const bookings = sitterBookings.current[sitter.id] || [];
         const calendar = useMemo(() => getMonthlyAvailability(sitter, currentMonthOffset, bookings), [sitter, currentMonthOffset, bookings]);
+        const activeServiceTags = useMemo(() => getActiveServiceTags(sitter), [sitter]);
 
         // Build calendar grid
         const calendarDays: (number | null)[] = [];
@@ -586,110 +602,145 @@ const SearchResultsPage: React.FC = () => {
                 onMouseLeave={() => setHoveredSitter(null)}
                 className={`
                     relative bg-white dark:bg-gray-800 rounded-2xl overflow-hidden
-                    border transition-colors duration-200 cursor-pointer shadow-sm
+                    border transition-all duration-200 cursor-pointer
                     ${isHovered || isSelected
-                        ? 'border-primary/50 shadow-lg shadow-primary/5'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                        ? 'border-primary/50 shadow-xl shadow-primary/10 -translate-y-0.5'
+                        : 'border-gray-200 dark:border-gray-700 shadow-sm hover:border-gray-300 hover:shadow-lg hover:-translate-y-0.5'
                     }
                 `}
             >
                 <div className="flex flex-col lg:flex-row">
                     {/* Left Section - Sitter Info */}
-                    <div className="p-4 flex gap-3 border-b lg:border-b-0 lg:border-r border-gray-100 dark:border-gray-700 lg:w-[260px] lg:flex-shrink-0">
-                        {/* Avatar */}
-                        <div className="relative flex-shrink-0">
-                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-100 to-amber-100 dark:from-gray-700 dark:to-gray-600 overflow-hidden">
-                                {sitter.user?.profileImage ? (
-                                    <img
-                                        src={sitter.user.profileImage}
-                                        alt={sitter.user.firstName}
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center">
-                                        <span className="text-lg font-bold text-primary/40">
-                                            {sitter.user?.firstName?.[0] || '?'}
-                                        </span>
+                    <div className="flex-1 min-w-0 p-5 flex flex-col">
+                        <div className="flex gap-4">
+                            {/* Avatar */}
+                            <div className="relative flex-shrink-0">
+                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 dark:from-gray-700 dark:to-gray-600 overflow-hidden ring-1 ring-black/5">
+                                    {sitter.user?.profileImage ? (
+                                        <img
+                                            src={sitter.user.profileImage}
+                                            alt={sitter.user.firstName}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                            <span className="text-2xl font-bold text-primary/40">
+                                                {sitter.user?.firstName?.[0] || '?'}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                                {sitter.isVerified && (
+                                    <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center border-2 border-white dark:border-gray-800 shadow-sm">
+                                        <Shield className="w-3 h-3 text-white" />
                                     </div>
                                 )}
                             </div>
-                            {sitter.isVerified && (
-                                <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center border-2 border-white dark:border-gray-800">
-                                    <Shield className="w-2.5 h-2.5 text-white" />
+
+                            {/* Identity */}
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="min-w-0">
+                                        <h3
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                navigate(`/sitter/${sitter.id}${searchParamsString ? `?${searchParamsString}` : ''}`, { state: { sitter } });
+                                            }}
+                                            className="text-lg font-bold text-gray-900 dark:text-white hover:text-primary transition-colors cursor-pointer truncate flex items-center gap-1.5"
+                                        >
+                                            {sitter.user?.firstName} {sitter.user?.lastName?.[0]}.
+                                            {(sitter.yearsExperience || 0) >= 5 && (
+                                                <Award className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                                            )}
+                                        </h3>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                                            {sitter.headline || 'Trusted Pet Care Specialist'}
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); toggleFavorite(sitter.id); }}
+                                        className="p-2 -mt-1 -mr-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
+                                    >
+                                        <Heart
+                                            className={`w-5 h-5 transition-colors ${isFavorite
+                                                ? 'text-red-500 fill-red-500'
+                                                : 'text-gray-300 hover:text-red-400'
+                                                }`}
+                                        />
+                                    </button>
                                 </div>
-                            )}
+
+                                {/* Meta row: rating · location · distance */}
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs">
+                                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/20">
+                                        <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                                        <span className="font-bold text-gray-900 dark:text-white">{getSitterRating(sitter).toFixed(1)}</span>
+                                        <span className="text-gray-400">({sitter.reviews?.length || 0})</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+                                        <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                                        <span className="truncate max-w-[160px]">{sitter.address?.split(',').slice(-2, -1)[0]?.trim() || 'Nearby'}</span>
+                                    </div>
+                                    {typeof sitter.distance === 'number' && sitter.distance > 0 && (
+                                        <span className="text-gray-400">· {sitter.distance.toFixed(1)} km away</span>
+                                    )}
+                                    {sitter.isVerified && (
+                                        <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                                            <CheckCircle2 className="w-3.5 h-3.5" /> Verified
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-1">
-                                <div className="min-w-0">
-                                    <h3
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            navigate(`/sitter/${sitter.id}${searchParamsString ? `?${searchParamsString}` : ''}`, { state: { sitter } });
-                                        }}
-                                        className="text-sm font-bold text-primary hover:underline cursor-pointer truncate flex items-center gap-1"
+                        {/* Service tags */}
+                        {activeServiceTags.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mt-3">
+                                {activeServiceTags.slice(0, 4).map((tag) => (
+                                    <span
+                                        key={tag}
+                                        className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-primary/5 text-primary border border-primary/10"
                                     >
-                                        {sitter.user?.firstName} {sitter.user?.lastName?.[0]}.
-                                        {(sitter.yearsExperience || 0) >= 5 && (
-                                            <Award className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
-                                        )}
-                                    </h3>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                                        {sitter.headline || 'Pet Care Specialist'}
-                                    </p>
-                                </div>
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); toggleFavorite(sitter.id); }}
-                                    className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
-                                >
-                                    <Heart
-                                        className={`w-4 h-4 transition-colors ${isFavorite
-                                            ? 'text-red-500 fill-red-500'
-                                            : 'text-gray-300 hover:text-red-400'
-                                            }`}
-                                    />
-                                </button>
+                                        {tag}
+                                    </span>
+                                ))}
                             </div>
+                        )}
 
-                            {/* Location */}
-                            <div className="flex items-center gap-1 text-xs text-gray-500 mt-1.5">
-                                <MapPin className="w-3 h-3 text-gray-400" />
-                                <span className="truncate">{sitter.address?.split(',').slice(-2, -1)[0]?.trim() || 'Nearby'}</span>
-                            </div>
+                        {/* Bio snippet */}
+                        {sitter.bio && (
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-3 line-clamp-2 leading-relaxed">
+                                {sitter.bio}
+                            </p>
+                        )}
 
-                            {/* Rating & Price */}
-                            <div className="flex items-center gap-2 mt-2">
-                                <div className="flex items-center gap-0.5">
-                                    <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                                    <span className="text-xs font-bold text-gray-900 dark:text-white">5.0</span>
-                                    <span className="text-[10px] text-gray-400">(0)</span>
+                        <div className="flex-1" />
+
+                        {/* Footer: price + actions */}
+                        <div className="flex items-end justify-between gap-3 mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                            <div>
+                                <div className="flex items-baseline gap-1">
+                                    <span className="text-2xl font-black text-gray-900 dark:text-white">${price}</span>
+                                    <span className="text-xs text-gray-400">/night</span>
                                 </div>
-                                <div className="h-3 w-px bg-gray-200 dark:bg-gray-700" />
-                                <div className="flex items-center">
-                                    <span className="text-sm font-black text-primary">${price}</span>
-                                    <span className="text-[10px] text-gray-400 ml-0.5">/night</span>
-                                </div>
+                                <span className="text-[11px] text-gray-400">from · {(sitter.yearsExperience || 0)}+ yrs experience</span>
                             </div>
-
-                            {/* Action Buttons */}
-                            <div className="flex gap-1.5 mt-3">
+                            <div className="flex gap-2 flex-shrink-0">
                                 <Button
                                     size="sm"
                                     variant="secondary"
-                                    className="flex-1 h-7 text-xs px-2"
+                                    className="h-9 px-3 text-xs"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         navigate(`/contact-sitter/${sitter.id}${searchParamsString ? `?${searchParamsString}` : ''}`, { state: { sitter } });
                                     }}
                                 >
-                                    <MessageCircle className="w-3 h-3 mr-1" />
-                                    Book
+                                    <MessageCircle className="w-3.5 h-3.5 mr-1" />
+                                    Message
                                 </Button>
                                 <Button
                                     size="sm"
-                                    className="flex-1 h-7 text-xs px-2"
+                                    className="h-9 px-4 text-xs"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         navigate(`/sitter/${sitter.id}${searchParamsString ? `?${searchParamsString}` : ''}`, { state: { sitter } });
@@ -702,8 +753,8 @@ const SearchResultsPage: React.FC = () => {
                     </div>
 
                     {/* Right Section - Monthly Calendar */}
-                    <div className="flex-1 p-4 bg-gray-50/30 dark:bg-gray-800/50 min-w-0 flex flex-col items-center justify-center">
-                        <div className="w-full max-w-[320px]">
+                    <div className="lg:w-[360px] lg:flex-shrink-0 p-4 bg-gray-50/60 dark:bg-gray-900/30 border-t lg:border-t-0 lg:border-l border-gray-100 dark:border-gray-700">
+                        <div className="w-full">
                             {/* Month Navigation */}
                             <div className="flex items-center justify-between mb-3">
                                 <h4 className="text-base font-bold text-gray-900 dark:text-white">
@@ -764,7 +815,7 @@ const SearchResultsPage: React.FC = () => {
                             <div className="grid grid-cols-7 gap-1">
                                 {calendarDays.map((day, idx) => {
                                     if (day === null) {
-                                        return <div key={idx} className="w-8 h-8"></div>;
+                                        return <div key={idx} className="aspect-square"></div>;
                                     }
 
                                     const isAvailable = calendar.availableDays.has(day);
@@ -791,7 +842,7 @@ const SearchResultsPage: React.FC = () => {
                                             }}
                                             disabled={!isAvailable}
                                             className={`
-                                                w-8 h-8 rounded-lg text-xs font-medium transition-colors
+                                                w-full aspect-square rounded-lg text-xs font-medium transition-colors
                                                 flex items-center justify-center
                                                 ${isAvailable
                                                     ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 cursor-pointer border border-emerald-200'
@@ -816,7 +867,7 @@ const SearchResultsPage: React.FC = () => {
                             <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-1">
                                 <div className="flex items-center gap-1.5 text-xs text-gray-500">
                                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                                    <span>Updated {calendar.lastUpdated} day{calendar.lastUpdated > 1 ? 's' : ''} ago</span>
+                                    <span>{calendar.lastUpdated === 0 ? 'Updated today' : `Updated ${calendar.lastUpdated} day${calendar.lastUpdated > 1 ? 's' : ''} ago`}</span>
                                 </div>
                                 <div className="text-xs text-gray-500">
                                     Cancellation: <span className="text-primary hover:underline cursor-pointer">flexible</span>
