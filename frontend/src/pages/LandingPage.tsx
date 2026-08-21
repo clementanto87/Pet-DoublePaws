@@ -92,7 +92,7 @@ const LandingPage: React.FC = () => {
     <div className="flex-1 w-full overflow-hidden bg-gradient-to-b from-orange-50/50 via-white to-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-900">
 
       {/* Hero Section with Search */}
-      <section className="relative min-h-[70vh] md:min-h-[95vh] flex items-center [@media(max-height:750px)]:min-h-[100svh]">
+      <section className="relative z-30 min-h-[70vh] md:min-h-[95vh] flex items-center [@media(max-height:750px)]:min-h-[100svh]">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {/* Animated Background Gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-orange-50 via-amber-50/30 to-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-900" />
