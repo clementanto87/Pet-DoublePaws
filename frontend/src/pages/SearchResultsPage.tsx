@@ -1184,10 +1184,16 @@ const SearchResultsPage: React.FC = () => {
                         )
                     }
 
-                    {/* Map - Split View */}
+                    {/* Map - Split & full Map view */}
                     {
-                        viewMode === 'split' && (
-                            <div className="hidden lg:block w-2/5 flex-shrink-0 h-[calc(100vh-56px)] sticky top-[56px] relative">
+                        (viewMode === 'split' || viewMode === 'map') && (
+                            <div
+                                key={viewMode}
+                                className={`relative h-[calc(100vh-56px)] ${viewMode === 'map'
+                                    ? 'w-full'
+                                    : 'hidden lg:block w-2/5 flex-shrink-0 sticky top-[56px]'
+                                    }`}
+                            >
                                 <MapContainer
                                     center={mapCenter}
                                     zoom={10}
