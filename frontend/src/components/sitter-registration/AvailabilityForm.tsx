@@ -1,8 +1,10 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSitterRegistration } from '../../context/SitterRegistrationContext';
 import { Label } from '../ui/Label';
 
 const AvailabilityForm: React.FC = () => {
+    const { t } = useTranslation();
     const { data, updateData, updateNestedData } = useSitterRegistration();
 
     const toggleGeneralAvailability = (day: string) => {
@@ -16,15 +18,15 @@ const AvailabilityForm: React.FC = () => {
     return (
         <div className="space-y-6 animate-fade-in">
             <div className="space-y-4">
-                <h2 className="text-xl font-bold text-foreground">Availability</h2>
+                <h2 className="text-xl font-bold text-foreground">{t('sitterRegistration.forms.availability.heading')}</h2>
                 <p className="text-muted-foreground text-sm">
-                    Set your general schedule. You can manage specific dates in your calendar later.
+                    {t('sitterRegistration.forms.availability.subtitle')}
                 </p>
             </div>
 
             <div className="space-y-6">
                 <div className="space-y-3">
-                    <Label className="text-base font-semibold">General Availability</Label>
+                    <Label className="text-base font-semibold">{t('sitterRegistration.forms.availability.general')}</Label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         {['Weekdays', 'Weekends', 'Holidays', 'Full-Time'].map(item => (
                             <label key={item} className={`flex flex-col items-center justify-center p-4 border rounded-xl cursor-pointer transition-all ${data.availability.general.includes(item) ? 'border-primary bg-primary/5 text-primary font-bold' : 'hover:bg-muted/50'}`}>
@@ -34,26 +36,26 @@ const AvailabilityForm: React.FC = () => {
                                     checked={data.availability.general.includes(item)}
                                     onChange={() => toggleGeneralAvailability(item)}
                                 />
-                                <span>{item}</span>
+                                <span>{t(`sitterRegistration.forms.availability.days.${item}`, item)}</span>
                             </label>
                         ))}
                     </div>
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="noticePeriod">Advance Notice Required</Label>
+                    <Label htmlFor="noticePeriod">{t('sitterRegistration.forms.availability.noticeLabel')}</Label>
                     <select
                         id="noticePeriod"
                         className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                         value={data.noticePeriod}
                         onChange={(e) => updateData('noticePeriod', e.target.value)}
                     >
-                        <option value="Same Day">Same Day</option>
-                        <option value="1 day">1 day</option>
-                        <option value="2 days">2 days</option>
-                        <option value="3 days">3 days</option>
-                        <option value="1 week">1 week</option>
-                        <option value="2 weeks">2 weeks</option>
+                        <option value="Same Day">{t('sitterRegistration.forms.availability.notice.Same Day')}</option>
+                        <option value="1 day">{t('sitterRegistration.forms.availability.notice.1 day')}</option>
+                        <option value="2 days">{t('sitterRegistration.forms.availability.notice.2 days')}</option>
+                        <option value="3 days">{t('sitterRegistration.forms.availability.notice.3 days')}</option>
+                        <option value="1 week">{t('sitterRegistration.forms.availability.notice.1 week')}</option>
+                        <option value="2 weeks">{t('sitterRegistration.forms.availability.notice.2 weeks')}</option>
                     </select>
                 </div>
             </div>

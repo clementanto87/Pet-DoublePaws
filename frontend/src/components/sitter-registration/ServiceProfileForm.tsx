@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSitterRegistration } from '../../context/SitterRegistrationContext';
 import type { ServiceRate } from '../../context/SitterRegistrationContext';
 import { Input } from '../ui/Input';
@@ -8,6 +9,7 @@ import { Home, Building, Sun, Dog, PawPrint, DollarSign, MapPin, Check, Sparkles
 import { cn } from '../../lib/utils';
 
 const ServiceProfileForm: React.FC = () => {
+    const { t } = useTranslation();
     const { data, updateNestedData, updateData } = useSitterRegistration();
 
     const handleServiceToggle = (serviceKey: string, checked: boolean) => {
@@ -79,10 +81,9 @@ const ServiceProfileForm: React.FC = () => {
                         <DollarSign className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                        <h3 className="font-semibold text-green-900 dark:text-green-300 mb-1">Time to set up your services! 💰</h3>
+                        <h3 className="font-semibold text-green-900 dark:text-green-300 mb-1">{t('sitterRegistration.forms.services.introTitle')}</h3>
                         <p className="text-sm text-green-700 dark:text-green-400">
-                            Choose the services you'd like to offer and set competitive rates. 
-                            You can adjust these anytime in your dashboard.
+                            {t('sitterRegistration.forms.services.introDesc')}
                         </p>
                     </div>
                 </div>
@@ -90,7 +91,7 @@ const ServiceProfileForm: React.FC = () => {
 
             {/* Active Services Counter */}
             <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                <span className="text-gray-600 dark:text-gray-400">Services selected</span>
+                <span className="text-gray-600 dark:text-gray-400">{t('sitterRegistration.forms.services.selected')}</span>
                 <span className={cn(
                     "px-3 py-1 rounded-full text-sm font-bold",
                     activeServicesCount > 0 
@@ -157,13 +158,13 @@ const ServiceProfileForm: React.FC = () => {
                                         <div className="flex items-start justify-between">
                                         <div>
                                                 <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                                    {service.label}
+                                                    {t(`sitterRegistration.forms.services.list.${service.key}.label`, service.label)}
                                                     <span className="text-lg">{service.emoji}</span>
                                                 </h3>
-                                                <p className="text-sm text-gray-500 mt-0.5">{service.desc}</p>
+                                                <p className="text-sm text-gray-500 mt-0.5">{t(`sitterRegistration.forms.services.list.${service.key}.desc`, service.desc)}</p>
                                             </div>
                                             <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full text-gray-500">
-                                                Avg: {service.avgRate}
+                                                {t('sitterRegistration.forms.services.avg')} {service.avgRate}
                                             </span>
                                         </div>
                                     </div>
@@ -185,7 +186,7 @@ const ServiceProfileForm: React.FC = () => {
                                             <div className="space-y-2">
                                                         <Label className="text-xs font-medium flex items-center gap-1">
                                                             <DollarSign className="w-3 h-3" />
-                                                            Your Rate
+                                                            {t('sitterRegistration.forms.services.yourRate')}
                                                         </Label>
                                                         <div className="relative">
                                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
@@ -202,7 +203,7 @@ const ServiceProfileForm: React.FC = () => {
                                             <div className="space-y-2">
                                                         <Label className="text-xs font-medium flex items-center gap-1">
                                                             <Sparkles className="w-3 h-3" />
-                                                            Holiday Rate
+                                                            {t('sitterRegistration.forms.services.holidayRate')}
                                                         </Label>
                                                         <div className="relative">
                                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
@@ -226,13 +227,13 @@ const ServiceProfileForm: React.FC = () => {
                                                         animate={{ opacity: 1, y: 0 }}
                                                         className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 space-y-3"
                                                     >
-                                                        {/* Standard Rate Breakdown */}
+                                                        {/* {t('sitterRegistration.forms.services.standardRates')} */}
                                                         <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl p-4 border border-green-100 dark:border-green-800">
                                                             <div className="flex items-center gap-2 mb-3">
                                                                 <div className="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center">
                                                                     <TrendingUp className="w-4 h-4 text-white" />
                                                                 </div>
-                                                                <span className="text-sm font-bold text-green-900 dark:text-green-300">Standard Rate Breakdown</span>
+                                                                <span className="text-sm font-bold text-green-900 dark:text-green-300">{t('sitterRegistration.forms.services.standardRates')}</span>
                                                             </div>
                                                             
                                                             <div className="space-y-2">
@@ -240,7 +241,7 @@ const ServiceProfileForm: React.FC = () => {
                                                                 <div className="flex items-center justify-between text-sm">
                                                                     <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
                                                                         <DollarSign className="w-3.5 h-3.5" />
-                                                                        Customer pays:
+                                                                        {t('sitterRegistration.forms.services.customerPays')}
                                                                     </span>
                                                                     <span className="font-bold text-gray-900 dark:text-white">${serviceData.rate.toFixed(0)}</span>
                                                                 </div>
@@ -249,7 +250,7 @@ const ServiceProfileForm: React.FC = () => {
                                                                 <div className="flex items-center justify-between pt-2 border-t border-green-200 dark:border-green-700">
                                                                     <span className="text-sm font-bold text-green-700 dark:text-green-300 flex items-center gap-1.5">
                                                                         <Sparkles className="w-4 h-4" />
-                                                                        You earn:
+                                                                        {t('sitterRegistration.forms.services.youEarn')}
                                                                     </span>
                                                                     <span className="text-lg font-black text-green-600 dark:text-green-400">
                                                                         ${(serviceData.rate * 0.85).toFixed(2)}
@@ -258,7 +259,7 @@ const ServiceProfileForm: React.FC = () => {
                                                             </div>
                                                         </div>
 
-                                                        {/* Holiday Rate Breakdown */}
+                                                        {/* {t('sitterRegistration.forms.services.holidayRates')} */}
                                                         {serviceData.holidayRate && serviceData.holidayRate > 0 && (
                                                             <motion.div
                                                                 initial={{ opacity: 0, scale: 0.95 }}
@@ -269,14 +270,14 @@ const ServiceProfileForm: React.FC = () => {
                                                                     <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center">
                                                                         <Sparkles className="w-4 h-4 text-white" />
                                                                     </div>
-                                                                    <span className="text-sm font-bold text-amber-900 dark:text-amber-300">Holiday Rate Breakdown</span>
+                                                                    <span className="text-sm font-bold text-amber-900 dark:text-amber-300">{t('sitterRegistration.forms.services.holidayRates')}</span>
                                                                 </div>
                                                                 
                                                                 <div className="space-y-2">
                                                                     <div className="flex items-center justify-between text-sm">
                                                                         <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
                                                                             <DollarSign className="w-3.5 h-3.5" />
-                                                                            Customer pays:
+                                                                            {t('sitterRegistration.forms.services.customerPays')}
                                                                         </span>
                                                                         <span className="font-bold text-gray-900 dark:text-white">${serviceData.holidayRate.toFixed(0)}</span>
                                                                     </div>
@@ -284,7 +285,7 @@ const ServiceProfileForm: React.FC = () => {
                                                                     <div className="flex items-center justify-between pt-2 border-t border-amber-200 dark:border-amber-700">
                                                                         <span className="text-sm font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
                                                                             <Sparkles className="w-4 h-4" />
-                                                                            You earn:
+                                                                            {t('sitterRegistration.forms.services.youEarn')}
                                                                         </span>
                                                                         <span className="text-lg font-black text-amber-600 dark:text-amber-400">
                                                                             ${(serviceData.holidayRate * 0.85).toFixed(2)}
@@ -298,7 +299,7 @@ const ServiceProfileForm: React.FC = () => {
                                                         <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                                                             <p className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
                                                                 <Sparkles className="w-3.5 h-3.5 text-primary" />
-                                                                With 10 bookings/month: <span className="font-bold text-primary">${(serviceData.rate * 0.85 * 10).toFixed(0)}</span>
+                                                                {t('sitterRegistration.forms.services.monthly')} <span className="font-bold text-primary">${(serviceData.rate * 0.85 * 10).toFixed(0)}</span>
                                                             </p>
                                                         </div>
                                                     </motion.div>
@@ -325,8 +326,8 @@ const ServiceProfileForm: React.FC = () => {
                         <MapPin className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                        <Label className="text-base font-semibold">Service Radius</Label>
-                        <p className="text-sm text-gray-500">How far will you travel?</p>
+                        <Label className="text-base font-semibold">{t('sitterRegistration.forms.services.radius')}</Label>
+                        <p className="text-sm text-gray-500">{t('sitterRegistration.forms.services.radiusQuestion')}</p>
                     </div>
                 </div>
                 
@@ -346,7 +347,7 @@ const ServiceProfileForm: React.FC = () => {
                 </div>
                 
                 <p className="text-xs text-gray-500 mt-3 flex items-center gap-1">
-                    🗺️ Pet parents within {Math.round(data.serviceRadius * 1.60934)} kilometers of your location will see your profile.
+                    🗺️ {t('sitterRegistration.forms.services.radiusFootnote', { km: Math.round(data.serviceRadius * 1.60934) })}
                 </p>
             </motion.div>
         </div>

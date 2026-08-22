@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSitterRegistration } from '../../context/SitterRegistrationContext';
 import { Label } from '../ui/Label';
 import { motion } from 'framer-motion';
@@ -6,6 +7,7 @@ import { Heart, Check, Dog, Cat, Bird, Rabbit, Turtle, Scale, Baby, Pill, Syring
 import { cn } from '../../lib/utils';
 
 const PreferencesForm: React.FC = () => {
+    const { t } = useTranslation();
     const { data, updateData } = useSitterRegistration();
 
     const toggleArrayItem = (field: 'acceptedPetTypes' | 'acceptedPetSizes' | 'behavioralRestrictions', value: string) => {
@@ -48,10 +50,9 @@ const PreferencesForm: React.FC = () => {
                         <Heart className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                        <h3 className="font-semibold text-pink-900 dark:text-pink-300 mb-1">What pets do you love? 🐾</h3>
+                        <h3 className="font-semibold text-pink-900 dark:text-pink-300 mb-1">{t('sitterRegistration.forms.preferences.introTitle')}</h3>
                         <p className="text-sm text-pink-700 dark:text-pink-400">
-                            Tell us about the furry (and scaly!) friends you'd enjoy caring for.
-                            Be honest—it helps us match you with the perfect pets!
+                            {t('sitterRegistration.forms.preferences.introDesc')}
                         </p>
                     </div>
                 </div>
@@ -65,10 +66,10 @@ const PreferencesForm: React.FC = () => {
             >
                 <div className="flex items-center justify-between">
                     <Label className="text-base font-semibold flex items-center gap-2">
-                        🐾 Pet Types I Accept
+                        {t('sitterRegistration.forms.preferences.petTypesLabel')}
                     </Label>
                     <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full text-gray-500">
-                        {data.acceptedPetTypes.length} selected
+                        {t('sitterRegistration.forms.preferences.selected', { count: data.acceptedPetTypes.length })}
                     </span>
                 </div>
 
@@ -110,7 +111,7 @@ const PreferencesForm: React.FC = () => {
                                     "font-semibold text-sm",
                                     isSelected ? "text-primary" : "text-gray-900 dark:text-white"
                                 )}>
-                                    {type.label}
+                                    {t(`sitterRegistration.forms.preferences.types.${type.value}`, type.label)}
                                 </p>
                                 <p className="text-xl mt-1">{type.emoji}</p>
                             </motion.button>
@@ -129,10 +130,10 @@ const PreferencesForm: React.FC = () => {
                 <div className="flex items-center justify-between">
                     <Label className="text-base font-semibold flex items-center gap-2">
                         <Scale className="w-4 h-4 text-primary" />
-                        Dog Sizes I Accept
+                        {t('sitterRegistration.forms.preferences.dogSizes')}
                     </Label>
                     <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full text-gray-500">
-                        {data.acceptedPetSizes.length} selected
+                        {t('sitterRegistration.forms.preferences.selected', { count: data.acceptedPetSizes.length })}
                     </span>
                 </div>
 
@@ -165,7 +166,7 @@ const PreferencesForm: React.FC = () => {
                                     "font-bold text-sm",
                                     isSelected ? "text-primary" : "text-gray-900 dark:text-white"
                                 )}>
-                                    {size.label}
+                                    {t(`sitterRegistration.forms.preferences.sizes.${size.value}`, size.label)}
                                 </p>
                                 <p className="text-xs text-gray-500">{size.weight}</p>
                             </motion.button>
@@ -192,8 +193,8 @@ const PreferencesForm: React.FC = () => {
                     <div className="flex items-center gap-3">
                         <span className="text-2xl">✂️</span>
                         <div className="text-left">
-                            <p className="font-semibold text-gray-900 dark:text-white">Only Spayed/Neutered Pets</p>
-                            <p className="text-sm text-gray-500">I prefer pets that are fixed</p>
+                            <p className="font-semibold text-gray-900 dark:text-white">{t('sitterRegistration.forms.preferences.neuteredTitle')}</p>
+                            <p className="text-sm text-gray-500">{t('sitterRegistration.forms.preferences.neuteredDesc')}</p>
                         </div>
                     </div>
                     <div className={cn(
@@ -215,10 +216,10 @@ const PreferencesForm: React.FC = () => {
                 className="space-y-4"
             >
                 <Label className="text-base font-semibold flex items-center gap-2">
-                    ⭐ Special Care I Can Provide
+                    {t('sitterRegistration.forms.preferences.specialCare')}
                 </Label>
                 <p className="text-sm text-gray-500 -mt-2">
-                    Check the special care situations you're comfortable handling.
+                    {t('sitterRegistration.forms.preferences.specialCareDesc')}
                 </p>
 
                 <div className="space-y-3">
@@ -254,7 +255,7 @@ const PreferencesForm: React.FC = () => {
                                             "font-semibold text-sm",
                                             isSelected ? "text-green-700 dark:text-green-300" : "text-gray-900 dark:text-white"
                                         )}>
-                                            {item.label}
+                                            {t(`sitterRegistration.forms.preferences.care.${item.value}`, item.label)}
                                         </p>
                                         <p className="text-xs text-gray-500">{item.desc}</p>
                                     </div>
@@ -280,7 +281,7 @@ const PreferencesForm: React.FC = () => {
             <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 border border-amber-200 dark:border-amber-800">
                 <p className="text-sm text-amber-800 dark:text-amber-300 flex items-start gap-2">
                     <span className="text-lg">💡</span>
-                    <span>Being flexible with pet types and sizes can increase your bookings by up to 60%!</span>
+                    <span>{t('sitterRegistration.forms.preferences.tip')}</span>
                 </p>
             </div>
         </div>

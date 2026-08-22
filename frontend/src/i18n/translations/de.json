@@ -613,15 +613,240 @@
     }
   },
   "sitterRegistration": {
-    "title": "Tiersitter werden",
     "steps": {
-      "serviceProfile": "Dienstleistungsprofil",
-      "experience": "Erfahrung",
-      "housing": "Wohnung",
-      "availability": "Verfügbarkeit",
-      "preferences": "Präferenzen",
-      "identity": "Identität",
-      "banking": "Banking"
+      "identity": {
+        "label": "Deine Infos",
+        "description": "Erzähle uns von dir",
+        "tip": "So wissen Tierhalter, wer du bist!"
+      },
+      "services": {
+        "label": "Services",
+        "description": "Welche Services bietest du an?",
+        "tip": "Setze faire Preise, um mehr Kunden zu gewinnen!"
+      },
+      "preferences": {
+        "label": "Tier-Präferenzen",
+        "description": "Welche Tiere betreust du gerne?",
+        "tip": "Sei ehrlich über deine Erfahrung mit verschiedenen Tieren."
+      },
+      "housing": {
+        "label": "Dein Zuhause",
+        "description": "Erzähle uns von deinem Zuhause",
+        "tip": "Ein sicherer, gemütlicher Ort macht Tiere glücklich!"
+      },
+      "experience": {
+        "label": "Erfahrung",
+        "description": "Zeige deine Kompetenz in der Tierbetreuung",
+        "tip": "Zertifikate stärken dein Profil!"
+      },
+      "availability": {
+        "label": "Zeitplan",
+        "description": "Wann kannst du Tiere betreuen?",
+        "tip": "Mehr Verfügbarkeit bedeutet mehr Buchungen!"
+      },
+      "banking": {
+        "label": "Bezahlung",
+        "description": "Richte deine Zahlungen ein",
+        "tip": "Erhalte dein Geld innerhalb von 2 Tagen nach jeder Buchung!"
+      }
+    },
+    "progress": "Dein Fortschritt",
+    "proTip": "Profi-Tipp",
+    "stepOf": "Schritt {{current}} von {{total}}",
+    "percentComplete": "{{percent}}% abgeschlossen",
+    "autoSaved": "Automatisch gespeichert",
+    "exit": "Verlassen",
+    "back": "Zurück",
+    "cancel": "Abbrechen",
+    "continue": "Weiter",
+    "complete": "Registrierung abschließen",
+    "save": "Änderungen speichern",
+    "trust": {
+      "secure": "Deine Daten sind sicher",
+      "time": "Dauert ~5 Minuten",
+      "free": "Kostenlos beitreten"
+    },
+    "success": {
+      "welcomeTitle": "Willkommen im Rudel! 🎉",
+      "updatedTitle": "Profil aktualisiert! 🎉",
+      "welcomeDesc": "Dein Betreuerprofil ist fertig! Mach dich bereit, tolle Tiere und ihre Halter kennenzulernen.",
+      "updatedDesc": "Deine Änderungen wurden gespeichert. Du wirst zum Dashboard weitergeleitet...",
+      "somethingWrong": "Etwas ist schiefgelaufen. Bitte versuche es erneut!"
+    },
+    "validation": {
+      "address": "Ups! Bitte wähle eine Adresse aus den Vorschlägen, damit Tiere dich finden!",
+      "phone": "Wir brauchen deine Telefonnummer, um dich mit Tierhaltern zu verbinden!",
+      "dob": "Vergiss dein Geburtsdatum nicht! (Du musst mind. 18 Jahre alt sein)",
+      "services": "Wähle mindestens einen Service und lege einen Preis fest, um zu verdienen!",
+      "petTypes": "Wähle, welche Lieblinge du betreuen möchtest!",
+      "petSizes": "Sag uns, mit welcher Tiergröße du dich wohlfühlst!",
+      "availability": "Sag uns, wann du für die Tierbetreuung frei bist!"
+    },
+    "forms": {
+      "identity": {
+        "heading": "Lass uns dich kennenlernen!",
+        "phone": "Telefonnummer",
+        "phonePlaceholder": "(555) 123-4567",
+        "address": "Adresse",
+        "addressPlaceholder": "Beginne, deine Adresse einzugeben...",
+        "dob": "Geburtsdatum",
+        "changeFile": "Klicken, um Datei zu ändern",
+        "uploadId": "Ausweis",
+        "introTitle": "Lass uns dich kennenlernen!",
+        "introDesc": "Diese Angaben helfen Tierhaltern, Vertrauen zu fassen, wer sich um ihre Lieblinge kümmert. Keine Sorge, deine persönlichen Daten sind bei uns sicher! 🔒",
+        "dobLabel": "Geburtsdatum",
+        "looksGood": "Sieht gut aus!",
+        "dobHint": "🎂 Du musst mindestens 18 Jahre alt sein, um Betreuer zu werden.",
+        "addressLabel": "Deine Adresse",
+        "locationFound": "Standort gefunden!",
+        "addressHint": "📍 So zeigen wir dich Tierhaltern in deiner Nähe.",
+        "phoneLabel": "Telefonnummer",
+        "perfect": "Perfekt!",
+        "phoneHint": "📱 Wir teilen dies erst mit Tierhaltern, nachdem du eine Buchung bestätigt hast.",
+        "govId": "Ausweis",
+        "uploaded": "Hochgeladen!",
+        "docUploaded": "Dokument hochgeladen! ✨",
+        "dropId": "Ziehe deinen Ausweis hierher oder klicke zum Hochladen",
+        "idFormats": "Führerschein oder Reisepass (PNG, JPG, PDF)",
+        "selectFile": "Datei auswählen",
+        "idHint": "🔒 Dein Ausweis ist verschlüsselt und wird nur zur Verifizierung verwendet. Er wird nicht geteilt."
+      },
+      "services": {
+        "heading": "Services & Preise",
+        "selected": "Services ausgewählt",
+        "radius": "Einsatzradius",
+        "radiusQuestion": "Wie weit reist du?",
+        "standardRates": "Standardpreise",
+        "holidayRates": "Feiertagspreise",
+        "yourRate": "Dein Preis",
+        "holidayRate": "Feiertagspreis",
+        "introTitle": "Zeit, deine Services einzurichten! 💰",
+        "introDesc": "Wähle die Services, die du anbieten möchtest, und lege faire Preise fest. Du kannst diese jederzeit im Dashboard anpassen.",
+        "avg": "Ø:",
+        "customerPays": "Kunde zahlt:",
+        "youEarn": "Du erhältst:",
+        "radiusFootnote": "Tierhalter im Umkreis von {{km}} Kilometern sehen dein Profil.",
+        "monthly": "Bei 10 Buchungen/Monat:",
+        "list": {
+          "boarding": {
+            "label": "Tierunterbringung",
+            "desc": "Tiere übernachten bei dir zu Hause"
+          },
+          "houseSitting": {
+            "label": "Hausbetreuung",
+            "desc": "Du übernachtest beim Tierhalter zu Hause"
+          },
+          "dropInVisits": {
+            "label": "Kurzbesuche",
+            "desc": "Kurze Besuche zum Füttern & Spielen"
+          },
+          "doggyDayCare": {
+            "label": "Hunde-Tagesbetreuung",
+            "desc": "Tagesbetreuung bei dir zu Hause"
+          },
+          "dogWalking": {
+            "label": "Gassi-Service",
+            "desc": "Bewegung in der Nachbarschaft"
+          }
+        }
+      },
+      "preferences": {
+        "heading": "Tier-Präferenzen",
+        "petTypes": "Akzeptierte Tierarten",
+        "petSizes": "Akzeptierte Tiergrößen",
+        "neuteredTitle": "Nur kastrierte/sterilisierte Tiere",
+        "neuteredDesc": "Ich bevorzuge kastrierte Tiere",
+        "tip": "Flexibilität bei Tierarten und -größen kann deine Buchungen um bis zu 60 % steigern!",
+        "introTitle": "Welche Tiere magst du? 🐾",
+        "introDesc": "Erzähle uns von den pelzigen (und schuppigen!) Freunden, die du gerne betreust. Sei ehrlich – so finden wir die perfekten Tiere für dich!",
+        "petTypesLabel": "🐾 Tierarten, die ich annehme",
+        "selected": "{{count}} ausgewählt",
+        "dogSizes": "Hundegrößen, die ich annehme",
+        "specialCare": "⭐ Besondere Pflege, die ich biete",
+        "specialCareDesc": "Wähle die besonderen Pflegesituationen, mit denen du dich wohlfühlst.",
+        "types": {
+          "Dog": "Hunde",
+          "Cat": "Katzen",
+          "Bird": "Vögel",
+          "Small Animal": "Kleintiere",
+          "Reptile": "Reptilien"
+        },
+        "sizes": {
+          "Small": "Klein",
+          "Medium": "Mittel",
+          "Large": "Groß",
+          "Giant": "Riesig"
+        },
+        "care": {
+          "Puppies (< 1 year)": "Welpen",
+          "Senior Dogs": "Seniortiere",
+          "Separation Anxiety": "Trennungsangst",
+          "Oral Medication": "Orale Medikamente",
+          "Injected Medication": "Injektionen"
+        }
+      },
+      "housing": {
+        "heading": "Wohnen & Umgebung",
+        "homeType": "Wohnungstyp",
+        "outdoorSpace": "Außenbereich",
+        "children": "Kinder im Haushalt?",
+        "otherPets": "Andere Tiere im Haushalt?",
+        "nonSmoking": "Nichtraucherhaushalt?",
+        "house": "Haus",
+        "apartment": "Wohnung",
+        "condo": "Eigentumswohnung",
+        "farm": "Bauernhof",
+        "fencedYard": "Eingezäunter Garten",
+        "unfencedYard": "Nicht eingezäunter Garten",
+        "noYard": "Kein Garten",
+        "subtitle": "Wichtig für Übernachtung und Tagesbetreuung. Hilf Haltern, sich vorzustellen, wo ihr Tier bleibt."
+      },
+      "experience": {
+        "heading": "Erfahrung & Fähigkeiten",
+        "years": "Jahre Erfahrung",
+        "headline": "Überschrift",
+        "headlinePlaceholder": "z. B. Liebevoller Tiersitter mit 5 Jahren Erfahrung",
+        "bio": "Über mich",
+        "bioPlaceholder": "Erzähle Haltern von dir, deiner Erfahrung mit Tieren und warum du deine Arbeit liebst.",
+        "skills": "Besondere Fähigkeiten",
+        "certifications": "Zertifikate",
+        "subtitle": "Zeige deine Kompetenz, um Vertrauen bei Tierhaltern aufzubauen."
+      },
+      "availability": {
+        "heading": "Verfügbarkeit",
+        "general": "Allgemeine Verfügbarkeit",
+        "notice": {
+          "Same Day": "Am selben Tag",
+          "1 day": "1 Tag",
+          "2 days": "2 Tage",
+          "3 days": "3 Tage",
+          "1 week": "1 Woche",
+          "2 weeks": "2 Wochen"
+        },
+        "sameDay": "Am selben Tag",
+        "subtitle": "Lege deinen allgemeinen Zeitplan fest. Bestimmte Termine kannst du später im Kalender verwalten.",
+        "days": {
+          "Weekdays": "Wochentags",
+          "Weekends": "Wochenenden",
+          "Holidays": "Feiertage",
+          "Full-Time": "Vollzeit"
+        },
+        "noticeLabel": "Erforderliche Vorlaufzeit"
+      },
+      "banking": {
+        "heading": "Bankdaten",
+        "accountHolder": "Kontoinhaber",
+        "accountHolderPlaceholder": "Vollständiger Name des Kontoinhabers",
+        "bankName": "Bankname",
+        "bankNamePlaceholder": "z. B. Sparkasse, Deutsche Bank",
+        "accountNumber": "Kontonummer",
+        "accountNumberPlaceholder": "10-12 Ziffern",
+        "routingNumber": "Bankleitzahl",
+        "routingPlaceholder": "9 Ziffern",
+        "secure": "Deine Zahlungsdaten sind verschlüsselt und sicher.",
+        "note": "Hinweis: In einer Produktionsumgebung würde dies mit einem Zahlungsdienstleister wie Stripe Connect für sicheres Onboarding und Auszahlungen integriert.",
+        "noteLabel": "Hinweis:"
+      }
     }
   },
   "petProfile": {

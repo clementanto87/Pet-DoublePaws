@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSitterRegistration } from '../../context/SitterRegistrationContext';
 import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
@@ -8,6 +9,7 @@ import { Upload, MapPin, Phone, Calendar, CheckCircle, FileCheck, User } from 'l
 import { cn } from '../../lib/utils';
 
 const IdentityForm: React.FC = () => {
+    const { t } = useTranslation();
     const { data, updateData } = useSitterRegistration();
     const [suggestions, setSuggestions] = useState<any[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -92,10 +94,9 @@ const IdentityForm: React.FC = () => {
                         <User className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                        <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-1">Let's get to know you!</h3>
+                        <h3 className="font-semibold text-blue-900 dark:text-blue-300 mb-1">{t('sitterRegistration.forms.identity.introTitle')}</h3>
                         <p className="text-sm text-blue-700 dark:text-blue-400">
-                            This information helps pet parents feel confident about who's caring for their furry friends.
-                            Don't worry, your personal details are secure with us! 🔒
+                            {t('sitterRegistration.forms.identity.introDesc')}
                         </p>
                     </div>
                 </div>
@@ -110,11 +111,11 @@ const IdentityForm: React.FC = () => {
                 <div className="flex items-center justify-between">
                     <Label htmlFor="dob" className="flex items-center gap-2 text-base font-semibold">
                         <Calendar className="w-4 h-4 text-primary" />
-                        Date of Birth
+                        {t('sitterRegistration.forms.identity.dobLabel')}
                     </Label>
                     {isDobValid && (
                         <span className="flex items-center gap-1 text-green-500 text-sm">
-                            <CheckCircle className="w-4 h-4" /> Looks good!
+                            <CheckCircle className="w-4 h-4" /> {t('sitterRegistration.forms.identity.looksGood')}
                         </span>
                     )}
                 </div>
@@ -130,7 +131,7 @@ const IdentityForm: React.FC = () => {
                         required
                     />
                 <p className="text-xs text-gray-500 flex items-center gap-1">
-                    🎂 You must be 18 years or older to become a sitter.
+                    {t('sitterRegistration.forms.identity.dobHint')}
                 </p>
             </motion.div>
 
@@ -144,18 +145,18 @@ const IdentityForm: React.FC = () => {
                 <div className="flex items-center justify-between">
                     <Label htmlFor="address" className="flex items-center gap-2 text-base font-semibold">
                         <MapPin className="w-4 h-4 text-primary" />
-                        Your Address
+                        {t('sitterRegistration.forms.identity.addressLabel')}
                     </Label>
                     {isAddressValid && (
                         <span className="flex items-center gap-1 text-green-500 text-sm">
-                            <CheckCircle className="w-4 h-4" /> Location found!
+                            <CheckCircle className="w-4 h-4" /> {t('sitterRegistration.forms.identity.locationFound')}
                         </span>
                     )}
                 </div>
                     <div className="relative">
                         <Input
                             id="address"
-                        placeholder="Start typing your address..."
+                        placeholder={t('sitterRegistration.forms.identity.addressPlaceholder')}
                         className={cn(
                             "h-12 pl-12 text-base",
                             isAddressValid && "border-green-300 focus:border-green-500"
@@ -201,7 +202,7 @@ const IdentityForm: React.FC = () => {
                     </AnimatePresence>
                     </div>
                 <p className="text-xs text-gray-500 flex items-center gap-1">
-                    📍 This helps us show you to nearby pet parents.
+                    {t('sitterRegistration.forms.identity.addressHint')}
                 </p>
             </motion.div>
 
@@ -215,11 +216,11 @@ const IdentityForm: React.FC = () => {
                 <div className="flex items-center justify-between">
                     <Label htmlFor="phone" className="flex items-center gap-2 text-base font-semibold">
                         <Phone className="w-4 h-4 text-primary" />
-                        Phone Number
+                        {t('sitterRegistration.forms.identity.phoneLabel')}
                     </Label>
                     {isPhoneValid && (
                         <span className="flex items-center gap-1 text-green-500 text-sm">
-                            <CheckCircle className="w-4 h-4" /> Perfect!
+                            <CheckCircle className="w-4 h-4" /> {t('sitterRegistration.forms.identity.perfect')}
                         </span>
                     )}
                 </div>
@@ -236,7 +237,7 @@ const IdentityForm: React.FC = () => {
                         required
                     />
                 <p className="text-xs text-gray-500 flex items-center gap-1">
-                    📱 We'll only share this with pet parents after you confirm a booking.
+                    {t('sitterRegistration.forms.identity.phoneHint')}
                 </p>
             </motion.div>
 
@@ -250,11 +251,11 @@ const IdentityForm: React.FC = () => {
                 <div className="flex items-center justify-between">
                     <Label className="flex items-center gap-2 text-base font-semibold">
                         <FileCheck className="w-4 h-4 text-primary" />
-                        Government ID
+                        {t('sitterRegistration.forms.identity.govId')}
                     </Label>
                     {data.governmentIdUrl && (
                         <span className="flex items-center gap-1 text-green-500 text-sm">
-                            <CheckCircle className="w-4 h-4" /> Uploaded!
+                            <CheckCircle className="w-4 h-4" /> {t('sitterRegistration.forms.identity.uploaded')}
                         </span>
                     )}
                 </div>
@@ -288,8 +289,8 @@ const IdentityForm: React.FC = () => {
                             <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4">
                                 <CheckCircle className="w-8 h-8 text-green-600" />
                                 </div>
-                            <p className="font-semibold text-green-600">Document Uploaded! ✨</p>
-                            <p className="text-sm text-gray-500 mt-1">Click to change file</p>
+                            <p className="font-semibold text-green-600">{t('sitterRegistration.forms.identity.docUploaded')}</p>
+                            <p className="text-sm text-gray-500 mt-1">{t('sitterRegistration.forms.identity.changeFile')}</p>
                             </>
                         ) : (
                             <>
@@ -297,21 +298,21 @@ const IdentityForm: React.FC = () => {
                                 <Upload className="w-8 h-8 text-primary" />
                                 </div>
                             <p className="font-semibold text-gray-900 dark:text-white mb-1">
-                                Drop your ID here or click to upload
+                                {t('sitterRegistration.forms.identity.dropId')}
                             </p>
                             <p className="text-sm text-gray-500 mb-4">
-                                Driver's License or Passport (PNG, JPG, PDF)
+                                {t('sitterRegistration.forms.identity.idFormats')}
                             </p>
                             <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleUploadClick(); }}>
                                 <Upload className="w-4 h-4 mr-2" />
-                                    Select File
+                                    {t('sitterRegistration.forms.identity.selectFile')}
                                 </Button>
                             </>
                         )}
                 </motion.div>
                 
                 <p className="text-xs text-gray-500 flex items-center gap-1">
-                    🔒 Your ID is encrypted and only used for verification. It won't be shared.
+                    {t('sitterRegistration.forms.identity.idHint')}
                 </p>
             </motion.div>
         </div>

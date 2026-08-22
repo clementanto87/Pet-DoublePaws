@@ -613,15 +613,240 @@
     }
   },
   "sitterRegistration": {
-    "title": "Become a Pet Sitter",
     "steps": {
-      "serviceProfile": "Service Profile",
-      "experience": "Experience",
-      "housing": "Housing",
-      "availability": "Availability",
-      "preferences": "Preferences",
-      "identity": "Identity",
-      "banking": "Banking"
+      "identity": {
+        "label": "Your Info",
+        "description": "Tell us about yourself",
+        "tip": "This helps pet parents know who you are!"
+      },
+      "services": {
+        "label": "Services",
+        "description": "What services will you offer?",
+        "tip": "Set competitive rates to attract more clients!"
+      },
+      "preferences": {
+        "label": "Pet Prefs",
+        "description": "What pets do you love caring for?",
+        "tip": "Be honest about your experience with different pets."
+      },
+      "housing": {
+        "label": "Your Space",
+        "description": "Tell us about your home",
+        "tip": "A safe, comfortable space makes happy pets!"
+      },
+      "experience": {
+        "label": "Experience",
+        "description": "Showcase your pet care expertise",
+        "tip": "Certifications can boost your profile!"
+      },
+      "availability": {
+        "label": "Schedule",
+        "description": "When can you care for pets?",
+        "tip": "More availability means more bookings!"
+      },
+      "banking": {
+        "label": "Get Paid",
+        "description": "Set up your payments",
+        "tip": "Get paid within 2 days of each booking!"
+      }
+    },
+    "progress": "Your Progress",
+    "proTip": "Pro Tip",
+    "stepOf": "Step {{current}} of {{total}}",
+    "percentComplete": "{{percent}}% Complete",
+    "autoSaved": "Auto-saved",
+    "exit": "Exit",
+    "back": "Back",
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "complete": "Complete Registration",
+    "save": "Save Changes",
+    "trust": {
+      "secure": "Your data is secure",
+      "time": "Takes ~5 minutes",
+      "free": "Free to join"
+    },
+    "success": {
+      "welcomeTitle": "Welcome to the Pack! 🎉",
+      "updatedTitle": "Profile Updated! 🎉",
+      "welcomeDesc": "Your sitter profile is all set up! Get ready to meet amazing pets and their loving owners.",
+      "updatedDesc": "Your changes have been saved. Redirecting you to your dashboard...",
+      "somethingWrong": "Something went wrong. Please try again!"
+    },
+    "validation": {
+      "address": "Oops! Please pick an address from the suggestions so pets can find you!",
+      "phone": "We need your phone number to keep you connected with pet parents!",
+      "dob": "Don't forget your birthday! (You must be 18+ to join)",
+      "services": "Pick at least one service and set a rate to start earning!",
+      "petTypes": "Choose which furry friends you'd love to care for!",
+      "petSizes": "Tell us what size pets you're comfortable with!",
+      "availability": "Let us know when you're free to care for pets!"
+    },
+    "forms": {
+      "identity": {
+        "heading": "Let's get to know you!",
+        "phone": "Phone Number",
+        "phonePlaceholder": "(555) 123-4567",
+        "address": "Address",
+        "addressPlaceholder": "Start typing your address...",
+        "dob": "Date of Birth",
+        "changeFile": "Click to change file",
+        "uploadId": "Government ID",
+        "introTitle": "Let's get to know you!",
+        "introDesc": "This information helps pet parents feel confident about who's caring for their furry friends. Don't worry, your personal details are secure with us! 🔒",
+        "dobLabel": "Date of Birth",
+        "looksGood": "Looks good!",
+        "dobHint": "🎂 You must be 18 years or older to become a sitter.",
+        "addressLabel": "Your Address",
+        "locationFound": "Location found!",
+        "addressHint": "📍 This helps us show you to nearby pet parents.",
+        "phoneLabel": "Phone Number",
+        "perfect": "Perfect!",
+        "phoneHint": "📱 We'll only share this with pet parents after you confirm a booking.",
+        "govId": "Government ID",
+        "uploaded": "Uploaded!",
+        "docUploaded": "Document Uploaded! ✨",
+        "dropId": "Drop your ID here or click to upload",
+        "idFormats": "Driver's License or Passport (PNG, JPG, PDF)",
+        "selectFile": "Select File",
+        "idHint": "🔒 Your ID is encrypted and only used for verification. It won't be shared."
+      },
+      "services": {
+        "heading": "Services & Rates",
+        "selected": "Services selected",
+        "radius": "Service Radius",
+        "radiusQuestion": "How far will you travel?",
+        "standardRates": "Standard Rate Breakdown",
+        "holidayRates": "Holiday Rate Breakdown",
+        "yourRate": "Your Rate",
+        "holidayRate": "Holiday Rate",
+        "introTitle": "Time to set up your services! 💰",
+        "introDesc": "Choose the services you'd like to offer and set competitive rates. You can adjust these anytime in your dashboard.",
+        "avg": "Avg:",
+        "customerPays": "Customer pays:",
+        "youEarn": "You earn:",
+        "radiusFootnote": "Pet parents within {{km}} kilometers of your location will see your profile.",
+        "monthly": "With 10 bookings/month:",
+        "list": {
+          "boarding": {
+            "label": "Pet Boarding",
+            "desc": "Pets stay overnight at your home"
+          },
+          "houseSitting": {
+            "label": "House Sitting",
+            "desc": "You stay at the pet owner's home"
+          },
+          "dropInVisits": {
+            "label": "Drop-In Visits",
+            "desc": "Quick visits for feeding & playtime"
+          },
+          "doggyDayCare": {
+            "label": "Doggy Day Care",
+            "desc": "Daytime care at your home"
+          },
+          "dogWalking": {
+            "label": "Dog Walking",
+            "desc": "Exercise in the neighborhood"
+          }
+        }
+      },
+      "preferences": {
+        "heading": "Pet Preferences",
+        "petTypes": "Accepted Pet Types",
+        "petSizes": "Accepted Pet Sizes",
+        "neuteredTitle": "Only Spayed/Neutered Pets",
+        "neuteredDesc": "I prefer pets that are fixed",
+        "tip": "Being flexible with pet types and sizes can increase your bookings by up to 60%!",
+        "introTitle": "What pets do you love? 🐾",
+        "introDesc": "Tell us about the furry (and scaly!) friends you'd enjoy caring for. Be honest—it helps us match you with the perfect pets!",
+        "petTypesLabel": "🐾 Pet Types I Accept",
+        "selected": "{{count}} selected",
+        "dogSizes": "Dog Sizes I Accept",
+        "specialCare": "⭐ Special Care I Can Provide",
+        "specialCareDesc": "Check the special care situations you're comfortable handling.",
+        "types": {
+          "Dog": "Dogs",
+          "Cat": "Cats",
+          "Bird": "Birds",
+          "Small Animal": "Small Pets",
+          "Reptile": "Reptiles"
+        },
+        "sizes": {
+          "Small": "Small",
+          "Medium": "Medium",
+          "Large": "Large",
+          "Giant": "Giant"
+        },
+        "care": {
+          "Puppies (< 1 year)": "Puppies",
+          "Senior Dogs": "Senior Pets",
+          "Separation Anxiety": "Separation Anxiety",
+          "Oral Medication": "Oral Medication",
+          "Injected Medication": "Injections"
+        }
+      },
+      "housing": {
+        "heading": "Housing & Environment",
+        "homeType": "Home Type",
+        "outdoorSpace": "Outdoor Space",
+        "children": "Children in home?",
+        "otherPets": "Other pets in home?",
+        "nonSmoking": "Non-smoking home?",
+        "house": "House",
+        "apartment": "Apartment",
+        "condo": "Condo",
+        "farm": "Farm",
+        "fencedYard": "Fenced Yard",
+        "unfencedYard": "Unfenced Yard",
+        "noYard": "No Yard",
+        "subtitle": "Important for Boarding and Day Care. Help owners visualize where their pet will stay."
+      },
+      "experience": {
+        "heading": "Experience & Skills",
+        "years": "Years of Experience",
+        "headline": "Headline",
+        "headlinePlaceholder": "e.g. Loving Pet Sitter with 5 Years Experience",
+        "bio": "Bio",
+        "bioPlaceholder": "Tell owners about yourself, your experience with pets, and why you love what you do.",
+        "skills": "Special Skills",
+        "certifications": "Certifications",
+        "subtitle": "Showcase your expertise to build trust with pet owners."
+      },
+      "availability": {
+        "heading": "Availability",
+        "general": "General Availability",
+        "notice": {
+          "Same Day": "Same Day",
+          "1 day": "1 day",
+          "2 days": "2 days",
+          "3 days": "3 days",
+          "1 week": "1 week",
+          "2 weeks": "2 weeks"
+        },
+        "sameDay": "Same Day",
+        "subtitle": "Set your general schedule. You can manage specific dates in your calendar later.",
+        "days": {
+          "Weekdays": "Weekdays",
+          "Weekends": "Weekends",
+          "Holidays": "Holidays",
+          "Full-Time": "Full-Time"
+        },
+        "noticeLabel": "Advance Notice Required"
+      },
+      "banking": {
+        "heading": "Banking Information",
+        "accountHolder": "Account Holder Name",
+        "accountHolderPlaceholder": "Full Name on Account",
+        "bankName": "Bank Name",
+        "bankNamePlaceholder": "e.g. Chase, Bank of America",
+        "accountNumber": "Account Number",
+        "accountNumberPlaceholder": "10-12 digits",
+        "routingNumber": "Routing Number",
+        "routingPlaceholder": "9 digits",
+        "secure": "Your payment details are encrypted and secure.",
+        "note": "Note: In a production environment, this would integrate with a payment processor like Stripe Connect for secure onboarding and payouts.",
+        "noteLabel": "Note:"
+      }
     }
   },
   "petProfile": {

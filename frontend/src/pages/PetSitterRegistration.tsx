@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowLeft,
@@ -112,6 +113,7 @@ const validationMessages: Record<string, { message: string; emoji: string }> = {
 };
 
 const RegistrationContent: React.FC = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { currentStep, setCurrentStep, data, loadData } = useSitterRegistration();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -186,38 +188,38 @@ const RegistrationContent: React.FC = () => {
         switch (stepIndex) {
             case 0:
                 if (!data.address || !data.latitude || !data.longitude) {
-                    setError(validationMessages.address);
+                    setError({ message: t('sitterRegistration.validation.address'), emoji: validationMessages.address.emoji });
                     return false;
                 }
                 if (!data.phone) {
-                    setError(validationMessages.phone);
+                    setError({ message: t('sitterRegistration.validation.phone'), emoji: validationMessages.phone.emoji });
                     return false;
                 }
                 if (!data.dob) {
-                    setError(validationMessages.dob);
+                    setError({ message: t('sitterRegistration.validation.dob'), emoji: validationMessages.dob.emoji });
                     return false;
                 }
                 return true;
             case 1:
                 const hasActiveService = Object.values(data.services).some(s => s.active && s.rate > 0);
                 if (!hasActiveService) {
-                    setError(validationMessages.services);
+                    setError({ message: t('sitterRegistration.validation.services'), emoji: validationMessages.services.emoji });
                     return false;
                 }
                 return true;
             case 2:
                 if (data.acceptedPetTypes.length === 0) {
-                    setError(validationMessages.petTypes);
+                    setError({ message: t('sitterRegistration.validation.petTypes'), emoji: validationMessages.petTypes.emoji });
                     return false;
                 }
                 if (data.acceptedPetSizes.length === 0) {
-                    setError(validationMessages.petSizes);
+                    setError({ message: t('sitterRegistration.validation.petSizes'), emoji: validationMessages.petSizes.emoji });
                     return false;
                 }
                 return true;
             case 5:
                 if (data.availability.general.length === 0) {
-                    setError(validationMessages.availability);
+                    setError({ message: t('sitterRegistration.validation.availability'), emoji: validationMessages.availability.emoji });
                     return false;
                 }
                 return true;
@@ -291,7 +293,7 @@ const RegistrationContent: React.FC = () => {
                         transition={{ delay: 0.3 }}
                         className="text-3xl font-bold text-gray-900 dark:text-white mb-4"
                     >
-                        {isEditing ? 'Profile Updated! 🎉' : 'Welcome to the Pack! 🎉'}
+                        {isEditing ? t('sitterRegistration.success.updatedTitle') : t('sitterRegistration.success.welcomeTitle')}
                     </motion.h2>
                     <motion.p
                         initial={{ opacity: 0, y: 20 }}
@@ -337,13 +339,13 @@ const RegistrationContent: React.FC = () => {
                             className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-primary transition-colors group"
                         >
                             <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                            <span className="font-medium">Exit</span>
+                            <span className="font-medium">{t('sitterRegistration.exit')}</span>
                         </button>
 
                         {/* Progress Bar */}
                         <div className="flex-1 max-w-md mx-3 sm:mx-8">
                             <div className="flex items-center justify-between text-xs sm:text-sm mb-2">
-                                <span className="text-gray-500 whitespace-nowrap">Step {currentStep + 1} / {steps.length}</span>
+                                <span className="text-gray-500 whitespace-nowrap">{t('sitterRegistration.stepOf', { current: currentStep + 1, total: steps.length })}</span>
                                 <span className="text-primary font-medium whitespace-nowrap">{Math.round(progress)}%</span>
                             </div>
                             <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -359,7 +361,7 @@ const RegistrationContent: React.FC = () => {
                         {/* Save indicator */}
                         <div className="hidden sm:flex items-center gap-2 text-gray-400 text-sm flex-shrink-0">
                             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                            Auto-saved
+                            {t('sitterRegistration.autoSaved')}
                         </div>
                     </div>
                 </div>
@@ -390,7 +392,7 @@ const RegistrationContent: React.FC = () => {
                                         ) : (
                                             <span>{step.emoji}</span>
                                         )}
-                                        {step.label}
+                                        {t(`sitterRegistration.steps.${step.id}.label`)}
                                     </button>
                                 ))}
                             </div>
@@ -399,7 +401,7 @@ const RegistrationContent: React.FC = () => {
                             <div className="hidden lg:block bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6">
                                 <h3 className="font-bold text-lg mb-6 flex items-center gap-2">
                                     <Sparkles className="w-5 h-5 text-primary" />
-                                    Your Progress
+                                    {t('sitterRegistration.progress')}
                                 </h3>
                                 <div className="space-y-1">
                                     {steps.map((step, index) => {
@@ -439,9 +441,9 @@ const RegistrationContent: React.FC = () => {
                                                     )}
                                                 </div>
                                                 <div className="flex-1">
-                                                    <p className="font-medium text-sm">{step.label}</p>
+                                                    <p className="font-medium text-sm">{t(`sitterRegistration.steps.${step.id}.label`)}</p>
                                                     {isCurrent && (
-                                                        <p className="text-xs text-gray-500 mt-0.5">{step.description}</p>
+                                                        <p className="text-xs text-gray-500 mt-0.5">{t(`sitterRegistration.steps.${step.id}.description`)}</p>
                                                     )}
                                                 </div>
                                             </motion.button>
@@ -460,8 +462,8 @@ const RegistrationContent: React.FC = () => {
                                 <div className="flex items-start gap-3">
                                     <div className="text-2xl">{currentStepInfo.emoji}</div>
                                     <div>
-                                        <p className="font-medium text-amber-900 dark:text-amber-300 text-sm mb-1">Pro Tip</p>
-                                        <p className="text-sm text-amber-700 dark:text-amber-400">{currentStepInfo.tip}</p>
+                                        <p className="font-medium text-amber-900 dark:text-amber-300 text-sm mb-1">{t('sitterRegistration.proTip')}</p>
+                                        <p className="text-sm text-amber-700 dark:text-amber-400">{t(`sitterRegistration.steps.${currentStepInfo.id}.tip`)}</p>
                                     </div>
                                 </div>
                             </motion.div>
@@ -483,9 +485,9 @@ const RegistrationContent: React.FC = () => {
                                     </div>
                                     <div>
                                         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                                            {currentStepInfo.label}
+                                            {t(`sitterRegistration.steps.${currentStepInfo.id}.label`)}
                                         </h2>
-                                        <p className="text-gray-500 dark:text-gray-400">{currentStepInfo.description}</p>
+                                        <p className="text-gray-500 dark:text-gray-400">{t(`sitterRegistration.steps.${currentStepInfo.id}.description`)}</p>
                                     </div>
                                 </div>
                             </div>
@@ -539,7 +541,7 @@ const RegistrationContent: React.FC = () => {
                                         className="h-12 px-6 gap-2"
                                     >
                                         <ArrowLeft className="w-4 h-4" />
-                                        {currentStep === 0 ? 'Cancel' : 'Back'}
+                                        {currentStep === 0 ? t('sitterRegistration.cancel') : t('sitterRegistration.back')}
                                     </Button>
 
                                     <div className="flex items-center gap-4">
@@ -565,12 +567,12 @@ const RegistrationContent: React.FC = () => {
                                                 </>
                                             ) : currentStep === steps.length - 1 ? (
                                                 <>
-                                                    {isEditing ? 'Save Changes' : 'Complete Registration'}
+                                                    {isEditing ? t('sitterRegistration.save') : t('sitterRegistration.complete')}
                                                     <PartyPopper className="w-4 h-4" />
                                                 </>
                                             ) : (
                                                 <>
-                                                    Continue
+                                                    {t('sitterRegistration.continue')}
                                                     <ArrowRight className="w-4 h-4" />
                                                 </>
                                             )}
@@ -583,9 +585,9 @@ const RegistrationContent: React.FC = () => {
                         {/* Trust Badges */}
                         <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500">
                             {[
-                                { icon: Shield, text: 'Your data is secure' },
-                                { icon: Clock, text: 'Takes ~5 minutes' },
-                                { icon: DollarSign, text: 'Free to join' },
+                                { icon: Shield, text: t('sitterRegistration.trust.secure') },
+                                { icon: Clock, text: t('sitterRegistration.trust.time') },
+                                { icon: DollarSign, text: t('sitterRegistration.trust.free') },
                             ].map((item, i) => (
                                 <div key={i} className="flex items-center gap-2">
                                     <item.icon className="w-4 h-4 text-green-500" />

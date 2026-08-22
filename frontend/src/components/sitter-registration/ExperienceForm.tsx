@@ -1,9 +1,11 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSitterRegistration } from '../../context/SitterRegistrationContext';
 import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
 
 const ExperienceForm: React.FC = () => {
+    const { t } = useTranslation();
     const { data, updateData } = useSitterRegistration();
 
     const toggleArrayItem = (field: 'skills' | 'certifications', value: string) => {
@@ -17,15 +19,15 @@ const ExperienceForm: React.FC = () => {
     return (
         <div className="space-y-6 animate-fade-in">
             <div className="space-y-4">
-                <h2 className="text-xl font-bold text-foreground">Experience & Skills</h2>
+                <h2 className="text-xl font-bold text-foreground">{t('sitterRegistration.forms.experience.heading')}</h2>
                 <p className="text-muted-foreground text-sm">
-                    Showcase your expertise to build trust with pet owners.
+                    {t('sitterRegistration.forms.experience.subtitle')}
                 </p>
             </div>
 
             <div className="space-y-6">
                 <div className="space-y-2">
-                    <Label htmlFor="yearsExperience">Years of Experience</Label>
+                    <Label htmlFor="yearsExperience">{t('sitterRegistration.forms.experience.years')}</Label>
                     <Input
                         id="yearsExperience"
                         type="number"
@@ -36,7 +38,7 @@ const ExperienceForm: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                    <Label>Special Skills</Label>
+                    <Label>{t('sitterRegistration.forms.experience.skills')}</Label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {['Oral Medication', 'Injected Medication', 'Senior Dog Experience', 'Puppy Training', 'Special Needs Care'].map(skill => (
                             <label key={skill} className="flex items-center space-x-3">
@@ -53,7 +55,7 @@ const ExperienceForm: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                    <Label>Certifications</Label>
+                    <Label>{t('sitterRegistration.forms.experience.certifications')}</Label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {['Pet CPR', 'First Aid', 'Professional Dog Trainer', 'Vet Tech'].map(cert => (
                             <label key={cert} className="flex items-center space-x-3">
@@ -70,10 +72,10 @@ const ExperienceForm: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="headline">Headline</Label>
+                    <Label htmlFor="headline">{t('sitterRegistration.forms.experience.headline')}</Label>
                     <Input
                         id="headline"
-                        placeholder="e.g. Loving Pet Sitter with 5 Years Experience"
+                        placeholder={t('sitterRegistration.forms.experience.headlinePlaceholder')}
                         maxLength={100}
                         value={data.headline}
                         onChange={(e) => updateData('headline', e.target.value)}
@@ -82,11 +84,11 @@ const ExperienceForm: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="bio">Bio</Label>
+                    <Label htmlFor="bio">{t('sitterRegistration.forms.experience.bio')}</Label>
                     <textarea
                         id="bio"
                         className="w-full min-h-[120px] px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                        placeholder="Tell owners about yourself, your experience with pets, and why you love what you do."
+                        placeholder={t('sitterRegistration.forms.experience.bioPlaceholder')}
                         value={data.bio}
                         onChange={(e) => updateData('bio', e.target.value)}
                     />
