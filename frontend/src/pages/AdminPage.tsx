@@ -56,6 +56,20 @@ const toneStyles: Record<string, string> = {
     violet: 'bg-violet-50 text-violet-600',
 };
 
+const sectionTargets: Record<string, string> = {
+    Overview: 'admin-overview',
+    'Verification queue': 'admin-verification',
+    'Users & sitters': 'admin-users',
+    Bookings: 'admin-bookings',
+    Payments: 'admin-payments',
+    Reports: 'admin-reports',
+};
+
+const sectionHeadings: Record<string, string> = {
+    'Verification queue': 'Verification queue',
+    Reports: 'Operations activity',
+};
+
 const statusLabel = (status: string): Status => ({
     PENDING: 'Pending',
     ACCEPTED: 'Confirmed',
@@ -79,6 +93,18 @@ const AdminPage: React.FC = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [bookingFilter, setBookingFilter] = useState<'All' | Status>('All');
     const [search, setSearch] = useState('');
+
+    const handleNavClick = (label: string) => {
+        setActiveNav(label);
+        setIsSidebarOpen(false);
+        const targetId = sectionTargets[label];
+        if (targetId) {
+            requestAnimationFrame(() => {
+                const target = document.getElementById(targetId) || Array.from(document.querySelectorAll('h3')).find((heading) => heading.textContent?.trim() === sectionHeadings[label]);
+                target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
+    };
 
     const firstName = user?.firstName || 'Alex';
 
@@ -127,7 +153,7 @@ const AdminPage: React.FC = () => {
                         return (
                             <button
                                 key={item.label}
-                                onClick={() => { setActiveNav(item.label); setIsSidebarOpen(false); }}
+                                onClick={() => handleNavClick(item.label)}
                                 className={cn(
                                     'group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold transition-colors',
                                     activeNav === item.label ? 'bg-orange-50 text-orange-700 dark:bg-orange-500/10 dark:text-orange-300' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white'
@@ -188,7 +214,7 @@ const AdminPage: React.FC = () => {
                     </div>
                 </header>
 
-                <div className="mx-auto max-w-[1560px] space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+                <div id="admin-overview" className="mx-auto max-w-[1560px] space-y-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
                     <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
                         <div>
                             <p className="mb-1 flex items-center gap-2 text-sm font-semibold text-orange-600"><span className="h-2 w-2 rounded-full bg-orange-500" /> Live overview</p>
@@ -201,7 +227,7 @@ const AdminPage: React.FC = () => {
                         </div>
                     </section>
 
-                    <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <section id="admin-users" className="scroll-mt-24 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         {metricCards.map((metric) => {
                             const Icon = metric.icon;
                             return <div key={metric.label} className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -214,7 +240,7 @@ const AdminPage: React.FC = () => {
                     </section>
 
                     <section className="grid gap-6 xl:grid-cols-[1.55fr_1fr]">
-                        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+                        <div id="admin-payments" className="scroll-mt-24 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
                             <div className="flex items-start justify-between"><div><h3 className="font-display text-base font-bold">Bookings & revenue</h3><p className="mt-1 text-xs text-slate-400">Performance over the last 30 days</p></div><div className="flex items-center gap-3 text-[11px] font-semibold text-slate-500"><span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-orange-500" /> Revenue</span><span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-sky-400" /> Bookings</span></div></div>
                             <div className="mt-8 flex h-48 items-end gap-2 border-b border-l border-slate-100 pl-3 dark:border-slate-800 sm:gap-4">
                                 {overview.chart.filter((_, index) => index % 3 === 0).map((point, _index, points) => { const maxRevenue = Math.max(...points.map((item) => item.revenue), 1); const maxBookings = Math.max(...points.map((item) => item.bookings), 1); return <div key={point.date} className="group relative flex h-full flex-1 items-end gap-1"><div style={{ height: `${Math.max(4, (point.revenue / maxRevenue) * 100)}%` }} className="w-1/2 rounded-t-md bg-orange-400 transition-all group-hover:bg-orange-500" /><div style={{ height: `${Math.max(4, (point.bookings / maxBookings) * 100)}%` }} className="w-1/2 rounded-t-md bg-sky-300 transition-all group-hover:bg-sky-400" /><span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-slate-400">{format(new Date(point.date), 'd')}</span></div>; })}
@@ -225,7 +251,7 @@ const AdminPage: React.FC = () => {
                     </section>
 
                     <section className="grid gap-6 xl:grid-cols-[1.55fr_1fr]">
-                        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                        <div id="admin-bookings" className="scroll-mt-24 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
                             <div className="flex flex-col gap-4 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6 dark:border-slate-800"><div><h3 className="font-display text-base font-bold">Recent bookings</h3><p className="mt-1 text-xs text-slate-400">Monitor marketplace activity in real time</p></div><div className="flex items-center gap-2 overflow-x-auto"><select value={bookingFilter} onChange={(e) => setBookingFilter(e.target.value as 'All' | Status)} className="h-9 rounded-lg border-slate-200 bg-slate-50 px-2 text-xs font-semibold outline-none dark:border-slate-700 dark:bg-slate-800"><option>All</option><option>Pending</option><option>Confirmed</option><option>Completed</option><option>Needs review</option></select><button className="rounded-lg p-2 text-slate-400 hover:bg-slate-50 hover:text-slate-700 dark:hover:bg-slate-800"><MoreHorizontal className="h-5 w-5" /></button></div></div>
                             <div className="overflow-x-auto"><table className="w-full min-w-[720px] text-left"><thead className="bg-slate-50/70 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:bg-slate-800/50"><tr><th className="px-6 py-3">Booking</th><th className="px-4 py-3">Participants</th><th className="px-4 py-3">Service</th><th className="px-4 py-3">Value</th><th className="px-4 py-3">Status</th><th className="px-6 py-3" /></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-slate-800">{filteredBookings.map((booking) => { const status = statusLabel(booking.status); return <tr key={booking.id} className="text-sm transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30"><td className="px-6 py-4"><p className="font-bold">#{booking.id.slice(0, 8)}</p><p className="mt-1 text-xs text-slate-400">{format(new Date(booking.createdAt), 'MMM d, h:mm a')}</p></td><td className="px-4 py-4"><p className="font-semibold">{booking.owner?.firstName} {booking.owner?.lastName}</p><p className="mt-1 text-xs text-slate-400">with {booking.sitter?.user?.firstName} {booking.sitter?.user?.lastName}</p></td><td className="px-4 py-4 text-slate-500">{serviceLabel(booking.serviceType)}</td><td className="px-4 py-4 font-bold">${Number(booking.totalPrice || 0).toFixed(2)}</td><td className="px-4 py-4"><span className={cn('inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ring-inset', statusStyles[status])}>{status}</span></td><td className="px-6 py-4 text-right"><button className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800" aria-label={`Open ${booking.id}`}><MoreHorizontal className="h-4 w-4" /></button></td></tr>; })}</tbody></table></div>
                             <div className="border-t border-slate-100 p-4 text-center dark:border-slate-800"><button className="text-xs font-bold text-orange-600 hover:text-orange-700">View all bookings <span aria-hidden="true">→</span></button></div>
