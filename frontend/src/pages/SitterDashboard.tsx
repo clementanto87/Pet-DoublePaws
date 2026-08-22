@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { dfOpts } from '../lib/dateLocale';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { searchAddresses, type Address } from '../utils/geocoding';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     User,
@@ -181,8 +182,7 @@ const SitterDashboard: React.FC = () => {
 
         if (value.length > 2) {
             try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(value)}&limit=5`);
-                const results = await response.json();
+                const results = await searchAddresses(value);
                 setSuggestions(results);
                 setShowSuggestions(true);
             } catch (error) {
@@ -194,12 +194,12 @@ const SitterDashboard: React.FC = () => {
         }
     };
 
-    const selectAddress = (place: any) => {
+    const selectAddress = (place: Address) => {
         setEditFormData({
             ...editFormData,
             address: place.display_name,
-            latitude: place.lat ? parseFloat(place.lat) : editFormData.latitude,
-            longitude: place.lon ? parseFloat(place.lon) : editFormData.longitude
+            latitude: place.coordinates?.lat ?? editFormData.latitude,
+            longitude: place.coordinates?.lng ?? editFormData.longitude
         });
         setShowSuggestions(false);
     };

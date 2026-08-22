@@ -1,7 +1,14 @@
 /**
- * Geocoding utilities using OpenStreetMap Nominatim API
- * Free service with no API key required
+ * Geocoding utilities using the Photon API (https://photon.komoot.io).
+ *
+ * Photon is an OpenStreetMap-based geocoder purpose-built for type-ahead /
+ * autocomplete search — unlike Nominatim, whose usage policy discourages
+ * autocomplete. It needs no API key. Results are returned as GeoJSON.
  */
+
+import i18n from '../i18n/i18n';
+
+const PHOTON_BASE = 'https://photon.komoot.io';
 
 export interface Coordinates {
     lat: number;
@@ -16,8 +23,55 @@ export interface Address {
     coordinates: Coordinates;
 }
 
+// Photon supports a limited set of UI languages; fall back to English otherwise.
+const photonLang = (): string => {
+    const lng = (i18n.language || 'en').slice(0, 2);
+    return ['en', 'de', 'fr'].includes(lng) ? lng : 'en';
+};
+
+interface PhotonProps {
+    name?: string;
+    street?: string;
+    housenumber?: string;
+    postcode?: string;
+    city?: string;
+    district?: string;
+    county?: string;
+    state?: string;
+    country?: string;
+    type?: string;
+}
+
+// Build a readable single-line address from Photon's structured properties.
+const buildDisplayName = (p: PhotonProps): string => {
+    const segments: string[] = [];
+    if (p.name) segments.push(p.name);
+    if (p.street && p.street !== p.name) {
+        segments.push(p.housenumber ? `${p.street} ${p.housenumber}` : p.street);
+    }
+    const city = p.city || p.district || p.county;
+    if (city && city !== p.name) segments.push(city);
+    if (p.state && p.state !== city) segments.push(p.state);
+    if (p.country) segments.push(p.country);
+    // De-duplicate while preserving order
+    return [...new Set(segments)].filter(Boolean).join(', ');
+};
+
+const featureToAddress = (feature: any): Address => {
+    const p: PhotonProps = feature.properties || {};
+    const [lng, lat] = feature.geometry?.coordinates || [0, 0];
+    const city = p.city || p.district || p.county || (p.type === 'city' ? p.name : undefined);
+    return {
+        display_name: buildDisplayName(p),
+        city,
+        state: p.state,
+        country: p.country,
+        coordinates: { lat, lng },
+    };
+};
+
 /**
- * Get user's current position using browser geolocation API
+ * Get the user's current position using the browser geolocation API.
  */
 export const getCurrentPosition = (): Promise<Coordinates> => {
     return new Promise((resolve, reject) => {
@@ -58,17 +112,12 @@ export const getCurrentPosition = (): Promise<Coordinates> => {
 };
 
 /**
- * Convert coordinates to address using reverse geocoding
+ * Convert coordinates to an address (reverse geocoding).
  */
 export const reverseGeocode = async (lat: number, lng: number): Promise<Address> => {
     try {
         const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
-            {
-                headers: {
-                    'User-Agent': 'DoublePaws-PetCare-App',
-                },
-            }
+            `${PHOTON_BASE}/reverse?lat=${lat}&lon=${lng}&lang=${photonLang()}`
         );
 
         if (!response.ok) {
@@ -76,14 +125,12 @@ export const reverseGeocode = async (lat: number, lng: number): Promise<Address>
         }
 
         const data = await response.json();
-
-        return {
-            display_name: data.display_name,
-            city: data.address?.city || data.address?.town || data.address?.village,
-            state: data.address?.state,
-            country: data.address?.country,
-            coordinates: { lat, lng },
-        };
+        const feature = data.features?.[0];
+        if (!feature) {
+            return { display_name: `${lat.toFixed(4)}, ${lng.toFixed(4)}`, coordinates: { lat, lng } };
+        }
+        // Prefer the real coordinates the caller passed in.
+        return { ...featureToAddress(feature), coordinates: { lat, lng } };
     } catch (error) {
         console.error('Reverse geocoding error:', error);
         throw new Error('Failed to get address from coordinates');
@@ -91,7 +138,7 @@ export const reverseGeocode = async (lat: number, lng: number): Promise<Address>
 };
 
 /**
- * Search for addresses based on query string
+ * Search for addresses / places matching a query string (autocomplete).
  */
 export const searchAddresses = async (query: string): Promise<Address[]> => {
     if (!query || query.length < 3) {
@@ -100,12 +147,7 @@ export const searchAddresses = async (query: string): Promise<Address[]> => {
 
     try {
         const response = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=5`,
-            {
-                headers: {
-                    'User-Agent': 'DoublePaws-PetCare-App',
-                },
-            }
+            `${PHOTON_BASE}/api/?q=${encodeURIComponent(query)}&limit=5&lang=${photonLang()}`
         );
 
         if (!response.ok) {
@@ -113,17 +155,9 @@ export const searchAddresses = async (query: string): Promise<Address[]> => {
         }
 
         const data = await response.json();
-
-        return data.map((item: any) => ({
-            display_name: item.display_name,
-            city: item.address?.city || item.address?.town || item.address?.village,
-            state: item.address?.state,
-            country: item.address?.country,
-            coordinates: {
-                lat: parseFloat(item.lat),
-                lng: parseFloat(item.lon),
-            },
-        }));
+        return (data.features || [])
+            .map(featureToAddress)
+            .filter((a: Address) => a.display_name);
     } catch (error) {
         console.error('Address search error:', error);
         return [];
@@ -131,7 +165,7 @@ export const searchAddresses = async (query: string): Promise<Address[]> => {
 };
 
 /**
- * Format address for display (shorter version)
+ * Format an address for compact display.
  */
 export const formatAddressShort = (address: Address): string => {
     const parts = [];

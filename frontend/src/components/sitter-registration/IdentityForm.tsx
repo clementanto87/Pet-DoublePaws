@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSitterRegistration } from '../../context/SitterRegistrationContext';
+import { searchAddresses, type Address } from '../../utils/geocoding';
 import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
 import { Button } from '../ui/Button';
@@ -26,8 +27,7 @@ const IdentityForm: React.FC = () => {
 
         if (value.length > 2) {
             try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(value)}&limit=5`);
-                const results = await response.json();
+                const results = await searchAddresses(value);
                 setSuggestions(results);
                 setShowSuggestions(true);
             } catch (error) {
@@ -39,11 +39,11 @@ const IdentityForm: React.FC = () => {
         }
     };
 
-    const selectAddress = (place: any) => {
+    const selectAddress = (place: Address) => {
         updateData('address', place.display_name);
-        if (place.lat && place.lon) {
-            updateData('latitude', parseFloat(place.lat));
-            updateData('longitude', parseFloat(place.lon));
+        if (place.coordinates) {
+            updateData('latitude', place.coordinates.lat);
+            updateData('longitude', place.coordinates.lng);
         }
         setShowSuggestions(false);
     };
