@@ -1,8 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Filter, MapPin, Star, Shield,
     CheckCircle2, X
 } from 'lucide-react';
+
+// Map the parent's service option ids to translation keys under search.services
+const serviceIdToKey: Record<string, string> = {
+    boarding: 'boarding',
+    housesitting: 'houseSitting',
+    visits: 'dropIn',
+    daycare: 'dayCare',
+    walking: 'walking',
+};
 import { AddressAutocomplete } from '../ui/AddressAutocomplete';
 import { Button } from '../ui/Button';
 import { RangeSlider } from '../ui/RangeSlider';
@@ -32,6 +42,7 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
     serviceOptions,
     className = '',
 }) => {
+    const { t } = useTranslation();
     // Local state for all filters
     const [location, setLocation] = useState(initialFilters.location);
     const [selectedService, setSelectedService] = useState(initialFilters.service);
@@ -97,7 +108,7 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
                 <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-2">
                         <Filter className="w-5 h-5 text-primary" />
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Filters</h2>
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t('search.filters')}</h2>
                     </div>
                     <Button
                         variant="outline"
@@ -123,10 +134,10 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
                             });
                         }}
                     >
-                        Reset
+                        {t('search.reset')}
                     </Button>
                 </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Refine your search results</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('search.refine')}</p>
             </div>
 
             {/* Scrollable Content */}
@@ -134,7 +145,7 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
 
                 {/* Location Section */}
                 <section>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Location</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('search.location')}</label>
                     <div className="relative">
                         <AddressAutocomplete
                             value={location}
@@ -149,7 +160,7 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
                                     });
                                 }
                             }}
-                            placeholder="Where to?"
+                            placeholder={t('search.locationPlaceholder')}
                             className="w-full pl-10 pr-10 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                         />
                         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -175,7 +186,7 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
 
                 {/* Service Type Section */}
                 <section>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Service Type</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{t('search.serviceType')}</label>
                     <div className="grid grid-cols-2 gap-2">
                         {serviceOptions.map((option) => {
                             const Icon = option.icon;
@@ -193,7 +204,7 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
                                     `}
                                 >
                                     <Icon className={`w-6 h-6 mb-2 ${isSelected ? 'text-primary' : 'text-gray-400'}`} />
-                                    <span className="text-xs font-semibold">{option.label}</span>
+                                    <span className="text-xs font-semibold">{String(t(`search.services.${serviceIdToKey[option.id] || option.id}`, { defaultValue: option.label }))}</span>
                                 </button>
                             );
                         })}
@@ -203,7 +214,7 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
                 {/* Price Range Section */}
                 <section>
                     <div className="flex items-center justify-between mb-2">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Price Range</label>
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('search.priceRange')}</label>
                         <span className="text-xs text-primary font-semibold">
                             ${priceRange[0]} - ${priceRange[1]}
                         </span>
@@ -220,7 +231,7 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
 
                 {/* Rating Filter */}
                 <section>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Minimum Rating</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{t('search.minimumRating')}</label>
                     <div className="flex gap-2">
                         {[0, 3, 4, 4.5, 5].map((rating) => {
                             const isSelected = minRating === rating;
@@ -239,7 +250,7 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
                                         }
                                     `}
                                 >
-                                    {rating === 0 ? 'Any' : (
+                                    {rating === 0 ? t('search.anyRating') : (
                                         <div className="flex items-center justify-center gap-1">
                                             <span>{rating}+</span>
                                             {rating > 0 && <Star className={`w-3 h-3 ${isSelected ? 'text-white fill-white' : 'text-yellow-400 fill-yellow-400'}`} />}
@@ -254,7 +265,7 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
                 {/* Max Distance Filter */}
                 <section>
                     <div className="flex items-center justify-between mb-2">
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Max Distance</label>
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('search.maxDistance')}</label>
                         <span className="text-xs text-gray-500">{maxDistance} km</span>
                     </div>
                     <input
@@ -278,7 +289,7 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
 
                 {/* Attributes */}
                 <section className="space-y-3 pt-2">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Attributes</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('search.attributes')}</label>
 
                     <label className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors group">
                         <div className={`
@@ -298,10 +309,10 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
                         </div>
                         <div className="flex-1">
                             <div className="flex items-center gap-1.5">
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Verified Sitters Only</span>
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{t('search.verifiedOnly')}</span>
                                 <Shield className="w-3 h-3 text-primary" />
                             </div>
-                            <p className="text-xs text-gray-500">Identity checked & background verified</p>
+                            <p className="text-xs text-gray-500">{t('search.verifiedOnlyDesc')}</p>
                         </div>
                     </label>
 
@@ -323,10 +334,10 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
                         </div>
                         <div className="flex-1">
                             <div className="flex items-center gap-1.5">
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Has Reviews</span>
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{t('search.hasReviews')}</span>
                                 <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
                             </div>
-                            <p className="text-xs text-gray-500">Sitters with 5 star ratings</p>
+                            <p className="text-xs text-gray-500">{t('search.hasReviewsDesc')}</p>
                         </div>
                     </label>
                 </section>

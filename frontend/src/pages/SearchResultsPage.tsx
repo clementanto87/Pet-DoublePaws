@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { sitterService } from '../services/sitter.service';
 import { Button } from '../components/ui/Button';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
@@ -278,6 +279,7 @@ const getActiveServiceTags = (sitter: SitterData): string[] =>
         .filter(Boolean);
 
 const SearchResultsPage: React.FC = () => {
+    const { t } = useTranslation();
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
     const [sitters, setSitters] = useState<SitterData[]>([]);
@@ -654,7 +656,7 @@ const SearchResultsPage: React.FC = () => {
                                             )}
                                         </h3>
                                         <p className="text-sm text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                                            {sitter.headline || 'Trusted Pet Care Specialist'}
+                                            {sitter.headline || t('search.headlineFallback')}
                                         </p>
                                     </div>
                                     <button
@@ -679,14 +681,14 @@ const SearchResultsPage: React.FC = () => {
                                     </div>
                                     <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
                                         <MapPin className="w-3.5 h-3.5 text-gray-400" />
-                                        <span className="truncate max-w-[160px]">{sitter.address?.split(',').slice(-2, -1)[0]?.trim() || 'Nearby'}</span>
+                                        <span className="truncate max-w-[160px]">{sitter.address?.split(',').slice(-2, -1)[0]?.trim() || t('search.nearby')}</span>
                                     </div>
                                     {typeof sitter.distance === 'number' && sitter.distance > 0 && (
-                                        <span className="text-gray-400">· {sitter.distance.toFixed(1)} km away</span>
+                                        <span className="text-gray-400">· {t('search.kmAway', { km: sitter.distance.toFixed(1) })}</span>
                                     )}
                                     {sitter.isVerified && (
                                         <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
-                                            <CheckCircle2 className="w-3.5 h-3.5" /> Verified
+                                            <CheckCircle2 className="w-3.5 h-3.5" /> {t('search.verified')}
                                         </span>
                                     )}
                                 </div>
@@ -721,9 +723,9 @@ const SearchResultsPage: React.FC = () => {
                             <div>
                                 <div className="flex items-baseline gap-1">
                                     <span className="text-2xl font-black text-gray-900 dark:text-white">${price}</span>
-                                    <span className="text-xs text-gray-400">/night</span>
+                                    <span className="text-xs text-gray-400">{t('search.perNight')}</span>
                                 </div>
-                                <span className="text-[11px] text-gray-400">from · {(sitter.yearsExperience || 0)}+ yrs experience</span>
+                                <span className="text-[11px] text-gray-400">{t('search.from')} · {t('search.yrsExperience', { count: sitter.yearsExperience || 0 })}</span>
                             </div>
                             <div className="flex gap-2 flex-shrink-0">
                                 <Button
@@ -736,7 +738,7 @@ const SearchResultsPage: React.FC = () => {
                                     }}
                                 >
                                     <MessageCircle className="w-3.5 h-3.5 mr-1" />
-                                    Message
+                                    {t('search.message')}
                                 </Button>
                                 <Button
                                     size="sm"
@@ -746,7 +748,7 @@ const SearchResultsPage: React.FC = () => {
                                         navigate(`/sitter/${sitter.id}${searchParamsString ? `?${searchParamsString}` : ''}`, { state: { sitter } });
                                     }}
                                 >
-                                    View Profile
+                                    {t('search.viewProfile')}
                                 </Button>
                             </div>
                         </div>
@@ -788,17 +790,17 @@ const SearchResultsPage: React.FC = () => {
                             <div className="flex items-center gap-3 mb-3 text-xs text-gray-500 flex-wrap">
                                 <div className="flex items-center gap-1.5">
                                     <div className="w-3.5 h-3.5 rounded bg-emerald-100 border border-emerald-200"></div>
-                                    <span>Available</span>
+                                    <span>{t('search.available')}</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <div className="w-3.5 h-3.5 rounded bg-amber-50 border border-amber-200"></div>
-                                    <span>Booked</span>
+                                    <span>{t('search.booked')}</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <div className="w-3.5 h-3.5 rounded bg-gray-100 border border-gray-200" style={{
                                         backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 1px, rgba(156,163,175,0.3) 1px, rgba(156,163,175,0.3) 2px)'
                                     }}></div>
-                                    <span>Not available</span>
+                                    <span>{t('search.notAvailable')}</span>
                                 </div>
                             </div>
 
@@ -867,10 +869,10 @@ const SearchResultsPage: React.FC = () => {
                             <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-1">
                                 <div className="flex items-center gap-1.5 text-xs text-gray-500">
                                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                                    <span>{calendar.lastUpdated === 0 ? 'Updated today' : `Updated ${calendar.lastUpdated} day${calendar.lastUpdated > 1 ? 's' : ''} ago`}</span>
+                                    <span>{calendar.lastUpdated === 0 ? t('search.updatedToday') : `${t('search.lastUpdated')} ${calendar.lastUpdated} ${t('search.daysAgo')}`}</span>
                                 </div>
                                 <div className="text-xs text-gray-500">
-                                    Cancellation: <span className="text-primary hover:underline cursor-pointer">flexible</span>
+                                    {t('search.cancellation')}: <span className="text-primary hover:underline cursor-pointer">{t('search.flexible')}</span>
                                 </div>
                             </div>
                         </div>
@@ -995,7 +997,7 @@ const SearchResultsPage: React.FC = () => {
                                 }}
                             >
                                 <MessageCircle className="w-3 h-3 mr-1" />
-                                Message
+                                {t('search.message')}
                             </Button>
                             <Button
                                 size="sm"
@@ -1005,7 +1007,7 @@ const SearchResultsPage: React.FC = () => {
                                     navigate(`/sitter/${sitter.id}${searchParamsString ? `?${searchParamsString}` : ''}`, { state: { sitter } });
                                 }}
                             >
-                                View Profile
+                                {t('search.viewProfile')}
                             </Button>
                         </div>
                     </div>
@@ -1034,10 +1036,10 @@ const SearchResultsPage: React.FC = () => {
                                     shadow-xl border border-gray-200 dark:border-gray-700 py-2 opacity-0 invisible 
                                     group-hover:opacity-100 group-hover:visible transition-all z-50">
                                     {[
-                                        { value: 'distance', label: '📍 Distance' },
-                                        { value: 'price_low', label: '💰 Price: Low to High' },
-                                        { value: 'price_high', label: '💎 Price: High to Low' },
-                                        { value: 'rating', label: '⭐ Top Rated' },
+                                        { value: 'distance', label: t('search.sortDistance') },
+                                        { value: 'price_low', label: t('search.sortPriceLow') },
+                                        { value: 'price_high', label: t('search.sortPriceHigh') },
+                                        { value: 'rating', label: t('search.sortRating') },
                                     ].map(opt => (
                                         <button
                                             key={opt.value}
@@ -1075,9 +1077,9 @@ const SearchResultsPage: React.FC = () => {
                         {/* View Mode Toggle */}
                         <div className="hidden md:flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1.5 flex-shrink-0">
                             {[
-                                { mode: 'list' as ViewMode, icon: List, label: 'List' },
-                                { mode: 'split' as ViewMode, icon: Grid3X3, label: 'Split' },
-                                { mode: 'map' as ViewMode, icon: MapIcon, label: 'Map' },
+                                { mode: 'list' as ViewMode, icon: List, label: t('search.listView') },
+                                { mode: 'split' as ViewMode, icon: Grid3X3, label: t('search.splitView') },
+                                { mode: 'map' as ViewMode, icon: MapIcon, label: t('search.mapView') },
                             ].map(({ mode, icon: Icon, label }) => (
                                 <button
                                     key={mode}
@@ -1249,7 +1251,7 @@ const SearchResultsPage: React.FC = () => {
                                                                         <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
                                                                         <span className="font-medium">5.0</span>
                                                                     </div>
-                                                                    <span className="text-primary font-bold">${price}/night</span>
+                                                                    <span className="text-primary font-bold">${price}{t('search.perNight')}</span>
                                                                 </div>
                                                             </div>
                                                             <Button
@@ -1257,7 +1259,7 @@ const SearchResultsPage: React.FC = () => {
                                                                 className="w-full"
                                                                 onClick={() => navigate(`/sitter/${sitter.id}${searchParamsString ? `?${searchParamsString}` : ''}`, { state: { sitter } })}
                                                             >
-                                                                View Profile
+                                                                {t('search.viewProfile')}
                                                             </Button>
                                                         </div>
                                                     </Popup>
@@ -1272,11 +1274,11 @@ const SearchResultsPage: React.FC = () => {
                                     <div className="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-400 font-medium">
                                         <span className="flex items-center gap-1.5">
                                             <div className="w-4 h-4 rounded-full bg-primary shadow-md"></div>
-                                            Selected
+                                            {t('search.mapSelected')}
                                         </span>
                                         <span className="flex items-center gap-1.5">
                                             <Shield className="w-4 h-4 text-emerald-500" />
-                                            Verified
+                                            {t('search.verified')}
                                         </span>
                                     </div>
                                 </div>
@@ -1290,9 +1292,9 @@ const SearchResultsPage: React.FC = () => {
             <div className="fixed bottom-6 left-1/2 -translate-x-1/2 md:hidden z-50">
                 <div className="bg-white dark:bg-gray-800 rounded-full shadow-2xl border border-gray-200 dark:border-gray-700 p-1.5 flex">
                     {[
-                        { mode: 'list' as ViewMode, icon: List, label: 'List' },
-                        { mode: 'split' as ViewMode, icon: Grid3X3, label: 'Split' },
-                        { mode: 'map' as ViewMode, icon: MapIcon, label: 'Map' },
+                        { mode: 'list' as ViewMode, icon: List, label: t('search.listView') },
+                        { mode: 'split' as ViewMode, icon: Grid3X3, label: t('search.splitView') },
+                        { mode: 'map' as ViewMode, icon: MapIcon, label: t('search.mapView') },
                     ].map(({ mode, icon: Icon, label }) => (
                         <button
                             key={mode}
