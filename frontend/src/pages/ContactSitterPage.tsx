@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation, useSearchParams, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -230,6 +231,7 @@ const getMonthlyAvailability = (sitter: any, monthOffset: number = 0, bookings: 
 };
 
 const ContactSitterPage: React.FC = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const location = useLocation();
     const { id } = useParams<{ id: string }>();
@@ -390,11 +392,11 @@ const ContactSitterPage: React.FC = () => {
                         <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
                             <MessageCircle className="w-10 h-10 text-gray-400" />
                         </div>
-                        <h2 className="text-2xl font-bold text-foreground mb-2">No Sitter Selected</h2>
-                        <p className="text-muted-foreground mb-6">Please select a sitter from the search results first.</p>
+                        <h2 className="text-2xl font-bold text-foreground mb-2">{t('contactSitter.noSitterTitle')}</h2>
+                        <p className="text-muted-foreground mb-6">{t('contactSitter.noSitterDesc')}</p>
                         <Button onClick={() => navigate('/search')} className="w-full">
                             <Sparkles className="w-4 h-4 mr-2" />
-                            Find Sitters
+                            {t('contactSitter.findSitters')}
                         </Button>
                     </Card>
                 </motion.div>
@@ -453,7 +455,7 @@ const ContactSitterPage: React.FC = () => {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.3 }}
                         >
-                            <h2 className="text-3xl font-bold text-foreground mb-2">Message Sent! 🎉</h2>
+                            <h2 className="text-3xl font-bold text-foreground mb-2">{t('contactSitter.successTitle')}</h2>
                             <p className="text-muted-foreground mb-8">
                                 Your message has been sent to <span className="font-semibold text-primary">{sitter.user?.firstName}</span>.
                                 They typically respond within a few hours!
@@ -602,16 +604,16 @@ const ContactSitterPage: React.FC = () => {
                 >
                     <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-white dark:bg-gray-800 rounded-full shadow-sm border border-gray-100 dark:border-gray-700 mb-3 sm:mb-4">
                         <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
-                        <span className="text-xs sm:text-sm font-semibold text-primary">Contact Sitter</span>
+                        <span className="text-xs sm:text-sm font-semibold text-primary">{t('contactSitter.badge')}</span>
                     </div>
                     <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-2 px-2">
-                        Send a Message to{' '}
+                        {t('contactSitter.title')}{' '}
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-amber-500">
                             {sitter.user?.firstName}
                         </span>
                     </h1>
                     <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 max-w-lg mx-auto px-2">
-                        Introduce yourself and tell them about your pet care needs
+                        {t('contactSitter.subtitle')}
                     </p>
                 </motion.div>
 
@@ -634,8 +636,8 @@ const ContactSitterPage: React.FC = () => {
                                             1
                                         </div>
                                         <div>
-                                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">What service do you need?</h2>
-                                            <p className="text-sm text-gray-500">Choose the type of care</p>
+                                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t('contactSitter.step1')}</h2>
+                                            <p className="text-sm text-gray-500">{t('contactSitter.step1desc')}</p>
                                         </div>
                                         {selectedService && (
                                             <CheckCircle className="w-5 h-5 text-green-500 ml-auto" />
@@ -724,8 +726,8 @@ const ContactSitterPage: React.FC = () => {
                                             2
                                         </div>
                                         <div>
-                                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">When do you need care?</h2>
-                                            <p className="text-sm text-gray-500">Select your dates</p>
+                                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t('contactSitter.step2')}</h2>
+                                            <p className="text-sm text-gray-500">{t('contactSitter.step2desc')}</p>
                                         </div>
                                         {startDate && endDate && (
                                             <CheckCircle className="w-5 h-5 text-green-500 ml-auto" />
@@ -735,7 +737,7 @@ const ContactSitterPage: React.FC = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-4">
                                             <div>
-                                                <Label className="mb-2 block text-sm font-medium">Start Date</Label>
+                                                <Label className="mb-2 block text-sm font-medium">{t('contactSitter.startDate')}</Label>
                                                 <DatePicker
                                                     value={startDate}
                                                     onChange={setStartDate}
@@ -744,7 +746,7 @@ const ContactSitterPage: React.FC = () => {
                                                 />
                                             </div>
                                             <div>
-                                                <Label className="mb-2 block text-sm font-medium">Start Time</Label>
+                                                <Label className="mb-2 block text-sm font-medium">{t('contactSitter.startTime')}</Label>
                                                 <TimePicker
                                                     value={startTime}
                                                     onChange={setStartTime}
@@ -753,7 +755,7 @@ const ContactSitterPage: React.FC = () => {
                                         </div>
                                         <div className="space-y-4">
                                             <div>
-                                                <Label className="mb-2 block text-sm font-medium">End Date</Label>
+                                                <Label className="mb-2 block text-sm font-medium">{t('contactSitter.endDate')}</Label>
                                                 <DatePicker
                                                     value={endDate}
                                                     onChange={setEndDate}
@@ -762,7 +764,7 @@ const ContactSitterPage: React.FC = () => {
                                                 />
                                             </div>
                                             <div>
-                                                <Label className="mb-2 block text-sm font-medium">End Time</Label>
+                                                <Label className="mb-2 block text-sm font-medium">{t('contactSitter.endTime')}</Label>
                                                 <TimePicker
                                                     value={endTime}
                                                     onChange={setEndTime}
@@ -779,7 +781,7 @@ const ContactSitterPage: React.FC = () => {
                                         >
                                             <Calendar className="w-4 h-4 text-primary" />
                                             <span className="text-sm text-primary font-medium">
-                                                {numberOfNights} night{numberOfNights !== 1 ? 's' : ''} of care
+                                                {t('contactSitter.nightsOfCare', { count: numberOfNights })}
                                             </span>
                                         </motion.div>
                                     )}
@@ -808,8 +810,8 @@ const ContactSitterPage: React.FC = () => {
                                             3
                                         </div>
                                         <div>
-                                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">How many pets?</h2>
-                                            <p className="text-sm text-gray-500">Tell us about your furry friends</p>
+                                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t('contactSitter.step3')}</h2>
+                                            <p className="text-sm text-gray-500">{t('contactSitter.step3desc')}</p>
                                         </div>
                                         {(selectedPetIds.length > 0 || petCounts.dogs > 0 || petCounts.cats > 0) && (
                                             <CheckCircle className="w-5 h-5 text-green-500 ml-auto" />
@@ -824,7 +826,7 @@ const ContactSitterPage: React.FC = () => {
                                                     <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400">
                                                         <Dog className="w-5 h-5" />
                                                     </div>
-                                                    <span className="font-semibold text-gray-900 dark:text-white">Dogs</span>
+                                                    <span className="font-semibold text-gray-900 dark:text-white">{t('contactSitter.dogs')}</span>
                                                 </div>
                                                 <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl p-1 border border-gray-200 dark:border-gray-700">
                                                     <button
@@ -848,7 +850,7 @@ const ContactSitterPage: React.FC = () => {
                                                     <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400">
                                                         <Cat className="w-5 h-5" />
                                                     </div>
-                                                    <span className="font-semibold text-gray-900 dark:text-white">Cats</span>
+                                                    <span className="font-semibold text-gray-900 dark:text-white">{t('contactSitter.cats')}</span>
                                                 </div>
                                                 <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-xl p-1 border border-gray-200 dark:border-gray-700">
                                                     <button
@@ -877,7 +879,7 @@ const ContactSitterPage: React.FC = () => {
                                                     exit={{ opacity: 0, height: 0 }}
                                                     className="overflow-hidden"
                                                 >
-                                                    <Label className="mb-3 block">Dog Size</Label>
+                                                    <Label className="mb-3 block">{t('contactSitter.dogSize')}</Label>
                                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                                         {PET_SIZES.map((size) => {
                                                             const isSelected = selectedPetSizes.includes(size.id);
@@ -916,21 +918,21 @@ const ContactSitterPage: React.FC = () => {
                                             </div>
                                             <div className="relative flex justify-center text-xs uppercase">
                                                 <span className="bg-white dark:bg-gray-800 px-2 text-gray-500">
-                                                    Or select from your profile (Optional)
+                                                    {t('contactSitter.orSelect')}
                                                 </span>
                                             </div>
                                         </div>
 
                                         {/* Profile Pets */}
                                         {isLoadingPets ? (
-                                            <div className="text-center py-8 text-gray-500">Loading your pets...</div>
+                                            <div className="text-center py-8 text-gray-500">{t('contactSitter.loadingPets')}</div>
                                         ) : !pets || pets.length === 0 ? (
                                             <div className="text-center py-8">
                                                 <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
                                                     <PawPrint className="w-8 h-8 text-gray-400" />
                                                 </div>
-                                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No pets found</h3>
-                                                <p className="text-gray-500 mb-6">You need to create a pet profile before booking.</p>
+                                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t('contactSitter.noPetsTitle')}</h3>
+                                                <p className="text-gray-500 mb-6">{t('contactSitter.noPetsDesc')}</p>
                                                 <Button onClick={() => navigate('/pet-profile', { state: { returnUrl: location.pathname + location.search } })} variant="outline">
                                                     <Plus className="w-4 h-4 mr-2" />
                                                     Add Pet
@@ -987,7 +989,7 @@ const ContactSitterPage: React.FC = () => {
                                                     onClick={() => setActiveStep(4)}
                                                     className="shadow-glow"
                                                 >
-                                                    Continue
+                                                    {t('contactSitter.continue')}
                                                     <ChevronRight className="w-4 h-4 ml-2" />
                                                 </Button>
                                             </div>
@@ -1018,7 +1020,7 @@ const ContactSitterPage: React.FC = () => {
                                             4
                                         </div>
                                         <div>
-                                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Your Message</h2>
+                                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t('contactSitter.step4')}</h2>
                                             <p className="text-sm text-gray-500">Tell {sitter.user?.firstName} about your needs</p>
                                         </div>
                                         {message.trim() && (
@@ -1028,7 +1030,7 @@ const ContactSitterPage: React.FC = () => {
 
                                     {/* Quick Templates */}
                                     <div className="mb-4">
-                                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Quick Templates</p>
+                                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{t('contactSitter.quickTemplates')}</p>
                                         <div className="flex flex-wrap gap-2">
                                             {messageCategories.map((cat) => (
                                                 <div key={cat.label} className="flex flex-wrap gap-2">
@@ -1095,12 +1097,12 @@ const ContactSitterPage: React.FC = () => {
                                 {isSending ? (
                                     <div className="flex items-center gap-3">
                                         <div className="w-6 h-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
-                                        Sending your message...
+                                        {t('contactSitter.sending')}
                                     </div>
                                 ) : (
                                     <div className="flex items-center gap-3">
                                         <Send className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                                        Send Message to {sitter.user?.firstName}
+                                        {t('contactSitter.sendMessage', { name: sitter.user?.firstName })}
                                         <Sparkles className="w-5 h-5 opacity-50" />
                                     </div>
                                 )}
@@ -1168,13 +1170,13 @@ const ContactSitterPage: React.FC = () => {
                                         {sitter.isVerified && (
                                             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
                                                 <Shield className="w-4 h-4 text-emerald-600" />
-                                                <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Verified Sitter</span>
+                                                <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">{t('contactSitter.verifiedSitter')}</span>
                                             </div>
                                         )}
                                         {(sitter.yearsExperience || 0) >= 3 && (
                                             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 dark:bg-amber-900/30 rounded-full">
                                                 <Award className="w-4 h-4 text-amber-600" />
-                                                <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">Experienced</span>
+                                                <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">{t('contactSitter.experienced')}</span>
                                             </div>
                                         )}
                                     </div>
@@ -1191,7 +1193,7 @@ const ContactSitterPage: React.FC = () => {
                                             <div className="w-8 h-8 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
                                                 <PawPrint className="w-4 h-4" />
                                             </div>
-                                            <span>{sitter.yearsExperience || 0}+ years experience</span>
+                                            <span>{t('contactSitter.yearsExperience', { count: sitter.yearsExperience || 0 })}</span>
                                         </div>
                                     </div>
 
