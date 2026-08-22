@@ -1,0 +1,31 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "projectName": {
+      "value": "doublepaws"
+    },
+    "environmentName": {
+      "value": "prod"
+    },
+    "location": {
+      "value": "westeurope"
+    },
+    "vnetAddressPrefix": {
+      "value": "10.40.0.0/16"
+    },
+    "apimSubnetPrefix": {
+      "value": "10.40.1.0/24"
+    },
+    "appSubnetPrefix": {
+      "value": "10.40.2.0/24"
+    },
+    "privateEndpointSubnetPrefix": {
+      "value": "10.40.3.0/24"
+    },
+    "postgresSubnetPrefix": {
+      "value": "10.40.4.0/24"
+    }
+  }
+}
+

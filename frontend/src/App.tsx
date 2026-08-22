@@ -17,6 +17,7 @@ import Dashboard from './pages/Dashboard';
 import SearchResultsPage from './pages/SearchResultsPage';
 import MessagesPage from './pages/MessagesPage';
 import SitterMessagesPage from './pages/SitterMessagesPage';
+import AdminPage from './pages/AdminPage';
 
 
 import { AuthProvider } from './context/AuthContext';
@@ -106,6 +107,14 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <SitterMessagesPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin"
+                      element={
+                        <ProtectedRoute>
+                          <AdminPage />
                         </ProtectedRoute>
                       }
                     />
