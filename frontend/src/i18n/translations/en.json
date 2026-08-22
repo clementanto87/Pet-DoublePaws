@@ -164,6 +164,11 @@
       "onlinePayments": "Easy online payments",
       "reviews": "Honest reviews",
       "flexibleScheduling": "Flexible scheduling"
+    },
+    "badges": {
+      "backgroundChecked": "Background Checked",
+      "petInsurance": "Pet Insurance Included",
+      "support": "24/7 Support"
     }
   },
   "booking": {

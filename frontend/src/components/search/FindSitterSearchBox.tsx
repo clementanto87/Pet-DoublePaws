@@ -208,7 +208,7 @@ const FindSitterSearchBox: React.FC<FindSitterSearchBoxProps> = ({
                     >
                         {/* Beautiful Location Input with Autocomplete */}
                         <div className="flex-1 relative min-w-0">
-                            <div className={`relative flex items-center rounded-full transition-all duration-300 overflow-visible ${isSearchFocused
+                            <div data-ac-anchor className={`relative flex items-center rounded-full transition-all duration-300 overflow-visible ${isSearchFocused
                                 ? 'ring-2 ring-primary/50 ring-offset-1 md:ring-offset-2 bg-white dark:bg-gray-700 shadow-lg shadow-primary/10'
                                 : 'bg-gray-50 dark:bg-gray-700 hover:bg-white shadow-sm hover:shadow-md'
                                 }`}>

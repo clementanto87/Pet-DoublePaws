@@ -219,9 +219,9 @@ const LandingPage: React.FC = () => {
               className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 md:gap-6 mt-3 sm:mt-4 md:mt-8 px-2 [@media(max-height:750px)]:hidden"
             >
               {[
-                { icon: CheckCircle, text: 'Background Checked', color: 'text-green-500' },
-                { icon: Shield, text: 'Pet Insurance Included', color: 'text-blue-500' },
-                { icon: Headphones, text: '24/7 Support', color: 'text-purple-500' }
+                { icon: CheckCircle, text: t('landing.badges.backgroundChecked'), color: 'text-green-500' },
+                { icon: Shield, text: t('landing.badges.petInsurance'), color: 'text-blue-500' },
+                { icon: Headphones, text: t('landing.badges.support'), color: 'text-purple-500' }
               ].map((item, i) => (
                 <motion.div
                   key={i}

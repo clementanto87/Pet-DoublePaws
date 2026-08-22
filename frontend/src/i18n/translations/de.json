@@ -164,6 +164,11 @@
       "onlinePayments": "Einfache Online-Zahlungen",
       "reviews": "Ehrliche Bewertungen",
       "flexibleScheduling": "Flexible Terminplanung"
+    },
+    "badges": {
+      "backgroundChecked": "Überprüfter Hintergrund",
+      "petInsurance": "Tierversicherung inklusive",
+      "support": "24/7-Support"
     }
   },
   "booking": {

@@ -40,7 +40,11 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
 
     const updatePosition = useCallback(() => {
         if (containerRef.current) {
-            const rect = containerRef.current.getBoundingClientRect();
+            // Anchor to the surrounding search field (icon + input + button) when one is
+            // marked, so the dropdown lines up with the full field instead of just the
+            // inner input; otherwise fall back to the input wrapper itself.
+            const anchor = (containerRef.current.closest('[data-ac-anchor]') as HTMLElement) || containerRef.current;
+            const rect = anchor.getBoundingClientRect();
             setDropdownPos({ top: rect.bottom + 8, left: rect.left, width: rect.width });
         }
     }, []);
