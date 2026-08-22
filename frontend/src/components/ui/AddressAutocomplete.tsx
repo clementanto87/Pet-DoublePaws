@@ -163,7 +163,9 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
 
     return (
         <div ref={containerRef} className="relative flex-1 overflow-visible">
-            <div className="relative overflow-visible">
+            {/* flex wrapper so the input's `flex-1` fills the full width instead of
+                collapsing to the browser default input width (~20 chars). */}
+            <div className="relative overflow-visible flex w-full items-center">
                 <input
                     ref={inputRef}
                     type="text"
