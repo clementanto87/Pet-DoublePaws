@@ -14,6 +14,7 @@ import sitterRoutes from './routes/sitter.routes';
 import bookingRoutes from './routes/booking.routes';
 import reviewRoutes from './routes/review.routes';
 import messageRoutes from './routes/message.routes';
+import adminRoutes from './routes/admin.routes';
 
 // Middleware
 import { isAllowedOrigin } from './config/cors';
@@ -38,6 +39,7 @@ app.use('/api/sitters', sitterRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Basic route
 app.get('/', (req, res) => {

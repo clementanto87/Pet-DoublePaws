@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
     Activity,
     AlertTriangle,
@@ -25,9 +25,11 @@ import {
     X,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { Logo } from '../components/ui/Logo';
 import { cn } from '../lib/utils';
+import { adminService } from '../services/admin.service';
 
 type Status = 'Pending' | 'Confirmed' | 'Completed' | 'Needs review';
 
@@ -38,33 +40,6 @@ const navItems = [
     { label: 'Bookings', icon: CalendarDays },
     { label: 'Payments', icon: DollarSign },
     { label: 'Reports', icon: BarChart3 },
-];
-
-const bookings = [
-    { id: '#DP-10482', owner: 'Sophie Laurent', sitter: 'Mia Thompson', service: 'Boarding', date: 'Today, 14:30', amount: '$84.00', status: 'Confirmed' as Status },
-    { id: '#DP-10481', owner: 'Jon Bell', sitter: 'Noah Williams', service: 'Dog walking', date: 'Today, 11:00', amount: '$24.00', status: 'Pending' as Status },
-    { id: '#DP-10480', owner: 'Emma Carter', sitter: 'Olivia Martin', service: 'House sitting', date: 'Yesterday', amount: '$162.00', status: 'Completed' as Status },
-    { id: '#DP-10479', owner: 'Lucas Meyer', sitter: 'Sofia Rossi', service: 'Drop-in visit', date: 'Yesterday', amount: '$38.00', status: 'Needs review' as Status },
-];
-
-const verificationQueue = [
-    { initials: 'AM', name: 'Amelia Morgan', city: 'Berlin, DE', submitted: '18 min ago', type: 'Identity + background' },
-    { initials: 'JL', name: 'James Lee', city: 'Hamburg, DE', submitted: '42 min ago', type: 'Profile approval' },
-    { initials: 'SK', name: 'Sofia Khan', city: 'Munich, DE', submitted: '1 hr ago', type: 'Identity + background' },
-];
-
-const activity = [
-    { icon: CheckCircle2, tone: 'text-emerald-600 bg-emerald-50', text: 'Booking #DP-10480 was completed', time: '8 min ago' },
-    { icon: ShieldCheck, tone: 'text-sky-600 bg-sky-50', text: 'Background check passed for Olivia Martin', time: '23 min ago' },
-    { icon: AlertTriangle, tone: 'text-amber-600 bg-amber-50', text: 'Payment dispute opened by Lucas Meyer', time: '44 min ago' },
-    { icon: Star, tone: 'text-orange-600 bg-orange-50', text: 'New 5-star review received', time: '1 hr ago' },
-];
-
-const metricCards = [
-    { label: 'Gross bookings', value: '$24,860', change: '+18.4%', icon: DollarSign, tone: 'orange', note: 'vs. last 30 days' },
-    { label: 'Active pet parents', value: '1,284', change: '+12.8%', icon: Users, tone: 'blue', note: 'vs. last 30 days' },
-    { label: 'Verified sitters', value: '368', change: '+9.2%', icon: ShieldCheck, tone: 'green', note: 'vs. last 30 days' },
-    { label: 'Completion rate', value: '96.8%', change: '+2.1%', icon: Activity, tone: 'violet', note: 'vs. last 30 days' },
 ];
 
 const statusStyles: Record<Status, string> = {
@@ -81,20 +56,54 @@ const toneStyles: Record<string, string> = {
     violet: 'bg-violet-50 text-violet-600',
 };
 
+const statusLabel = (status: string): Status => ({
+    PENDING: 'Pending',
+    ACCEPTED: 'Confirmed',
+    COMPLETED: 'Completed',
+    REJECTED: 'Needs review',
+    CANCELLED: 'Needs review',
+}[status] || 'Pending') as Status;
+
+const serviceLabel = (serviceType?: string) => (serviceType || 'Service')
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, (value) => value.toUpperCase());
+
 const AdminPage: React.FC = () => {
     const { user } = useAuth();
+    const { data: overview, isLoading, isError } = useQuery({
+        queryKey: ['adminOverview'],
+        queryFn: adminService.getOverview,
+        refetchInterval: 300000,
+    });
     const [activeNav, setActiveNav] = useState('Overview');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [bookingFilter, setBookingFilter] = useState<'All' | Status>('All');
     const [search, setSearch] = useState('');
 
-    const filteredBookings = useMemo(() => bookings.filter((booking) => {
-        const matchesFilter = bookingFilter === 'All' || booking.status === bookingFilter;
-        const query = search.toLowerCase();
-        return matchesFilter && (!query || `${booking.id} ${booking.owner} ${booking.sitter}`.toLowerCase().includes(query));
-    }), [bookingFilter, search]);
-
     const firstName = user?.firstName || 'Alex';
+
+    if (isLoading) {
+        return <div className="flex min-h-[70vh] items-center justify-center bg-[#f6f8fb] dark:bg-slate-950"><div className="h-9 w-9 animate-spin rounded-full border-4 border-orange-200 border-t-orange-500" /></div>;
+    }
+
+    if (isError || !overview) {
+        return <div className="flex min-h-[70vh] items-center justify-center bg-[#f6f8fb] px-4 dark:bg-slate-950"><div className="max-w-md rounded-2xl border border-rose-100 bg-white p-8 text-center shadow-sm dark:border-rose-500/20 dark:bg-slate-900"><AlertTriangle className="mx-auto h-8 w-8 text-rose-500" /><h1 className="mt-4 font-display text-xl font-bold">Could not load admin data</h1><p className="mt-2 text-sm text-slate-500">Check that the API is running and try again.</p></div></div>;
+    }
+
+    const metricCards = [
+        { label: 'Gross bookings', value: `$${overview.metrics.grossRevenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, icon: DollarSign, tone: 'orange', note: 'last 30 days' },
+        { label: 'Pet parents', value: overview.metrics.userCount.toLocaleString(), icon: Users, tone: 'blue', note: 'registered users' },
+        { label: 'Verified sitters', value: overview.metrics.verifiedSitterCount.toLocaleString(), icon: ShieldCheck, tone: 'green', note: `of ${overview.metrics.sitterCount} sitter profiles` },
+        { label: 'Completion rate', value: `${overview.metrics.completionRate.toFixed(1)}%`, icon: Activity, tone: 'violet', note: 'last 30 days' },
+    ];
+
+    const filteredBookings = overview.recentBookings.filter((booking) => {
+        const displayStatus = statusLabel(booking.status);
+        const ownerName = `${booking.owner?.firstName || ''} ${booking.owner?.lastName || ''}`;
+        const sitterName = `${booking.sitter?.user?.firstName || ''} ${booking.sitter?.user?.lastName || ''}`;
+        const query = search.toLowerCase();
+        return (bookingFilter === 'All' || bookingFilter === displayStatus) && (!query || `${booking.id} ${ownerName} ${sitterName}`.toLowerCase().includes(query));
+    });
 
     return (
         <div className="min-h-screen bg-[#f6f8fb] text-slate-900 dark:bg-slate-950 dark:text-white">
@@ -198,7 +207,7 @@ const AdminPage: React.FC = () => {
                             return <div key={metric.label} className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                                 <div className="flex items-start justify-between"><span className={cn('flex h-10 w-10 items-center justify-center rounded-xl', toneStyles[metric.tone])}><Icon className="h-5 w-5" /></span><MoreHorizontal className="h-5 w-5 text-slate-300" /></div>
                                 <p className="mt-5 text-sm font-medium text-slate-500">{metric.label}</p>
-                                <div className="mt-1 flex items-end gap-2"><p className="font-display text-2xl font-bold">{metric.value}</p><span className="mb-1 flex items-center text-xs font-bold text-emerald-600"><ArrowUpRight className="h-3.5 w-3.5" /> {metric.change}</span></div>
+                                <div className="mt-1 flex items-end gap-2"><p className="font-display text-2xl font-bold">{metric.value}</p></div>
                                 <p className="mt-1 text-xs text-slate-400">{metric.note}</p>
                             </div>;
                         })}
@@ -208,23 +217,23 @@ const AdminPage: React.FC = () => {
                         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6">
                             <div className="flex items-start justify-between"><div><h3 className="font-display text-base font-bold">Bookings & revenue</h3><p className="mt-1 text-xs text-slate-400">Performance over the last 30 days</p></div><div className="flex items-center gap-3 text-[11px] font-semibold text-slate-500"><span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-orange-500" /> Revenue</span><span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-sky-400" /> Bookings</span></div></div>
                             <div className="mt-8 flex h-48 items-end gap-2 border-b border-l border-slate-100 pl-3 dark:border-slate-800 sm:gap-4">
-                                {[42, 56, 48, 67, 52, 74, 62, 79, 70, 88, 76, 94].map((height, index) => <div key={index} className="group relative flex h-full flex-1 items-end gap-1"><div style={{ height: `${height}%` }} className="w-1/2 rounded-t-md bg-orange-400 transition-all group-hover:bg-orange-500" /><div style={{ height: `${Math.max(24, height - 20)}%` }} className="w-1/2 rounded-t-md bg-sky-300 transition-all group-hover:bg-sky-400" /><span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-slate-400">{['1','3','5','7','9','11','13','15','17','19','21','23'][index]}</span></div>)}
+                                {overview.chart.filter((_, index) => index % 3 === 0).map((point, _index, points) => { const maxRevenue = Math.max(...points.map((item) => item.revenue), 1); const maxBookings = Math.max(...points.map((item) => item.bookings), 1); return <div key={point.date} className="group relative flex h-full flex-1 items-end gap-1"><div style={{ height: `${Math.max(4, (point.revenue / maxRevenue) * 100)}%` }} className="w-1/2 rounded-t-md bg-orange-400 transition-all group-hover:bg-orange-500" /><div style={{ height: `${Math.max(4, (point.bookings / maxBookings) * 100)}%` }} className="w-1/2 rounded-t-md bg-sky-300 transition-all group-hover:bg-sky-400" /><span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-slate-400">{format(new Date(point.date), 'd')}</span></div>; })}
                             </div>
-                            <div className="mt-10 flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800/60"><div><p className="text-xs text-slate-400">Average booking value</p><p className="mt-0.5 text-sm font-bold">$68.40 <span className="ml-1 text-xs font-semibold text-emerald-600">+6.2%</span></p></div><div className="h-8 w-px bg-slate-200 dark:bg-slate-700" /><div><p className="text-xs text-slate-400">Platform commission</p><p className="mt-0.5 text-sm font-bold">$3,978.20 <span className="ml-1 text-xs font-semibold text-emerald-600">+14.8%</span></p></div></div>
+                            <div className="mt-10 flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 dark:bg-slate-800/60"><div><p className="text-xs text-slate-400">Average booking value</p><p className="mt-0.5 text-sm font-bold">${overview.metrics.averageBookingValue.toFixed(2)}</p></div><div className="h-8 w-px bg-slate-200 dark:bg-slate-700" /><div><p className="text-xs text-slate-400">Platform commission</p><p className="mt-0.5 text-sm font-bold text-slate-400">Not tracked</p></div></div>
                         </div>
-                        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6"><div className="flex items-start justify-between"><div><h3 className="font-display text-base font-bold">Trust & safety</h3><p className="mt-1 text-xs text-slate-400">Items that need attention</p></div><ShieldCheck className="h-5 w-5 text-emerald-500" /></div><div className="mt-6 space-y-3"><div className="flex items-center justify-between rounded-xl border border-orange-100 bg-orange-50/70 p-3 dark:border-orange-500/20 dark:bg-orange-500/10"><div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-orange-500 shadow-sm dark:bg-slate-900"><ClipboardCheck className="h-4 w-4" /></span><div><p className="text-sm font-bold">Sitter verification</p><p className="text-xs text-slate-500">12 applications waiting</p></div></div><ArrowUpRight className="h-4 w-4 text-orange-500" /></div><div className="flex items-center justify-between rounded-xl border border-rose-100 bg-rose-50/70 p-3 dark:border-rose-500/20 dark:bg-rose-500/10"><div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-rose-500 shadow-sm dark:bg-slate-900"><AlertTriangle className="h-4 w-4" /></span><div><p className="text-sm font-bold">Open disputes</p><p className="text-xs text-slate-500">3 need a response today</p></div></div><ArrowUpRight className="h-4 w-4 text-rose-500" /></div><div className="flex items-center justify-between rounded-xl border border-sky-100 bg-sky-50/70 p-3 dark:border-sky-500/20 dark:bg-sky-500/10"><div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-sky-500 shadow-sm dark:bg-slate-900"><Clock3 className="h-4 w-4" /></span><div><p className="text-sm font-bold">Response time</p><p className="text-xs text-slate-500">Median support reply: 18m</p></div></div><span className="text-xs font-bold text-emerald-600">Healthy</span></div></div><button className="mt-5 w-full rounded-xl border border-slate-200 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Open trust center</button></div>
+                        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6"><div className="flex items-start justify-between"><div><h3 className="font-display text-base font-bold">Trust & safety</h3><p className="mt-1 text-xs text-slate-400">Items that need attention</p></div><ShieldCheck className="h-5 w-5 text-emerald-500" /></div><div className="mt-6 space-y-3"><div className="flex items-center justify-between rounded-xl border border-orange-100 bg-orange-50/70 p-3 dark:border-orange-500/20 dark:bg-orange-500/10"><div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-orange-500 shadow-sm dark:bg-slate-900"><ClipboardCheck className="h-4 w-4" /></span><div><p className="text-sm font-bold">Sitter verification</p><p className="text-xs text-slate-500">{overview.trust.pendingVerificationCount} profiles waiting</p></div></div><ArrowUpRight className="h-4 w-4 text-orange-500" /></div><div className="flex items-center justify-between rounded-xl border border-rose-100 bg-rose-50/70 p-3 dark:border-rose-500/20 dark:bg-rose-500/10"><div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-rose-500 shadow-sm dark:bg-slate-900"><AlertTriangle className="h-4 w-4" /></span><div><p className="text-sm font-bold">Disputes</p><p className="text-xs text-slate-500">Not tracked in current data model</p></div></div></div><div className="flex items-center justify-between rounded-xl border border-sky-100 bg-sky-50/70 p-3 dark:border-sky-500/20 dark:bg-sky-500/10"><div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-sky-500 shadow-sm dark:bg-slate-900"><Clock3 className="h-4 w-4" /></span><div><p className="text-sm font-bold">Support response time</p><p className="text-xs text-slate-500">Not tracked in current data model</p></div></div></div></div><button className="mt-5 w-full rounded-xl border border-slate-200 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Open trust center</button></div>
                     </section>
 
                     <section className="grid gap-6 xl:grid-cols-[1.55fr_1fr]">
                         <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
                             <div className="flex flex-col gap-4 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6 dark:border-slate-800"><div><h3 className="font-display text-base font-bold">Recent bookings</h3><p className="mt-1 text-xs text-slate-400">Monitor marketplace activity in real time</p></div><div className="flex items-center gap-2 overflow-x-auto"><select value={bookingFilter} onChange={(e) => setBookingFilter(e.target.value as 'All' | Status)} className="h-9 rounded-lg border-slate-200 bg-slate-50 px-2 text-xs font-semibold outline-none dark:border-slate-700 dark:bg-slate-800"><option>All</option><option>Pending</option><option>Confirmed</option><option>Completed</option><option>Needs review</option></select><button className="rounded-lg p-2 text-slate-400 hover:bg-slate-50 hover:text-slate-700 dark:hover:bg-slate-800"><MoreHorizontal className="h-5 w-5" /></button></div></div>
-                            <div className="overflow-x-auto"><table className="w-full min-w-[720px] text-left"><thead className="bg-slate-50/70 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:bg-slate-800/50"><tr><th className="px-6 py-3">Booking</th><th className="px-4 py-3">Participants</th><th className="px-4 py-3">Service</th><th className="px-4 py-3">Value</th><th className="px-4 py-3">Status</th><th className="px-6 py-3" /></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-slate-800">{filteredBookings.map((booking) => <tr key={booking.id} className="text-sm transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30"><td className="px-6 py-4"><p className="font-bold">{booking.id}</p><p className="mt-1 text-xs text-slate-400">{booking.date}</p></td><td className="px-4 py-4"><p className="font-semibold">{booking.owner}</p><p className="mt-1 text-xs text-slate-400">with {booking.sitter}</p></td><td className="px-4 py-4 text-slate-500">{booking.service}</td><td className="px-4 py-4 font-bold">{booking.amount}</td><td className="px-4 py-4"><span className={cn('inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ring-inset', statusStyles[booking.status])}>{booking.status}</span></td><td className="px-6 py-4 text-right"><button className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800" aria-label={`Open ${booking.id}`}><MoreHorizontal className="h-4 w-4" /></button></td></tr>)}</tbody></table></div>
+                            <div className="overflow-x-auto"><table className="w-full min-w-[720px] text-left"><thead className="bg-slate-50/70 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:bg-slate-800/50"><tr><th className="px-6 py-3">Booking</th><th className="px-4 py-3">Participants</th><th className="px-4 py-3">Service</th><th className="px-4 py-3">Value</th><th className="px-4 py-3">Status</th><th className="px-6 py-3" /></tr></thead><tbody className="divide-y divide-slate-100 dark:divide-slate-800">{filteredBookings.map((booking) => { const status = statusLabel(booking.status); return <tr key={booking.id} className="text-sm transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30"><td className="px-6 py-4"><p className="font-bold">#{booking.id.slice(0, 8)}</p><p className="mt-1 text-xs text-slate-400">{format(new Date(booking.createdAt), 'MMM d, h:mm a')}</p></td><td className="px-4 py-4"><p className="font-semibold">{booking.owner?.firstName} {booking.owner?.lastName}</p><p className="mt-1 text-xs text-slate-400">with {booking.sitter?.user?.firstName} {booking.sitter?.user?.lastName}</p></td><td className="px-4 py-4 text-slate-500">{serviceLabel(booking.serviceType)}</td><td className="px-4 py-4 font-bold">${Number(booking.totalPrice || 0).toFixed(2)}</td><td className="px-4 py-4"><span className={cn('inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ring-inset', statusStyles[status])}>{status}</span></td><td className="px-6 py-4 text-right"><button className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800" aria-label={`Open ${booking.id}`}><MoreHorizontal className="h-4 w-4" /></button></td></tr>; })}</tbody></table></div>
                             <div className="border-t border-slate-100 p-4 text-center dark:border-slate-800"><button className="text-xs font-bold text-orange-600 hover:text-orange-700">View all bookings <span aria-hidden="true">→</span></button></div>
                         </div>
-                        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6"><div className="flex items-start justify-between"><div><h3 className="font-display text-base font-bold">Verification queue</h3><p className="mt-1 text-xs text-slate-400">Review new sitter applications</p></div><span className="rounded-full bg-orange-50 px-2.5 py-1 text-xs font-bold text-orange-600 dark:bg-orange-500/10">12 waiting</span></div><div className="mt-5 space-y-1">{verificationQueue.map((item) => <div key={item.name} className="flex items-center gap-3 rounded-xl px-2 py-3 transition hover:bg-slate-50 dark:hover:bg-slate-800"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-100 to-sky-100 text-xs font-bold text-slate-700 dark:from-orange-500/20 dark:to-sky-500/20 dark:text-slate-200">{item.initials}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{item.name}</p><p className="truncate text-xs text-slate-400">{item.type} · {item.city}</p></div><span className="hidden text-[11px] text-slate-400 sm:block">{item.submitted}</span><button className="rounded-lg p-1.5 text-slate-400 hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-500/10" aria-label={`Review ${item.name}`}><ArrowUpRight className="h-4 w-4" /></button></div>)}</div><button className="mt-4 w-full rounded-xl bg-orange-500 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600">Review all applications</button></div>
+                        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6"><div className="flex items-start justify-between"><div><h3 className="font-display text-base font-bold">Verification queue</h3><p className="mt-1 text-xs text-slate-400">Review unverified sitter profiles</p></div><span className="rounded-full bg-orange-50 px-2.5 py-1 text-xs font-bold text-orange-600 dark:bg-orange-500/10">{overview.trust.pendingVerificationCount} waiting</span></div><div className="mt-5 space-y-1">{overview.verificationQueue.map((item) => { const name = `${item.user?.firstName || 'Unknown'} ${item.user?.lastName || 'sitter'}`; return <div key={item.id} className="flex items-center gap-3 rounded-xl px-2 py-3 transition hover:bg-slate-50 dark:hover:bg-slate-800"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-100 to-sky-100 text-xs font-bold text-slate-700 dark:from-orange-500/20 dark:to-sky-500/20 dark:text-slate-200">{name.split(' ').map((part) => part[0]).join('').slice(0, 2)}</span><div className="min-w-0 flex-1"><p className="truncate text-sm font-bold">{name}</p><p className="truncate text-xs text-slate-400">Profile submitted · {format(new Date(item.createdAt), 'MMM d')}</p></div><button className="rounded-lg p-1.5 text-slate-400 hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-500/10" aria-label={`Review ${name}`}><ArrowUpRight className="h-4 w-4" /></button></div>; })}</div>{overview.verificationQueue.length === 0 && <p className="py-8 text-center text-sm text-slate-400">No profiles waiting for verification.</p>}<button className="mt-4 w-full rounded-xl bg-orange-500 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600">Review all applications</button></div>
                     </section>
 
-                    <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6"><div className="flex items-start justify-between"><div><h3 className="font-display text-base font-bold">Operations activity</h3><p className="mt-1 text-xs text-slate-400">Latest events across the platform</p></div><button className="text-xs font-bold text-orange-600">View audit log</button></div><div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">{activity.map((event) => { const Icon = event.icon; return <div key={event.text} className="flex gap-3 rounded-xl border border-slate-100 p-3 dark:border-slate-800"><span className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', event.tone)}><Icon className="h-4 w-4" /></span><div><p className="text-xs font-semibold leading-5">{event.text}</p><p className="mt-1 text-[11px] text-slate-400">{event.time}</p></div></div>; })}</div></section>
+                    <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6"><div className="flex items-start justify-between"><div><h3 className="font-display text-base font-bold">Operations activity</h3><p className="mt-1 text-xs text-slate-400">Latest live events across the platform</p></div><button className="text-xs font-bold text-orange-600">View audit log</button></div><div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">{overview.activity.map((event) => { const Icon = event.kind === 'booking' ? CheckCircle2 : event.kind === 'sitter' ? ShieldCheck : event.kind === 'review' ? Star : event.kind === 'message' ? Bell : Users; const tone = event.kind === 'booking' ? 'text-emerald-600 bg-emerald-50' : event.kind === 'sitter' ? 'text-sky-600 bg-sky-50' : 'text-orange-600 bg-orange-50'; return <div key={`${event.kind}-${event.time}-${event.text}`} className="flex gap-3 rounded-xl border border-slate-100 p-3 dark:border-slate-800"><span className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', tone)}><Icon className="h-4 w-4" /></span><div><p className="text-xs font-semibold leading-5">{event.text}</p><p className="mt-1 text-[11px] text-slate-400">{format(new Date(event.time), 'MMM d, h:mm a')}</p></div></div>; })}</div></section>
                     <p className="flex items-center justify-center gap-2 pb-4 text-xs text-slate-400"><PawPrint className="h-3.5 w-3.5 text-orange-400" /> Data refreshes automatically every 5 minutes <span className="text-slate-300">·</span> {format(new Date(), 'MMM d, yyyy')}</p>
                 </div>
             </main>
