@@ -291,6 +291,7 @@ const SearchResultsPage: React.FC = () => {
     const [viewMode, setViewMode] = useState<ViewMode>('list');
     const [showSidebarFilters, setShowSidebarFilters] = useState(true); // Desktop sidebar (toggled on lg+)
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false); // Mobile filters drawer
+    const [filterResetSignal, setFilterResetSignal] = useState(0); // Bump to reset filters from the drawer header
     const [sortMenuOpen, setSortMenuOpen] = useState(false); // Sort dropdown (click-toggle, touch-friendly)
     const [sortBy, setSortBy] = useState<SortOption>('distance');
     const [favorites, setFavorites] = useState<Set<string>>(new Set());
@@ -1118,21 +1119,32 @@ const SearchResultsPage: React.FC = () => {
             {mobileFiltersOpen && (
                 <div className="lg:hidden fixed inset-0 z-[60] flex">
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileFiltersOpen(false)} />
-                    <div className="relative ml-auto h-full w-[88%] max-w-sm bg-gray-50 dark:bg-gray-900 shadow-2xl flex flex-col">
-                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                    <div className="relative ml-auto h-full w-[88%] max-w-sm bg-white dark:bg-gray-900 shadow-2xl flex flex-col">
+                        <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                             <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                 <SlidersHorizontal className="w-5 h-5 text-primary" />
                                 {t('search.filters')}
                             </h2>
-                            <button onClick={() => setMobileFiltersOpen(false)} className="p-2 -mr-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                                <X className="w-5 h-5 text-gray-500" />
-                            </button>
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={() => setFilterResetSignal((n) => n + 1)}
+                                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                >
+                                    {t('search.reset')}
+                                </button>
+                                <button onClick={() => setMobileFiltersOpen(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                                    <X className="w-5 h-5 text-gray-500" />
+                                </button>
+                            </div>
                         </div>
                         <div className="flex-1 overflow-y-auto p-3">
                             <SearchFilters
                                 initialFilters={filters}
                                 onFilterChange={handleFilterChange}
                                 serviceOptions={serviceOptions}
+                                hideHeader
+                                resetSignal={filterResetSignal}
+                                className="!shadow-none !border-0 !rounded-none"
                             />
                         </div>
                         <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">

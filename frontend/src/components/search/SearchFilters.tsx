@@ -34,6 +34,8 @@ interface SearchFiltersProps {
     onFilterChange: (filters: any) => void;
     serviceOptions: any[];
     className?: string;
+    hideHeader?: boolean;
+    resetSignal?: number;
 }
 
 export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
@@ -41,6 +43,8 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
     onFilterChange,
     serviceOptions,
     className = '',
+    hideHeader = false,
+    resetSignal,
 }) => {
     const { t } = useTranslation();
     // Local state for all filters
@@ -77,6 +81,35 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
         hasReviews
     });
 
+    // Reset all filters back to their defaults (shared by the header button and
+    // the external resetSignal used by the mobile drawer).
+    const handleReset = () => {
+        const defaultRange: [number, number] = [0, initialFilters.maxPrice || 200];
+        setPriceRange(defaultRange);
+        setMinRating(0);
+        setMaxDistance(50);
+        setVerifiedOnly(false);
+        setHasReviews(false);
+        setSelectedService(initialFilters.service);
+        onFilterChange({
+            ...getCurrentFilters(),
+            priceRange: defaultRange,
+            minRating: 0,
+            maxDistance: 50,
+            verifiedOnly: false,
+            hasReviews: false,
+            service: initialFilters.service,
+        });
+    };
+
+    // Fire reset when the parent bumps resetSignal (skip the initial mount).
+    const didMountRef = useRef(false);
+    useEffect(() => {
+        if (!didMountRef.current) { didMountRef.current = true; return; }
+        handleReset();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [resetSignal]);
+
     // Handle initial filters updates (e.g., if page refreshes or props change)
     useEffect(() => {
         setLocation(initialFilters.location);
@@ -103,42 +136,21 @@ export const SearchFilters: React.FC<SearchFiltersProps> = React.memo(({
     return (
         <div className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 h-full flex flex-col overflow-hidden ${className}`}>
 
-            {/* Header */}
-            <div className="p-5 border-b border-gray-100 dark:border-gray-700">
-                <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                        <Filter className="w-5 h-5 text-primary" />
-                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t('search.filters')}</h2>
+            {/* Header (hidden when the drawer provides its own) */}
+            {!hideHeader && (
+                <div className="p-5 border-b border-gray-100 dark:border-gray-700">
+                    <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                            <Filter className="w-5 h-5 text-primary" />
+                            <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t('search.filters')}</h2>
+                        </div>
+                        <Button variant="outline" size="sm" className="text-xs" onClick={handleReset}>
+                            {t('search.reset')}
+                        </Button>
                     </div>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-xs"
-                        onClick={() => {
-                            // Reset all filters
-                            const defaultRange: [number, number] = [0, initialFilters.maxPrice || 200];
-                            setPriceRange(defaultRange);
-                            setMinRating(0);
-                            setMaxDistance(50);
-                            setVerifiedOnly(false);
-                            setHasReviews(false);
-                            setSelectedService(initialFilters.service);
-                            onFilterChange({
-                                ...getCurrentFilters(),
-                                priceRange: defaultRange,
-                                minRating: 0,
-                                maxDistance: 50,
-                                verifiedOnly: false,
-                                hasReviews: false,
-                                service: initialFilters.service
-                            });
-                        }}
-                    >
-                        {t('search.reset')}
-                    </Button>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{t('search.refine')}</p>
                 </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{t('search.refine')}</p>
-            </div>
+            )}
 
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto p-5 space-y-8 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
