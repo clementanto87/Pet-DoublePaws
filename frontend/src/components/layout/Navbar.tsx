@@ -4,6 +4,7 @@ import { Button } from '../ui/Button';
 import { cn } from '../../lib/utils';
 import { Menu, X } from 'lucide-react';
 import { Logo } from '../ui/Logo';
+import { LanguageDropdown } from '../ui/LanguageDropdown';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 
@@ -12,11 +13,7 @@ const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const { isAuthenticated, logout, user } = useAuth();
   const location = useLocation();
-  const { t, i18n } = useTranslation();
-  
-  const changeLanguage = (lng: string) => {
-    i18n.changeLanguage(lng);
-  };
+  const { t } = useTranslation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -83,31 +80,8 @@ const Navbar: React.FC = () => {
                 </Link>
               )
             ))}
-            {/* Language Switcher */}
-            <div className="flex items-center gap-2 mr-4">
-              <button
-                onClick={() => changeLanguage('en')}
-                className={cn(
-                  "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
-                  i18n.language === 'en'
-                    ? "bg-primary text-white"
-                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-                )}
-              >
-                EN
-              </button>
-              <button
-                onClick={() => changeLanguage('de')}
-                className={cn(
-                  "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
-                  i18n.language === 'de'
-                    ? "bg-primary text-white"
-                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
-                )}
-              >
-                DE
-              </button>
-            </div>
+            {/* Language Dropdown */}
+            <LanguageDropdown className="mr-4" />
             
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
@@ -131,31 +105,8 @@ const Navbar: React.FC = () => {
 
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
-            {/* Language Switcher - Mobile */}
-            <div className="flex items-center gap-0.5 sm:gap-1">
-              <button
-                onClick={() => changeLanguage('en')}
-                className={cn(
-                  "px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-medium transition-colors flex-shrink-0",
-                  i18n.language === 'en'
-                    ? "bg-primary text-white"
-                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-                )}
-              >
-                EN
-              </button>
-              <button
-                onClick={() => changeLanguage('de')}
-                className={cn(
-                  "px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-medium transition-colors flex-shrink-0",
-                  i18n.language === 'de'
-                    ? "bg-primary text-white"
-                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-                )}
-              >
-                DE
-              </button>
-            </div>
+            {/* Language Dropdown - Mobile */}
+            <LanguageDropdown />
 
             <button
               onClick={toggleMenu}

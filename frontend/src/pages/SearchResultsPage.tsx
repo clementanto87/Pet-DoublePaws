@@ -427,6 +427,19 @@ const SearchResultsPage: React.FC = () => {
     }, []);
 
     // Initial Fetch on Mount or when search params change from URL (not from filter changes)
+    // Split view isn't offered on mobile (see the bottom toggle) and degrades to a bare
+    // list without a map below the lg breakpoint — fall back to List if the viewport
+    // narrows while it's active (e.g. rotating or resizing down from desktop).
+    useEffect(() => {
+        const mq = window.matchMedia('(min-width: 1024px)');
+        const check = () => {
+            if (!mq.matches && viewMode === 'split') setViewMode('list');
+        };
+        check();
+        mq.addEventListener('change', check);
+        return () => mq.removeEventListener('change', check);
+    }, [viewMode]);
+
     // While the mobile filters drawer is open, track the visual viewport so the panel
     // (and its "Show results" footer) shrinks to sit above the on-screen keyboard.
     useEffect(() => {
@@ -1366,12 +1379,12 @@ const SearchResultsPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Mobile View Toggle */}
+            {/* Mobile View Toggle — Split is desktop-only (it degrades to a bare list
+                without a map below lg), so only List and Map are offered here. */}
             <div className="fixed bottom-6 left-1/2 -translate-x-1/2 md:hidden z-50">
                 <div className="bg-white dark:bg-gray-800 rounded-full shadow-2xl border border-gray-200 dark:border-gray-700 p-1.5 flex">
                     {[
                         { mode: 'list' as ViewMode, icon: List, label: t('search.listView') },
-                        { mode: 'split' as ViewMode, icon: Grid3X3, label: t('search.splitView') },
                         { mode: 'map' as ViewMode, icon: MapIcon, label: t('search.mapView') },
                     ].map(({ mode, icon: Icon, label }) => (
                         <button
