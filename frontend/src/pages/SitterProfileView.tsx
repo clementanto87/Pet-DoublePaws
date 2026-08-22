@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, useLocation, useSearchParams, useParams } from 'react-router-dom';
 import {
     ArrowLeft,
     MapPin,
@@ -31,6 +31,7 @@ import { cn } from '../lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import type { Review } from '../services/review.service';
 import { reviewService } from '../services/review.service';
+import { sitterService } from '../services/sitter.service';
 import { format } from 'date-fns';
 
 // Service icons mapping
@@ -196,18 +197,39 @@ const SitterProfileView: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [searchParams] = useSearchParams();
+    const { id } = useParams<{ id: string }>();
 
-    // Get sitter data from navigation state or fetch it
+    // Get sitter data from navigation state, or fetch by id (deep link / refresh)
     const sitterFromState = location.state?.sitter;
 
     // Preserve search params for contact page
     const searchParamsString = searchParams.toString();
 
-    // For now, we use the sitter from state. In production, you'd fetch by ID
-    const sitter = sitterFromState;
+    const { data: fetchedSitter, isLoading } = useQuery({
+        queryKey: ['sitter', id],
+        queryFn: () => sitterService.getSitterById(id!),
+        enabled: !sitterFromState && !!id,
+    });
+
+    const sitter = sitterFromState || fetchedSitter;
 
     // Month navigation for calendar
     const [monthOffset, setMonthOffset] = useState(0);
+
+    // Fetch reviews (hook must run before any early return to keep hook order stable)
+    const { data: reviews, isLoading: reviewsLoading } = useQuery({
+        queryKey: ['sitterReviews', sitter?.id],
+        queryFn: () => reviewService.getSitterReviews(sitter.id),
+        enabled: !!sitter?.id
+    });
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gray-50 dark:bg-background-alt-dark flex items-center justify-center">
+                <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+            </div>
+        );
+    }
 
     if (!sitter) {
         return (
@@ -233,13 +255,6 @@ const SitterProfileView: React.FC = () => {
     const minRate = activeServices.length > 0
         ? Math.min(...activeServices.map(([_, service]: [string, any]) => service.rate))
         : 0;
-
-    // Fetch reviews
-    const { data: reviews, isLoading: reviewsLoading } = useQuery({
-        queryKey: ['sitterReviews', sitter.id],
-        queryFn: () => reviewService.getSitterReviews(sitter.id),
-        enabled: !!sitter?.id
-    });
 
     const averageRating = reviews && reviews.length > 0
         ? reviews.reduce((acc: number, review: Review) => acc + review.rating, 0) / reviews.length
@@ -603,7 +618,9 @@ const SitterProfileView: React.FC = () => {
 
                                 {/* Calendar View */}
                                 {(() => {
-                                    const calendar = useMemo(() => getMonthlyAvailability(sitter, monthOffset, []), [sitter, monthOffset]);
+                                    // Plain call, not useMemo — this runs inside a JSX IIFE and would
+                                    // violate the Rules of Hooks (React error #300).
+                                    const calendar = getMonthlyAvailability(sitter, monthOffset, []);
                                     const calendarDays: (number | null)[] = [];
 
                                     // Add empty cells for days before the first day of the month

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowLeft,
@@ -36,6 +36,7 @@ import { TimePicker } from '../components/ui/TimePicker';
 import { cn } from '../lib/utils';
 import { bookingService } from '../services/booking.service';
 import { petService, type PetData } from '../services/pet.service';
+import { sitterService } from '../services/sitter.service';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 
@@ -231,10 +232,17 @@ const getMonthlyAvailability = (sitter: any, monthOffset: number = 0, bookings: 
 const ContactSitterPage: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    // const { id } = useParams<{ id: string }>();
+    const { id } = useParams<{ id: string }>();
     const [searchParams] = useSearchParams();
 
-    const sitter = location.state?.sitter;
+    // Sitter comes from navigation state, or is fetched by id (deep link / refresh)
+    const sitterFromState = location.state?.sitter;
+    const { data: fetchedSitter, isLoading: isLoadingSitter } = useQuery({
+        queryKey: ['sitter', id],
+        queryFn: () => sitterService.getSitterById(id!),
+        enabled: !sitterFromState && !!id,
+    });
+    const sitter = sitterFromState || fetchedSitter;
 
     // Get pre-filled values from search params
     const prefilledService = searchParams.get('service') || '';
@@ -359,6 +367,15 @@ const ContactSitterPage: React.FC = () => {
             setIsSending(false);
         }
     };
+
+    // While fetching the sitter (deep link / refresh), show a loader
+    if (isLoadingSitter) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+                <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+            </div>
+        );
+    }
 
     // If no sitter data, show error
     if (!sitter) {

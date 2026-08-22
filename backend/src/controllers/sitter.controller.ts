@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { AppDataSource } from '../config/database';
 import { SitterProfile } from '../entities/SitterProfile.entity';
 import { User } from '../entities/User.entity';
@@ -253,6 +253,29 @@ export const getSitterProfile = async (req: AuthRequest, res: Response): Promise
         res.json(profile);
     } catch (error) {
         console.error('Error fetching sitter profile:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// Public: fetch a single sitter profile by its id (for deep links / refresh).
+export const getSitterById = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { id } = req.params;
+        const sitterRepository = AppDataSource.getRepository(SitterProfile);
+
+        const profile = await sitterRepository.findOne({
+            where: { id },
+            relations: ['user', 'reviews'],
+        });
+
+        if (!profile) {
+            res.status(404).json({ message: 'Sitter not found' });
+            return;
+        }
+
+        res.json(profile);
+    } catch (error) {
+        console.error('Error fetching sitter by id:', error);
         res.status(500).json({ message: 'Server error' });
     }
 };

@@ -61,6 +61,11 @@ export const sitterService = {
         return response.data;
     },
 
+    getSitterById: async (id: string): Promise<SitterProfile> => {
+        const response = await api.get(`/sitters/${id}`);
+        return response.data;
+    },
+
     updateProfile: async (data: Partial<SitterRegistrationData>): Promise<SitterProfile> => {
         const response = await api.post('/sitters', data);
         return response.data;
