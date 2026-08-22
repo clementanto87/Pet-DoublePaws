@@ -401,7 +401,7 @@ const SitterDashboard: React.FC = () => {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm font-medium text-muted-foreground">{t('sitterDashboard.stats.experience')}</p>
-                                    <p className="text-2xl sm:text-3xl font-bold text-foreground">{profile.yearsExperience || 0} yrs</p>
+                                    <p className="text-2xl sm:text-3xl font-bold text-foreground">{profile.yearsExperience || 0} {t('sitterDashboard.stats.years')}</p>
                                 </div>
                                 <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/40 rounded-xl flex items-center justify-center">
                                     <Award className="w-6 h-6 text-purple-600" />
@@ -819,7 +819,7 @@ const SitterDashboard: React.FC = () => {
                                                                             </div>
                                                                             <div className="flex justify-between">
                                                                                 <span className="text-muted-foreground">Age:</span>
-                                                                                <span className="font-medium">{pet.age} yrs</span>
+                                                                                <span className="font-medium">{pet.age} {t('sitterDashboard.stats.years')}</span>
                                                                             </div>
                                                                             <div className="flex justify-between">
                                                                                 <span className="text-muted-foreground">Weight:</span>
