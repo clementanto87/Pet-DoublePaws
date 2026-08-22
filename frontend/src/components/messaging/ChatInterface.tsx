@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { messageService } from '../../services/message.service';
 import { useAuth } from '../../context/AuthContext';
@@ -13,6 +14,7 @@ interface ChatInterfaceProps {
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({ defaultSelectedUserId }) => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const [selectedUserId, setSelectedUserId] = useState<string | null>(defaultSelectedUserId || null);
@@ -91,13 +93,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ defaultSelectedUse
                 {/* Header */}
                 <div className="p-4 md:p-6 border-b border-gray-200 dark:border-gray-700">
                     <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent mb-4 md:mb-5">
-                        Messages
+                        {t('messages.title')}
                     </h2>
                     <div className="relative">
                         <Search className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-gray-400" />
                         <input
                             type="text"
-                            placeholder="Search conversations..."
+                            placeholder={t('messages.searchConversations')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full pl-10 md:pl-12 pr-4 py-2.5 md:py-3 rounded-xl bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
@@ -108,14 +110,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ defaultSelectedUse
                 {/* Conversations List */}
                 <div className="flex-1 overflow-y-auto">
                     {loadingConversations ? (
-                        <div className="p-4 md:p-6 text-center text-gray-500 text-sm">Loading conversations...</div>
+                        <div className="p-4 md:p-6 text-center text-gray-500 text-sm">{t('messages.loadingConversations')}</div>
                     ) : filteredConversations?.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full text-center p-6 md:p-8">
                             <div className="w-16 h-16 md:w-20 md:h-20 bg-primary/10 rounded-full flex items-center justify-center mb-4 md:mb-5">
                                 <MessageSquare className="w-8 h-8 md:w-10 md:h-10 text-primary" />
                             </div>
-                            <p className="font-semibold text-gray-700 dark:text-gray-300 mb-2 text-sm md:text-base">No chats yet</p>
-                            <p className="text-xs md:text-sm text-gray-500 max-w-xs">Book a service to start chatting with sitters</p>
+                            <p className="font-semibold text-gray-700 dark:text-gray-300 mb-2 text-sm md:text-base">{t('messages.noChatsYet')}</p>
+                            <p className="text-xs md:text-sm text-gray-500 max-w-xs">{t('messages.bookToChat')}</p>
                         </div>
                     ) : (
                         <div className="p-2 md:p-3">
@@ -227,7 +229,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ defaultSelectedUse
                                     </h3>
                                     <div className="flex items-center gap-2 mt-0.5 md:mt-1">
                                         <Circle className="w-2 h-2 md:w-2.5 md:h-2.5 fill-emerald-500 text-emerald-500 flex-shrink-0" />
-                                        <span className="text-xs md:text-sm text-gray-500">Online</span>
+                                        <span className="text-xs md:text-sm text-gray-500">{t('messages.online')}</span>
                                     </div>
                                 </div>
                             </div>
@@ -237,7 +239,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ defaultSelectedUse
                         <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 md:py-6 space-y-3 md:space-y-4">
                             {loadingMessages ? (
                                 <div className="flex justify-center items-center h-full">
-                                    <div className="text-sm text-gray-400">Loading messages...</div>
+                                    <div className="text-sm text-gray-400">{t('messages.loading')}</div>
                                 </div>
                             ) : messages && messages.length > 0 ? (
                                 messages.map((msg) => {
@@ -320,7 +322,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ defaultSelectedUse
                                         type="text"
                                         value={messageInput}
                                         onChange={(e) => setMessageInput(e.target.value)}
-                                        placeholder="Type a message..."
+                                        placeholder={t('messages.typeMessage')}
                                         className="flex-1 px-4 md:px-5 py-2.5 md:py-3 rounded-full bg-gray-100 dark:bg-gray-700 border-0 focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm transition-all"
                                     />
                                     <Button

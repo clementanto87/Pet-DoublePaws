@@ -90,7 +90,7 @@ const SignupPage: React.FC = () => {
                                             type="text"
                                             autoComplete="given-name"
                                             required
-                                            placeholder="Jane"
+                                            placeholder={t('auth.firstNamePlaceholder')}
                                             className="h-11"
                                         />
                                     </div>
@@ -104,7 +104,7 @@ const SignupPage: React.FC = () => {
                                             type="text"
                                             autoComplete="family-name"
                                             required
-                                            placeholder="Doe"
+                                            placeholder={t('auth.lastNamePlaceholder')}
                                             className="h-11"
                                         />
                                     </div>

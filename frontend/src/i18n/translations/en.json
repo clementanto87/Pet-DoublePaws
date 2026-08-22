@@ -70,7 +70,9 @@
     "orContinueWith": "Or continue with",
     "passwordMinLength": "Must be at least 8 characters long.",
     "emailPlaceholder": "you@example.com",
-    "passwordPlaceholder": "••••••••"
+    "passwordPlaceholder": "••••••••",
+    "firstNamePlaceholder": "Jane",
+    "lastNamePlaceholder": "Doe"
   },
   "validation": {
     "required": "This field is required",
@@ -514,7 +516,11 @@
     "noMessages": "No messages yet",
     "startConversation": "Start the conversation",
     "loading": "Loading messages...",
-    "selectConversation": "Select a conversation to view messages"
+    "selectConversation": "Select a conversation to view messages",
+    "noChatsYet": "No chats yet",
+    "bookToChat": "Book a service to start chatting with sitters",
+    "loadingConversations": "Loading conversations...",
+    "online": "Online"
   },
   "sitterMessages": {
     "title": "Messages",
@@ -850,13 +856,42 @@
     }
   },
   "petProfile": {
-    "title": "Create Pet Profile",
-    "name": "Pet Name",
-    "type": "Pet Type",
+    "title": "Create Your",
+    "titleAccent": "Pet's Profile",
+    "subtitle": "Let's get to know your furry friend. This information helps us provide the best personalized care.",
+    "fillDetails": "Please fill in the details below to create your pet's profile.",
+    "profilePhoto": "Profile Photo",
+    "uploadPhoto": "Upload a cute photo of your pet",
+    "clickUpload": "Click to upload or drag and drop",
+    "fileTypes": "SVG, PNG, JPG or GIF (max. 800x400px)",
+    "petDetails": "Pet Details",
+    "petBasics": "Tell us the basics about your pet",
+    "petName": "Pet's Name",
+    "petNamePlaceholder": "e.g. Buddy",
+    "petType": "Pet Type",
+    "dog": "Dog",
+    "cat": "Cat",
+    "bird": "Bird",
+    "other": "Other",
     "breed": "Breed",
+    "breedPlaceholder": "e.g. Golden Retriever",
     "age": "Age",
-    "size": "Size",
-    "description": "Description"
+    "ageMonths": "Months",
+    "weight": "Weight (kg)",
+    "gender": "Gender",
+    "male": "Male",
+    "female": "Female",
+    "specialNeeds": "Special Needs / Notes",
+    "specialNeedsPlaceholder": "Any allergies, medical conditions, or behavioral notes?",
+    "save": "Save Pet Profile",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "back": "Back",
+    "saveForLater": "Save for Later",
+    "creating": "Creating...",
+    "createProfile": "Create Profile",
+    "changePhoto": "Click to change photo",
+    "ageYears": "Years"
   },
   "serviceProfile": {
     "title": "Service Profile",

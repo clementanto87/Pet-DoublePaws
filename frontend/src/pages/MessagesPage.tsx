@@ -1,10 +1,12 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ChatInterface } from '../components/messaging/ChatInterface';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 
 const MessagesPage: React.FC = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const location = useLocation();
     const defaultUserId = location.state?.userId;
@@ -20,12 +22,12 @@ const MessagesPage: React.FC = () => {
                         className="mb-3 md:mb-4 text-sm md:text-base"
                     >
                         <ArrowLeft className="w-4 h-4 mr-2" />
-                        Back to Dashboard
+                        {t('messages.backToDashboard')}
                     </Button>
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Messages</h1>
-                            <p className="text-sm md:text-base text-gray-500 dark:text-gray-400 mt-1">Chat with your sitters</p>
+                            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">{t('messages.title')}</h1>
+                            <p className="text-sm md:text-base text-gray-500 dark:text-gray-400 mt-1">{t('messages.subtitle')}</p>
                         </div>
                     </div>
                 </div>

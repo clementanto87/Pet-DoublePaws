@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
@@ -9,6 +10,7 @@ import { Upload, PawPrint, Calendar, User, ArrowRight, ArrowLeft, Weight, Heart 
 import { petService } from '../services/pet.service';
 
 const PetProfileCreation: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
@@ -99,17 +101,17 @@ const PetProfileCreation: React.FC = () => {
             <PawPrint className="w-8 h-8" />
           </div>
           <h1 className="text-4xl md:text-5xl font-display font-bold mb-4">
-            Create Your <span className="text-gradient">Pet's Profile</span>
+            {t('petProfile.title')} <span className="text-gradient">{t('petProfile.titleAccent')}</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Let's get to know your furry friend. This information helps us provide the best personalized care.
+            {t('petProfile.subtitle')}
           </p>
         </div>
 
         {/* Progress Bar Removed */}
         <div className="mb-8 animate-slide-up">
           <p className="text-center text-muted-foreground">
-            Please fill in the details below to create your pet's profile.
+            {t('petProfile.fillDetails')}
           </p>
         </div>
 
@@ -123,8 +125,8 @@ const PetProfileCreation: React.FC = () => {
           {/* Photo Upload Section */}
           <Card className="border-border/50 shadow-lg backdrop-blur-sm bg-white/80 dark:bg-card/80">
             <CardHeader>
-              <CardTitle>Profile Photo</CardTitle>
-              <CardDescription>Upload a cute photo of your pet</CardDescription>
+              <CardTitle>{t('petProfile.profilePhoto')}</CardTitle>
+              <CardDescription>{t('petProfile.uploadPhoto')}</CardDescription>
             </CardHeader>
             <CardContent>
               <input
@@ -151,9 +153,9 @@ const PetProfileCreation: React.FC = () => {
                   </div>
                 )}
                 <p className="text-lg font-bold text-foreground mb-2">
-                  {previewUrl ? 'Click to change photo' : 'Click to upload or drag and drop'}
+                  {previewUrl ? t('petProfile.changePhoto') : t('petProfile.clickUpload')}
                 </p>
-                <p className="text-sm text-muted-foreground">SVG, PNG, JPG or GIF (max. 800x400px)</p>
+                <p className="text-sm text-muted-foreground">{t('petProfile.fileTypes')}</p>
               </div>
             </CardContent>
           </Card>
@@ -161,17 +163,17 @@ const PetProfileCreation: React.FC = () => {
           {/* Details Section */}
           <Card className="border-border/50 shadow-lg backdrop-blur-sm bg-white/80 dark:bg-card/80">
             <CardHeader>
-              <CardTitle>Pet Details</CardTitle>
-              <CardDescription>Tell us the basics about your pet</CardDescription>
+              <CardTitle>{t('petProfile.petDetails')}</CardTitle>
+              <CardDescription>{t('petProfile.petBasics')}</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="petName">Pet's Name</Label>
+                  <Label htmlFor="petName">{t('petProfile.petName')}</Label>
                   <div className="relative">
                     <Input
                       id="petName"
-                      placeholder="e.g. Buddy"
+                      placeholder={t('petProfile.petNamePlaceholder')}
                       value={formData.petName}
                       onChange={handleChange}
                       required
@@ -182,26 +184,26 @@ const PetProfileCreation: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="petType">Pet Type</Label>
+                  <Label htmlFor="petType">{t('petProfile.petType')}</Label>
                   <Select
                     id="petType"
                     value={formData.petType}
                     onChange={handleChange}
                   >
-                    <option value="Dog">Dog</option>
-                    <option value="Cat">Cat</option>
-                    <option value="Bird">Bird</option>
-                    <option value="Other">Other</option>
+                    <option value="Dog">{t('petProfile.dog')}</option>
+                    <option value="Cat">{t('petProfile.cat')}</option>
+                    <option value="Bird">{t('petProfile.bird')}</option>
+                    <option value="Other">{t('petProfile.other')}</option>
                   </Select>
                 </div>
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="breed">Breed</Label>
+                  <Label htmlFor="breed">{t('petProfile.breed')}</Label>
                   <Input
                     id="breed"
-                    placeholder="e.g. Golden Retriever"
+                    placeholder={t('petProfile.breedPlaceholder')}
                     value={formData.breed}
                     onChange={handleChange}
                     required
@@ -209,7 +211,7 @@ const PetProfileCreation: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="gender">Gender</Label>
+                  <Label htmlFor="gender">{t('petProfile.gender')}</Label>
                   <div className="relative">
                     <Select
                       id="gender"
@@ -217,8 +219,8 @@ const PetProfileCreation: React.FC = () => {
                       onChange={handleChange}
                       className="pl-10"
                     >
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
+                      <option value="Male">{t('petProfile.male')}</option>
+                      <option value="Female">{t('petProfile.female')}</option>
                     </Select>
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   </div>
@@ -233,7 +235,7 @@ const PetProfileCreation: React.FC = () => {
                       <Input
                         id="ageYears"
                         type="number"
-                        placeholder="Years"
+                        placeholder={t('petProfile.ageYears')}
                         value={formData.ageYears}
                         onChange={handleChange}
                         min="0"
@@ -246,7 +248,7 @@ const PetProfileCreation: React.FC = () => {
                       <Input
                         id="ageMonths"
                         type="number"
-                        placeholder="Months"
+                        placeholder={t('petProfile.ageMonths')}
                         value={formData.ageMonths}
                         onChange={handleChange}
                         min="0"
@@ -259,7 +261,7 @@ const PetProfileCreation: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="weight">Weight (kg)</Label>
+                  <Label htmlFor="weight">{t('petProfile.weight')}</Label>
                   <div className="relative">
                     <Input
                       id="weight"
@@ -278,11 +280,11 @@ const PetProfileCreation: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="specialNeeds">Special Needs / Notes</Label>
+                <Label htmlFor="specialNeeds">{t('petProfile.specialNeeds')}</Label>
                 <div className="relative">
                   <Input
                     id="specialNeeds"
-                    placeholder="Any allergies, medical conditions, or behavioral notes?"
+                    placeholder={t('petProfile.specialNeedsPlaceholder')}
                     value={formData.specialNeeds}
                     onChange={handleChange}
                     className="pl-10"
@@ -297,14 +299,14 @@ const PetProfileCreation: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
             <Button variant="ghost" type="button" className="w-full sm:w-auto text-muted-foreground hover:text-foreground" onClick={() => navigate(-1)}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
+              {t('petProfile.back')}
             </Button>
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
               <Button variant="secondary" type="button" size="lg" className="w-full sm:w-auto">
-                Save for Later
+                {t('petProfile.saveForLater')}
               </Button>
               <Button type="submit" size="lg" className="w-full sm:w-auto shadow-glow" disabled={isLoading}>
-                {isLoading ? 'Creating...' : 'Create Profile'}
+                {isLoading ? t('petProfile.creating') : t('petProfile.createProfile')}
                 {!isLoading && <ArrowRight className="w-4 h-4 ml-2" />}
               </Button>
             </div>
