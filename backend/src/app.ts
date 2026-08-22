@@ -15,6 +15,7 @@ import bookingRoutes from './routes/booking.routes';
 import reviewRoutes from './routes/review.routes';
 import messageRoutes from './routes/message.routes';
 import adminRoutes from './routes/admin.routes';
+import supportRoutes from './routes/support.routes';
 
 // Middleware
 import { isAllowedOrigin } from './config/cors';
@@ -40,6 +41,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/support-requests', supportRoutes);
 
 // Basic route
 app.get('/', (req, res) => {

@@ -21,6 +21,8 @@ export interface AdminOverview {
     activity: Array<{ kind: string; text: string; time: string }>;
     trust: {
         pendingVerificationCount: number;
+        openDisputes: number;
+        averageResponseMinutes: number | null;
         disputesTracked: boolean;
         responseTimeTracked: boolean;
     };

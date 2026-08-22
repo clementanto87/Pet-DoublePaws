@@ -40,6 +40,7 @@ import { format } from 'date-fns';
 import { messageService } from '../services/message.service';
 import { useToast } from '../components/ui/Toast';
 import { AvailabilityCalendar } from '../components/sitter/AvailabilityCalendar';
+import { SupportRequestCard } from '../components/support/SupportRequestCard';
 
 // Service name mapping
 const serviceNames: Record<string, string> = {
@@ -349,6 +350,13 @@ const SitterDashboard: React.FC = () => {
                         </div>
                     </div>
                 )}
+
+                <SupportRequestCard
+                    bookingOptions={bookings?.map((booking: Booking) => ({
+                        id: booking.id,
+                        label: `${booking.serviceType.replace(/([A-Z])/g, ' $1').trim()} · ${format(new Date(booking.startDate), 'MMM d', dfOpts())}`,
+                    }))}
+                />
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1583,4 +1591,3 @@ const SitterDashboard: React.FC = () => {
 };
 
 export default SitterDashboard;
-

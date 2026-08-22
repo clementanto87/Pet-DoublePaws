@@ -30,6 +30,7 @@ import { Modal } from '../components/ui/Modal';
 import { reviewService } from '../services/review.service';
 import { messageService } from '../services/message.service';
 import { useToast } from '../components/ui/Toast';
+import { SupportRequestCard } from '../components/support/SupportRequestCard';
 
 interface Pet extends PetData {
     id: string;
@@ -502,6 +503,12 @@ const Dashboard: React.FC = () => {
                                 </Button>
                             </CardContent>
                         </Card>
+                        <SupportRequestCard
+                            bookingOptions={bookings?.map((booking: Booking) => ({
+                                id: booking.id,
+                                label: `${booking.serviceType.replace(/([A-Z])/g, ' $1').trim()} · ${format(new Date(booking.startDate), 'MMM d', dfOpts())}`,
+                            }))}
+                        />
                     </div>
 
                 </div>

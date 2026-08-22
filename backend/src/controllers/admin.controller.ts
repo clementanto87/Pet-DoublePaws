@@ -5,6 +5,7 @@ import { Booking, BookingStatus } from '../entities/Booking.entity';
 import { Message } from '../entities/Message.entity';
 import { Review } from '../entities/Review.entity';
 import { SitterProfile } from '../entities/SitterProfile.entity';
+import { SupportRequest, SupportRequestStatus, SupportRequestType } from '../entities/SupportRequest.entity';
 import { User } from '../entities/User.entity';
 
 const dayStart = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -16,12 +17,13 @@ export const getAdminOverview = async (_req: Request, res: Response): Promise<vo
         const bookingRepository = AppDataSource.getRepository(Booking);
         const reviewRepository = AppDataSource.getRepository(Review);
         const messageRepository = AppDataSource.getRepository(Message);
+        const supportRepository = AppDataSource.getRepository(SupportRequest);
 
         const now = new Date();
         const periodStart = new Date(now);
         periodStart.setDate(periodStart.getDate() - 30);
 
-        const [userCount, sitterCount, verifiedSitterCount, pendingVerificationCount, bookings] = await Promise.all([
+        const [userCount, sitterCount, verifiedSitterCount, pendingVerificationCount, bookings, supportRequests] = await Promise.all([
             userRepository.count(),
             sitterRepository.count(),
             sitterRepository.count({ where: { isVerified: true } }),
@@ -31,6 +33,7 @@ export const getAdminOverview = async (_req: Request, res: Response): Promise<vo
                 relations: ['owner', 'sitter', 'sitter.user'],
                 order: { createdAt: 'DESC' },
             }),
+            supportRepository.find({ order: { createdAt: 'DESC' }, take: 100 }),
         ]);
 
         const [recentUsers, recentSitters, recentReviews, recentMessages] = await Promise.all([
@@ -45,6 +48,14 @@ export const getAdminOverview = async (_req: Request, res: Response): Promise<vo
             .reduce((total, booking) => total + Number(booking.totalPrice || 0), 0);
         const completedBookings = bookings.filter((booking) => booking.status === BookingStatus.COMPLETED).length;
         const eligibleBookings = bookings.filter((booking) => ![BookingStatus.REJECTED, BookingStatus.CANCELLED].includes(booking.status)).length;
+        const openDisputes = supportRequests.filter((request) => request.type === SupportRequestType.DISPUTE && ![SupportRequestStatus.RESOLVED, SupportRequestStatus.CLOSED].includes(request.status)).length;
+        const responseTimes = supportRequests
+            .filter((request) => request.firstResponseAt)
+            .map((request) => new Date(request.firstResponseAt!).getTime() - new Date(request.createdAt).getTime())
+            .filter((milliseconds) => milliseconds >= 0);
+        const averageResponseMinutes = responseTimes.length
+            ? responseTimes.reduce((total, milliseconds) => total + milliseconds, 0) / responseTimes.length / 60000
+            : null;
 
         const chart = Array.from({ length: 30 }, (_, index) => {
             const date = new Date(periodStart);
@@ -111,8 +122,10 @@ export const getAdminOverview = async (_req: Request, res: Response): Promise<vo
             activity,
             trust: {
                 pendingVerificationCount,
-                disputesTracked: false,
-                responseTimeTracked: false,
+                openDisputes,
+                averageResponseMinutes,
+                disputesTracked: true,
+                responseTimeTracked: responseTimes.length > 0,
             },
         });
     } catch (error) {
