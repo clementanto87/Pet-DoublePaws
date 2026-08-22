@@ -66,11 +66,34 @@ export const ChatPageLayout: React.FC<ChatPageLayoutProps> = ({ title, subtitle,
 
     // Lock page scroll while the fixed mobile chat is mounted, so the footer
     // (further down the normal page flow) can never be scrolled into view.
+    //
+    // `overflow: hidden` on body alone is NOT enough on iOS Safari: it blocks
+    // touch-drag scrolling, but Safari's own "scroll the focused input into
+    // view" behavior on keyboard-open uses a separate internal mechanism that
+    // ignores that CSS property entirely — tapping the message input would
+    // still scroll the whole page down to the site Footer. Pinning body with
+    // `position: fixed` removes it from the document flow altogether, so
+    // there is nothing left for Safari to scroll to.
     useEffect(() => {
         if (isDesktop) return;
-        const prevOverflow = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-        return () => { document.body.style.overflow = prevOverflow; };
+        const scrollY = window.scrollY;
+        const body = document.body.style;
+        const prev = { position: body.position, top: body.top, left: body.left, right: body.right, width: body.width, overflow: body.overflow };
+        body.position = 'fixed';
+        body.top = `-${scrollY}px`;
+        body.left = '0';
+        body.right = '0';
+        body.width = '100%';
+        body.overflow = 'hidden';
+        return () => {
+            body.position = prev.position;
+            body.top = prev.top;
+            body.left = prev.left;
+            body.right = prev.right;
+            body.width = prev.width;
+            body.overflow = prev.overflow;
+            window.scrollTo(0, scrollY);
+        };
     }, [isDesktop]);
 
     if (isDesktop) {
