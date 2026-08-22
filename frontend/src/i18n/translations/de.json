@@ -252,7 +252,8 @@
     },
     "headlineFallback": "Vertrauenswürdiger Tierbetreuer",
     "nearby": "In der Nähe",
-    "mapSelected": "Ausgewählt"
+    "mapSelected": "Ausgewählt",
+    "showResults": "Ergebnisse anzeigen"
   },
   "dashboard": {
     "greeting": {

@@ -289,7 +289,9 @@ const SearchResultsPage: React.FC = () => {
     const [hoveredSitter, setHoveredSitter] = useState<string | null>(null);
     const [selectedSitter, setSelectedSitter] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('list');
-    const [showSidebarFilters, setShowSidebarFilters] = useState(true); // Show by default, toggle with button
+    const [showSidebarFilters, setShowSidebarFilters] = useState(true); // Desktop sidebar (toggled on lg+)
+    const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false); // Mobile filters drawer
+    const [sortMenuOpen, setSortMenuOpen] = useState(false); // Sort dropdown (click-toggle, touch-friendly)
     const [sortBy, setSortBy] = useState<SortOption>('distance');
     const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
@@ -1018,46 +1020,60 @@ const SearchResultsPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-            {/* Clean Search Header */}
-            <div className="sticky top-0 z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 overflow-x-hidden">
-                <div className="max-w-7xl mx-auto px-2 sm:px-3 md:px-4 py-2 overflow-x-hidden">
+            {/* Clean Search Header — no overflow-x-hidden here so the Sort menu can drop
+                below the bar (the app root already prevents page-level horizontal scroll). */}
+            <div className="sticky top-0 z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+                <div className="max-w-7xl mx-auto px-2 sm:px-3 md:px-4 py-2">
                     {/* Controls Row */}
                     <div className="flex items-center justify-between gap-1.5 sm:gap-2">
                         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
-                            {/* Sort Dropdown */}
-                            <div className="relative group">
-                                <button className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-2.5 rounded-lg sm:rounded-xl bg-gray-100 dark:bg-gray-800 
+                            {/* Sort Dropdown (click-toggle so it works on touch) */}
+                            <div className="relative">
+                                <button
+                                    onClick={() => setSortMenuOpen((o) => !o)}
+                                    className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-2.5 rounded-lg sm:rounded-xl bg-gray-100 dark:bg-gray-800
                                     hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-xs sm:text-sm font-semibold">
                                     <ArrowUpDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary flex-shrink-0" />
                                     <span className="hidden sm:inline">Sort</span>
-                                    <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                                    <ChevronDown className={`w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0 transition-transform ${sortMenuOpen ? 'rotate-180' : ''}`} />
                                 </button>
-                                <div className="absolute left-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl 
-                                    shadow-xl border border-gray-200 dark:border-gray-700 py-2 opacity-0 invisible 
-                                    group-hover:opacity-100 group-hover:visible transition-all z-50">
-                                    {[
-                                        { value: 'distance', label: t('search.sortDistance') },
-                                        { value: 'price_low', label: t('search.sortPriceLow') },
-                                        { value: 'price_high', label: t('search.sortPriceHigh') },
-                                        { value: 'rating', label: t('search.sortRating') },
-                                    ].map(opt => (
-                                        <button
-                                            key={opt.value}
-                                            onClick={() => setSortBy(opt.value as SortOption)}
-                                            className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-100 
-                                                dark:hover:bg-gray-700 flex items-center justify-between
-                                                ${sortBy === opt.value ? 'text-primary font-semibold bg-primary/5' : 'text-gray-700 dark:text-gray-300'}`}
-                                        >
-                                            {opt.label}
-                                            {sortBy === opt.value && <CheckCircle2 className="w-4 h-4" />}
-                                        </button>
-                                    ))}
-                                </div>
+                                {sortMenuOpen && (
+                                    <>
+                                        {/* Tap-away backdrop */}
+                                        <div className="fixed inset-0 z-40" onClick={() => setSortMenuOpen(false)} />
+                                        <div className="absolute left-0 top-full mt-2 w-52 bg-white dark:bg-gray-800 rounded-xl
+                                            shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50">
+                                            {[
+                                                { value: 'distance', label: t('search.sortDistance') },
+                                                { value: 'price_low', label: t('search.sortPriceLow') },
+                                                { value: 'price_high', label: t('search.sortPriceHigh') },
+                                                { value: 'rating', label: t('search.sortRating') },
+                                            ].map(opt => (
+                                                <button
+                                                    key={opt.value}
+                                                    onClick={() => { setSortBy(opt.value as SortOption); setSortMenuOpen(false); }}
+                                                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-100
+                                                        dark:hover:bg-gray-700 flex items-center justify-between
+                                                        ${sortBy === opt.value ? 'text-primary font-semibold bg-primary/5' : 'text-gray-700 dark:text-gray-300'}`}
+                                                >
+                                                    {opt.label}
+                                                    {sortBy === opt.value && <CheckCircle2 className="w-4 h-4" />}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
                             </div>
 
-                            {/* Filter Button */}
+                            {/* Filter Button — toggles the desktop sidebar on lg+, opens a drawer on mobile */}
                             <button
-                                onClick={() => setShowSidebarFilters(!showSidebarFilters)}
+                                onClick={() => {
+                                    if (window.matchMedia('(min-width: 1024px)').matches) {
+                                        setShowSidebarFilters((v) => !v);
+                                    } else {
+                                        setMobileFiltersOpen(true);
+                                    }
+                                }}
                                 className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-2.5 rounded-lg sm:rounded-xl transition-colors text-xs sm:text-sm font-semibold relative flex-shrink-0
                                     ${showSidebarFilters
                                         ? 'bg-primary text-white shadow-lg shadow-primary/30'
@@ -1097,6 +1113,36 @@ const SearchResultsPage: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Mobile Filters Drawer */}
+            {mobileFiltersOpen && (
+                <div className="lg:hidden fixed inset-0 z-[60] flex">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileFiltersOpen(false)} />
+                    <div className="relative ml-auto h-full w-[88%] max-w-sm bg-gray-50 dark:bg-gray-900 shadow-2xl flex flex-col">
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                            <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                <SlidersHorizontal className="w-5 h-5 text-primary" />
+                                {t('search.filters')}
+                            </h2>
+                            <button onClick={() => setMobileFiltersOpen(false)} className="p-2 -mr-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                                <X className="w-5 h-5 text-gray-500" />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-3">
+                            <SearchFilters
+                                initialFilters={filters}
+                                onFilterChange={handleFilterChange}
+                                serviceOptions={serviceOptions}
+                            />
+                        </div>
+                        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                            <Button className="w-full h-12" onClick={() => setMobileFiltersOpen(false)}>
+                                {t('search.showResults')}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {
                 error && (

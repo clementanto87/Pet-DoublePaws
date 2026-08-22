@@ -252,7 +252,8 @@
     },
     "headlineFallback": "Trusted Pet Care Specialist",
     "nearby": "Nearby",
-    "mapSelected": "Selected"
+    "mapSelected": "Selected",
+    "showResults": "Show results"
   },
   "dashboard": {
     "greeting": {
