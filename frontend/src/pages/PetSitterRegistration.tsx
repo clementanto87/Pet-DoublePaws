@@ -341,10 +341,10 @@ const RegistrationContent: React.FC = () => {
                         </button>
 
                         {/* Progress Bar */}
-                        <div className="flex-1 max-w-md mx-8">
-                            <div className="flex items-center justify-between text-sm mb-2">
-                                <span className="text-gray-500">Step {currentStep + 1} of {steps.length}</span>
-                                <span className="text-primary font-medium">{Math.round(progress)}% Complete</span>
+                        <div className="flex-1 max-w-md mx-3 sm:mx-8">
+                            <div className="flex items-center justify-between text-xs sm:text-sm mb-2">
+                                <span className="text-gray-500 whitespace-nowrap">Step {currentStep + 1} / {steps.length}</span>
+                                <span className="text-primary font-medium whitespace-nowrap">{Math.round(progress)}%</span>
                             </div>
                             <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                 <motion.div
@@ -357,7 +357,7 @@ const RegistrationContent: React.FC = () => {
                         </div>
 
                         {/* Save indicator */}
-                        <div className="flex items-center gap-2 text-gray-400 text-sm">
+                        <div className="hidden sm:flex items-center gap-2 text-gray-400 text-sm flex-shrink-0">
                             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                             Auto-saved
                         </div>
