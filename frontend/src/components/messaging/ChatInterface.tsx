@@ -83,7 +83,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ defaultSelectedUse
     const selectedConversation = conversations?.find(c => c.user.id === selectedUserId);
 
     return (
-        <div className="flex h-full min-h-[500px] md:min-h-[750px] bg-white dark:bg-gray-800 rounded-xl md:rounded-2xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+        <div className="flex h-full min-h-0 md:min-h-[750px] bg-white dark:bg-gray-800 rounded-none md:rounded-2xl shadow-none md:shadow-lg overflow-hidden border-0 md:border border-gray-200 dark:border-gray-700">
             {/* Left Sidebar - Conversations List */}
             <div
                 className={cn(
