@@ -156,25 +156,7 @@ const Navbar: React.FC = () => {
                 DE
               </button>
             </div>
-            
-            {isAuthenticated ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-[10px] sm:text-xs md:text-sm px-1 sm:px-1.5 md:px-2 text-muted-foreground hover:text-primary flex-shrink-0"
-                onClick={logout}
-              >
-                <span className="hidden sm:inline">{t('navigation.logout')}</span>
-                <span className="sm:hidden">Out</span>
-              </Button>
-            ) : (
-              <Link to="/login" className="flex-shrink-0">
-                <Button variant="secondary" size="sm" className="shadow-glow text-[10px] sm:text-xs md:text-sm px-1.5 sm:px-2 md:px-3">
-                  <span className="hidden sm:inline">{t('navigation.login')}</span>
-                  <span className="sm:hidden">In</span>
-                </Button>
-              </Link>
-            )}
+
             <button
               onClick={toggleMenu}
               className="inline-flex items-center justify-center p-1.5 sm:p-2 rounded-md text-muted-foreground hover:text-primary focus:outline-none flex-shrink-0"
@@ -212,6 +194,27 @@ const Navbar: React.FC = () => {
               {link.name}
             </Link>
           ))}
+
+          {/* Auth actions */}
+          <div className="pt-2 mt-2 border-t border-gray-200/70 dark:border-gray-700/70">
+            {isAuthenticated ? (
+              <>
+                <p className="px-3 sm:px-4 py-2 text-sm text-muted-foreground">
+                  {t('navigation.hi')}, <span className="font-semibold text-foreground">{user?.firstName}</span>
+                </p>
+                <button
+                  onClick={() => { setIsMenuOpen(false); logout(); }}
+                  className="block w-full text-left px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base font-medium rounded-xl text-muted-foreground hover:bg-muted hover:text-primary transition-colors"
+                >
+                  {t('navigation.logout')}
+                </button>
+              </>
+            ) : (
+              <Link to="/login" onClick={() => setIsMenuOpen(false)} className="block">
+                <Button className="w-full shadow-glow">{t('navigation.login')}</Button>
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     </header>
