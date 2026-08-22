@@ -133,72 +133,68 @@ const Dashboard: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-50/50 dark:bg-background-alt-dark pt-4 sm:pt-6 md:pt-8 pb-6 sm:pb-8 md:pb-12 px-3 sm:px-4 md:px-6 lg:px-8 overflow-x-hidden">
             <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 md:space-y-8">
-                {/* Header */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 sm:gap-4">
-                    <div className="min-w-0 flex-1">
-                        <h1 className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-foreground">
-                            {getGreeting()}, {user?.firstName}! 👋
-                        </h1>
-                        <p className="text-sm sm:text-base text-muted-foreground mt-1">
-                            {petCount > 0
-                                ? `You have ${petCount} adorable pet${petCount === 1 ? '' : 's'} in your care`
-                                : 'Welcome to your pet care dashboard'
-                            }
-                        </p>
+                {/* Header hero */}
+                <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-primary via-orange-500 to-amber-500 p-6 sm:p-8 text-white shadow-lg shadow-primary/20">
+                    <div className="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+                    <div className="absolute -bottom-16 right-1/4 text-white/10 text-[10rem] leading-none select-none pointer-events-none hidden sm:block">🐾</div>
+                    <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="min-w-0 flex-1">
+                            <p className="text-white/80 text-xs sm:text-sm font-medium">{format(new Date(), 'EEEE, MMMM d')}</p>
+                            <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold mt-1">
+                                {getGreeting()}, {user?.firstName}! 👋
+                            </h1>
+                            <p className="text-sm sm:text-base text-white/90 mt-1.5">
+                                {petCount > 0
+                                    ? `You have ${petCount} adorable pet${petCount === 1 ? '' : 's'} in your care`
+                                    : 'Welcome to your pet care dashboard'
+                                }
+                            </p>
+                        </div>
+                        <Link to="/booking" className="flex-shrink-0">
+                            <Button className="bg-white text-primary hover:bg-white/90 shadow-lg font-semibold text-sm">
+                                <Calendar className="w-4 h-4 mr-2" />
+                                Book Now
+                            </Button>
+                        </Link>
                     </div>
-                    <Link to="/booking" className="flex-shrink-0">
-                        <Button className="shadow-glow text-xs sm:text-sm">
-                            <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2" />
-                            Book Now
-                        </Button>
-                    </Link>
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-                    <Card className="bg-gradient-to-br from-primary/10 to-orange-100 dark:from-primary/20 dark:to-orange-900/20 border-primary/20">
-                        <CardContent className="p-6">
-                            <div className="flex items-center justify-between">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+                    {[
+                        {
+                            label: 'My Pets', value: petCount, sub: petCount === 1 ? 'pet in your care' : 'pets in your care',
+                            icon: PawPrint, accent: 'text-primary', chip: 'bg-primary/10',
+                            onClick: () => navigate('/pet-profile'),
+                        },
+                        {
+                            label: 'Upcoming', value: upcomingBookings.length, sub: 'active & pending',
+                            icon: Calendar, accent: 'text-blue-600', chip: 'bg-blue-100 dark:bg-blue-900/40',
+                            onClick: () => setActiveTab('upcoming'),
+                        },
+                        {
+                            label: 'Completed', value: bookings?.filter((b: Booking) => b.status === BookingStatus.COMPLETED).length || 0, sub: 'past stays',
+                            icon: CheckCircle, accent: 'text-emerald-600', chip: 'bg-emerald-100 dark:bg-emerald-900/40',
+                            onClick: () => setActiveTab('history'),
+                        },
+                    ].map((stat) => (
+                        <button
+                            key={stat.label}
+                            onClick={stat.onClick}
+                            className="text-left bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 sm:p-6 shadow-sm hover:shadow-lg hover:border-gray-300 hover:-translate-y-0.5 transition-all"
+                        >
+                            <div className="flex items-start justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-muted-foreground">My Pets</p>
-                                    <p className="text-3xl font-bold text-foreground">{petCount}</p>
+                                    <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
+                                    <p className="text-3xl sm:text-4xl font-bold text-foreground mt-1 tabular-nums">{stat.value}</p>
+                                    <p className="text-xs text-muted-foreground mt-1">{stat.sub}</p>
                                 </div>
-                                <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
-                                    <PawPrint className="w-6 h-6 text-primary" />
+                                <div className={cn('w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0', stat.chip)}>
+                                    <stat.icon className={cn('w-6 h-6', stat.accent)} />
                                 </div>
                             </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="bg-gradient-to-br from-blue-50 to-cyan-100 dark:from-blue-900/20 dark:to-cyan-900/20 border-blue-200 dark:border-blue-800">
-                        <CardContent className="p-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-muted-foreground">Upcoming</p>
-                                    <p className="text-3xl font-bold text-foreground">{upcomingBookings.length}</p>
-                                </div>
-                                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center">
-                                    <Calendar className="w-6 h-6 text-blue-600" />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800">
-                        <CardContent className="p-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-muted-foreground">Completed</p>
-                                    <p className="text-3xl font-bold text-foreground">
-                                        {bookings?.filter((b: Booking) => b.status === BookingStatus.COMPLETED).length || 0}
-                                    </p>
-                                </div>
-                                <div className="w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-xl flex items-center justify-center">
-                                    <CheckCircle className="w-6 h-6 text-green-600" />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                        </button>
+                    ))}
                 </div>
 
                 {/* Quick Actions Row */}
@@ -206,7 +202,7 @@ const Dashboard: React.FC = () => {
                     <h3 className="text-lg font-bold text-foreground mb-4">Quick Actions</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <Link to="/booking">
-                            <Card className="hover:shadow-md transition-all cursor-pointer h-full group">
+                            <Card className="hover:shadow-lg hover:-translate-y-0.5 hover:border-gray-300 transition-all cursor-pointer h-full group">
                                 <CardContent className="p-6 flex items-center justify-between">
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -223,7 +219,7 @@ const Dashboard: React.FC = () => {
                         </Link>
 
                         <Link to="/pet-profile">
-                            <Card className="hover:shadow-md transition-all cursor-pointer h-full group">
+                            <Card className="hover:shadow-lg hover:-translate-y-0.5 hover:border-gray-300 transition-all cursor-pointer h-full group">
                                 <CardContent className="p-6 flex items-center justify-between">
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -240,7 +236,7 @@ const Dashboard: React.FC = () => {
                         </Link>
 
                         <Link to="/messages">
-                            <Card className="hover:shadow-md transition-all cursor-pointer h-full group">
+                            <Card className="hover:shadow-lg hover:-translate-y-0.5 hover:border-gray-300 transition-all cursor-pointer h-full group">
                                 <CardContent className="p-6 flex items-center justify-between">
                                     <div className="flex items-center gap-4">
                                         <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center group-hover:scale-110 transition-transform relative">
