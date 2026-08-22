@@ -108,6 +108,7 @@ interface SitterRegistrationContextType {
     data: SitterRegistrationData;
     updateData: (section: keyof SitterRegistrationData, value: any) => void;
     updateNestedData: (section: keyof SitterRegistrationData, field: string, value: any) => void;
+    loadData: (partial: Partial<SitterRegistrationData>) => void;
     currentStep: number;
     setCurrentStep: (step: number) => void;
 }
@@ -132,8 +133,20 @@ export const SitterRegistrationProvider: React.FC<{ children: ReactNode }> = ({ 
         }));
     };
 
+    // Bulk-load an existing profile into the form (used when editing). Nested
+    // objects are merged so partial data from the API keeps sensible defaults.
+    const loadData = (partial: Partial<SitterRegistrationData>) => {
+        setData(prev => ({
+            ...prev,
+            ...partial,
+            services: { ...prev.services, ...(partial.services || {}) },
+            availability: { ...prev.availability, ...(partial.availability || {}) },
+            bankDetails: { ...prev.bankDetails, ...(partial.bankDetails || {}) },
+        }));
+    };
+
     return (
-        <SitterRegistrationContext.Provider value={{ data, updateData, updateNestedData, currentStep, setCurrentStep }}>
+        <SitterRegistrationContext.Provider value={{ data, updateData, updateNestedData, loadData, currentStep, setCurrentStep }}>
             {children}
         </SitterRegistrationContext.Provider>
     );

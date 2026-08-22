@@ -113,15 +113,65 @@ const validationMessages: Record<string, { message: string; emoji: string }> = {
 
 const RegistrationContent: React.FC = () => {
     const navigate = useNavigate();
-    const { currentStep, setCurrentStep, data } = useSitterRegistration();
+    const { currentStep, setCurrentStep, data, loadData } = useSitterRegistration();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<{ message: string; emoji: string } | null>(null);
     const [showSuccess, setShowSuccess] = useState(false);
     const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
+    const [loadingProfile, setLoadingProfile] = useState(true);
+    const [isEditing, setIsEditing] = useState(false);
 
     const CurrentComponent = steps[currentStep].component;
     const currentStepInfo = steps[currentStep];
     const progress = ((currentStep + 1) / steps.length) * 100;
+
+    // Load an existing sitter profile (if any) so editing prepopulates the form.
+    useEffect(() => {
+        let mounted = true;
+        (async () => {
+            try {
+                const p = await sitterService.getMyProfile();
+                if (p && mounted && p.id) {
+                    loadData({
+                        dob: p.dob || '',
+                        address: p.address || '',
+                        latitude: p.latitude,
+                        longitude: p.longitude,
+                        phone: p.phone || '',
+                        governmentIdUrl: p.governmentIdUrl || '',
+                        services: p.services as any,
+                        serviceRadius: p.serviceRadius ?? 5,
+                        acceptedPetTypes: p.preferences?.acceptedPetTypes ?? ['Dog'],
+                        acceptedPetSizes: p.preferences?.acceptedPetSizes ?? ['Small', 'Medium', 'Large'],
+                        isNeuteredOnly: p.preferences?.isNeuteredOnly ?? false,
+                        behavioralRestrictions: p.preferences?.behavioralRestrictions ?? [],
+                        homeType: p.housing?.homeType ?? 'House',
+                        outdoorSpace: p.housing?.outdoorSpace ?? 'Fenced Yard',
+                        hasChildren: p.housing?.hasChildren ?? false,
+                        hasOtherPets: p.housing?.hasOtherPets ?? false,
+                        isNonSmoking: p.housing?.isNonSmoking ?? true,
+                        yearsExperience: p.yearsExperience ?? 0,
+                        skills: p.skills ?? [],
+                        certifications: p.certifications ?? [],
+                        headline: p.headline ?? '',
+                        bio: p.bio ?? '',
+                        availability: p.availability as any,
+                        noticePeriod: p.noticePeriod ?? '1 day',
+                        bankDetails: p.bankDetails as any,
+                    });
+                    // Existing profile → allow free navigation between all steps.
+                    setIsEditing(true);
+                    setCompletedSteps(new Set(steps.map((_, i) => i)));
+                }
+            } catch {
+                // No existing profile (e.g. 404) — start a fresh registration.
+            } finally {
+                if (mounted) setLoadingProfile(false);
+            }
+        })();
+        return () => { mounted = false; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Auto-dismiss error after 5 seconds
     useEffect(() => {
@@ -241,7 +291,7 @@ const RegistrationContent: React.FC = () => {
                         transition={{ delay: 0.3 }}
                         className="text-3xl font-bold text-gray-900 dark:text-white mb-4"
                     >
-                        Welcome to the Pack! 🎉
+                        {isEditing ? 'Profile Updated! 🎉' : 'Welcome to the Pack! 🎉'}
                     </motion.h2>
                     <motion.p
                         initial={{ opacity: 0, y: 20 }}
@@ -249,7 +299,9 @@ const RegistrationContent: React.FC = () => {
                         transition={{ delay: 0.4 }}
                         className="text-gray-600 dark:text-gray-400 mb-6"
                     >
-                        Your sitter profile is all set up! Get ready to meet amazing pets and their loving owners.
+                        {isEditing
+                            ? 'Your changes have been saved. Redirecting you to your dashboard...'
+                            : 'Your sitter profile is all set up! Get ready to meet amazing pets and their loving owners.'}
                     </motion.p>
                     <motion.div
                         initial={{ opacity: 0 }}
@@ -262,6 +314,14 @@ const RegistrationContent: React.FC = () => {
                         <span className="text-4xl animate-bounce" style={{ animationDelay: '200ms' }}>🐾</span>
                     </motion.div>
                 </motion.div>
+            </div>
+        );
+    }
+
+    if (loadingProfile) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-amber-50/50 to-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+                <div className="h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
             </div>
         );
     }
@@ -505,7 +565,7 @@ const RegistrationContent: React.FC = () => {
                                                 </>
                                             ) : currentStep === steps.length - 1 ? (
                                                 <>
-                                                    Complete Registration
+                                                    {isEditing ? 'Save Changes' : 'Complete Registration'}
                                                     <PartyPopper className="w-4 h-4" />
                                                 </>
                                             ) : (
