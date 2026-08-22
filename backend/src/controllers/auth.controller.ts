@@ -10,7 +10,14 @@ const googleClient = new OAuth2Client();
 
 export const signup = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { firstName, lastName, email, password } = req.body;
+        const { firstName, lastName, password } = req.body;
+        // Normalize email so casing/whitespace can't create duplicate accounts
+        const email = (req.body.email || '').trim().toLowerCase();
+
+        if (!email) {
+            res.status(400).json({ message: 'Email is required' });
+            return;
+        }
 
         // Check if user already exists
         const existingUser = await userRepository.findOneBy({ email });
@@ -58,7 +65,8 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
 
 export const login = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { email, password } = req.body;
+        const { password } = req.body;
+        const email = (req.body.email || '').trim().toLowerCase();
 
         // Find user
         // We need to explicitly select password because it's set to select: false in the entity
@@ -155,7 +163,7 @@ export const googleLogin = async (req: Request, res: Response): Promise<void> =>
                 return;
             }
 
-            email = payload?.email || undefined;
+            email = payload?.email ? String(payload.email).trim().toLowerCase() : undefined;
             given_name = (payload as any)?.given_name || undefined;
             family_name = (payload as any)?.family_name || undefined;
             googleId = payload?.sub || undefined;
@@ -173,7 +181,7 @@ export const googleLogin = async (req: Request, res: Response): Promise<void> =>
             }
 
             const payload = await response.json();
-            email = payload?.email;
+            email = payload?.email ? String(payload.email).trim().toLowerCase() : undefined;
             given_name = payload?.given_name;
             family_name = payload?.family_name;
             googleId = payload?.sub;
