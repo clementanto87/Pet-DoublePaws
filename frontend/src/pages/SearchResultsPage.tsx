@@ -1112,7 +1112,7 @@ const SearchResultsPage: React.FC = () => {
                 <div className={`flex ${viewMode === 'map' ? 'flex-col' : 'flex-row'}`}>
                     {/* New Search Filters Component */}
                     {viewMode !== 'map' && showSidebarFilters && (
-                        <div className="hidden lg:block w-80 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm h-[calc(100vh-56px)] sticky top-[56px]">
+                        <div className="hidden lg:block w-80 flex-shrink-0 h-[calc(100vh-56px)] sticky top-[56px] pl-4 pr-2 pt-4 pb-4">
                             <SearchFilters
                                 initialFilters={filters}
                                 onFilterChange={handleFilterChange}
