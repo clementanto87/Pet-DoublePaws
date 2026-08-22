@@ -96,19 +96,6 @@ const AdminPage: React.FC = () => {
 
     const firstName = user?.firstName || 'Alex';
 
-    if (user?.role !== 'admin') {
-        return (
-            <div className="flex min-h-[70vh] items-center justify-center bg-[#f6f8fb] px-4 dark:bg-slate-950">
-                <div className="max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                    <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 dark:bg-rose-500/10"><ShieldCheck className="h-6 w-6" /></span>
-                    <h1 className="mt-5 font-display text-xl font-bold">Admin access required</h1>
-                    <p className="mt-2 text-sm leading-6 text-slate-500">Your account does not have permission to access the operations console. Contact a platform administrator if you need access.</p>
-                    <a href="/" className="mt-6 inline-flex h-10 items-center rounded-xl bg-slate-900 px-4 text-sm font-bold text-white hover:bg-slate-800 dark:bg-orange-500">Return home</a>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div className="min-h-screen bg-[#f6f8fb] text-slate-900 dark:bg-slate-950 dark:text-white">
             <aside className={cn(
