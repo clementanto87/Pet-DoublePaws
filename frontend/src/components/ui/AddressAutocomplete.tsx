@@ -45,19 +45,33 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
             // inner input; otherwise fall back to the input wrapper itself.
             const anchor = (containerRef.current.closest('[data-ac-anchor]') as HTMLElement) || containerRef.current;
             const rect = anchor.getBoundingClientRect();
-            setDropdownPos({ top: rect.bottom + 8, left: rect.left, width: rect.width });
+            // Clamp within the viewport with an 8px margin as a defensive safety net — this
+            // keeps the dropdown fully visible even if the anchor itself is partly off-screen.
+            const viewportWidth = document.documentElement.clientWidth;
+            const margin = 8;
+            const width = Math.min(rect.width, viewportWidth - margin * 2);
+            const left = Math.min(Math.max(rect.left, margin), viewportWidth - width - margin);
+            setDropdownPos({ top: rect.bottom + 8, left, width });
         }
     }, []);
 
     // Keep the dropdown anchored to the input while it is open (scroll / resize / new results).
+    // Also listen on visualViewport: iOS Safari shifts the visible (visual) viewport away from
+    // the layout viewport when it auto-zooms on input focus, which getBoundingClientRect() alone
+    // doesn't account for — without this the dropdown can render partly off-screen after zoom.
     useEffect(() => {
         if (!showSuggestions || suggestions.length === 0) return;
         updatePosition();
         window.addEventListener('scroll', updatePosition, true);
         window.addEventListener('resize', updatePosition);
+        const vv = window.visualViewport;
+        vv?.addEventListener('resize', updatePosition);
+        vv?.addEventListener('scroll', updatePosition);
         return () => {
             window.removeEventListener('scroll', updatePosition, true);
             window.removeEventListener('resize', updatePosition);
+            vv?.removeEventListener('resize', updatePosition);
+            vv?.removeEventListener('scroll', updatePosition);
         };
     }, [showSuggestions, suggestions.length, updatePosition]);
 

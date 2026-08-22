@@ -277,7 +277,10 @@ const FindSitterSearchBox: React.FC<FindSitterSearchBoxProps> = ({
                                         }
                                     }}
                                     placeholder={placeholders[placeholderIndex]}
-                                    className="flex-1 h-10 sm:h-12 md:h-14 pr-1 sm:pr-2 bg-transparent text-gray-900 dark:text-white placeholder-gray-400 text-xs sm:text-sm md:text-base font-medium !border-0 !outline-none !ring-0 focus:!border-0 focus:!outline-none focus:!ring-0 min-w-0"
+                                    // Font size is pinned at 16px (text-base) on every breakpoint: below 16px,
+                                    // iOS Safari force-zooms the page on focus, which desyncs this dropdown's
+                                    // fixed-position math from what's actually on screen (it renders cut off).
+                                    className="flex-1 h-10 sm:h-12 md:h-14 pr-1 sm:pr-2 bg-transparent text-gray-900 dark:text-white placeholder-gray-400 text-base font-medium !border-0 !outline-none !ring-0 focus:!border-0 focus:!outline-none focus:!ring-0 min-w-0"
                                 />
 
                                 {/* Near Me Button - Better mobile layout */}
