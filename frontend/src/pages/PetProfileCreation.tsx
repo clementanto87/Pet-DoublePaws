@@ -16,18 +16,24 @@ const PetProfileCreation: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(
+    ((location.state as any)?.pet?.imageUrl) ?? null
+  );
+
+  // When arriving from "Edit" on the dashboard, the pet is passed via router state.
+  const editingPet = (location.state as any)?.pet;
+  const isEditing = Boolean(editingPet?.id);
 
   const [formData, setFormData] = useState({
-    petName: '',
-    petType: 'Dog',
-    breed: '',
-    gender: 'Male',
-    ageYears: '',
+    petName: editingPet?.name ?? '',
+    petType: editingPet?.species ?? 'Dog',
+    breed: editingPet?.breed ?? '',
+    gender: editingPet?.gender ?? 'Male',
+    ageYears: editingPet?.age != null ? String(editingPet.age) : '',
     ageMonths: '',
-    weight: '',
-    specialNeeds: '',
-    imageUrl: ''
+    weight: editingPet?.weight != null ? String(editingPet.weight) : '',
+    specialNeeds: editingPet?.specialNeeds ?? '',
+    imageUrl: editingPet?.imageUrl ?? ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -67,7 +73,7 @@ const PetProfileCreation: React.FC = () => {
     try {
       const age = parseFloat(formData.ageYears) || 0;
 
-      await petService.createPet({
+      const payload = {
         name: formData.petName,
         species: formData.petType,
         breed: formData.breed,
@@ -75,13 +81,20 @@ const PetProfileCreation: React.FC = () => {
         weight: parseFloat(formData.weight) || 0,
         specialNeeds: formData.specialNeeds,
         imageUrl: formData.imageUrl
-      });
+      };
+
+      // Editing an existing pet must update it, not create a duplicate.
+      if (isEditing) {
+        await petService.updatePet(editingPet.id, payload);
+      } else {
+        await petService.createPet(payload);
+      }
 
       const returnUrl = (location.state as any)?.returnUrl || '/dashboard';
       navigate(returnUrl);
     } catch (err) {
-      console.error('Failed to create pet profile:', err);
-      setError('Failed to create pet profile. Please try again.');
+      console.error('Failed to save pet profile:', err);
+      setError('Failed to save pet profile. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -101,7 +114,7 @@ const PetProfileCreation: React.FC = () => {
             <PawPrint className="w-8 h-8" />
           </div>
           <h1 className="text-4xl md:text-5xl font-display font-bold mb-4">
-            {t('petProfile.title')} <span className="text-gradient">{t('petProfile.titleAccent')}</span>
+            {isEditing ? t('petProfile.editTitle') : t('petProfile.title')} <span className="text-gradient">{t('petProfile.titleAccent')}</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             {t('petProfile.subtitle')}
@@ -306,7 +319,9 @@ const PetProfileCreation: React.FC = () => {
                 {t('petProfile.saveForLater')}
               </Button>
               <Button type="submit" size="lg" className="w-full sm:w-auto shadow-glow" disabled={isLoading}>
-                {isLoading ? t('petProfile.creating') : t('petProfile.createProfile')}
+                {isLoading
+                  ? (isEditing ? t('petProfile.saving') : t('petProfile.creating'))
+                  : (isEditing ? t('petProfile.saveChanges') : t('petProfile.createProfile'))}
                 {!isLoading && <ArrowRight className="w-4 h-4 ml-2" />}
               </Button>
             </div>

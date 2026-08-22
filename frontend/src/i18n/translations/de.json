@@ -941,7 +941,9 @@
     "creating": "Wird erstellt...",
     "createProfile": "Profil erstellen",
     "changePhoto": "Zum Ändern des Fotos klicken",
-    "ageYears": "Jahre"
+    "ageYears": "Jahre",
+    "editTitle": "Bearbeite das",
+    "saveChanges": "Änderungen speichern"
   },
   "serviceProfile": {
     "title": "Dienstleistungsprofil",

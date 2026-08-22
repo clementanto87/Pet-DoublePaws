@@ -941,7 +941,9 @@
     "creating": "Creating...",
     "createProfile": "Create Profile",
     "changePhoto": "Click to change photo",
-    "ageYears": "Years"
+    "ageYears": "Years",
+    "editTitle": "Edit Your",
+    "saveChanges": "Save Changes"
   },
   "serviceProfile": {
     "title": "Service Profile",

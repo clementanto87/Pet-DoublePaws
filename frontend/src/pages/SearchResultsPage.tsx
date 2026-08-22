@@ -272,6 +272,14 @@ const serviceTagLabels: Record<string, string> = {
     dogWalking: 'Dog Walking',
 };
 
+// Local YYYY-MM-DD (matches what DatePicker emits/expects). Deliberately not
+// toISOString(), which converts to UTC and can shift the date by a day.
+const formatDateParam = (date: Date): string => {
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${date.getFullYear()}-${month}-${day}`;
+};
+
 const getActiveServiceTags = (sitter: SitterData): string[] =>
     Object.entries(sitter.services || {})
         .filter(([, v]) => v?.active)
@@ -866,12 +874,14 @@ const SearchResultsPage: React.FC = () => {
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 if (isAvailable) {
-                                                    navigate(`/contact/${sitter.id}`, {
-                                                        state: {
-                                                            sitter,
-                                                            selectedDate: new Date(calendar.year, calendar.month, day),
-                                                            searchParams: searchParamsString
-                                                        }
+                                                    // Route is /contact-sitter/:id — `/contact/:id` doesn't exist and
+                                                    // fell through to the catch-all redirect back to the landing page.
+                                                    // Pass the picked day as startDate so the booking form prefills it.
+                                                    const picked = new Date(calendar.year, calendar.month, day);
+                                                    const params = new URLSearchParams(searchParamsString);
+                                                    params.set('startDate', formatDateParam(picked));
+                                                    navigate(`/contact-sitter/${sitter.id}?${params.toString()}`, {
+                                                        state: { sitter }
                                                     });
                                                 }
                                             }}
@@ -1255,7 +1265,18 @@ const SearchResultsPage: React.FC = () => {
                                         <p className="text-gray-500 mb-6">
                                             Try adjusting your filters or search area
                                         </p>
-                                        <Button onClick={() => setShowSidebarFilters(true)} size="lg">
+                                        <Button
+                                            onClick={() => {
+                                                // The sidebar is lg-only, so on smaller screens open the
+                                                // filters drawer instead (previously this did nothing on mobile).
+                                                if (window.matchMedia('(min-width: 1024px)').matches) {
+                                                    setShowSidebarFilters(true);
+                                                } else {
+                                                    setMobileFiltersOpen(true);
+                                                }
+                                            }}
+                                            size="lg"
+                                        >
                                             <Search className="w-5 h-5 mr-2" />
                                             Update Search
                                         </Button>
