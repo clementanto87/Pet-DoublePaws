@@ -45,13 +45,18 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
             // inner input; otherwise fall back to the input wrapper itself.
             const anchor = (containerRef.current.closest('[data-ac-anchor]') as HTMLElement) || containerRef.current;
             const rect = anchor.getBoundingClientRect();
-            // Clamp within the viewport with an 8px margin as a defensive safety net — this
-            // keeps the dropdown fully visible even if the anchor itself is partly off-screen.
+            // Use DOCUMENT coordinates (rect + scroll offset) with position:absolute rather than
+            // viewport coordinates with position:fixed. On iOS the visual viewport diverges from
+            // the layout viewport when the keyboard is open, which makes a fixed dropdown render
+            // too high and overlap the input; absolute + document coords always sits just below it.
+            const scrollX = window.scrollX;
+            const scrollY = window.scrollY;
             const viewportWidth = document.documentElement.clientWidth;
             const margin = 8;
             const width = Math.min(rect.width, viewportWidth - margin * 2);
-            const left = Math.min(Math.max(rect.left, margin), viewportWidth - width - margin);
-            setDropdownPos({ top: rect.bottom + 8, left, width });
+            const rawLeft = rect.left + scrollX;
+            const left = Math.min(Math.max(rawLeft, scrollX + margin), scrollX + viewportWidth - width - margin);
+            setDropdownPos({ top: rect.bottom + scrollY + 8, left, width });
         }
     }, []);
 
@@ -246,7 +251,7 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
                         style={{
-                            position: 'fixed',
+                            position: 'absolute',
                             top: dropdownPos.top,
                             left: dropdownPos.left,
                             width: dropdownPos.width,
