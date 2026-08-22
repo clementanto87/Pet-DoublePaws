@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     User,
@@ -94,6 +95,7 @@ const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, title, children,
 };
 
 const SitterDashboard: React.FC = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { user } = useAuth();
     const queryClient = useQueryClient();
@@ -251,7 +253,7 @@ const SitterDashboard: React.FC = () => {
                     <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
                         <PawPrint className="w-8 h-8 text-primary" />
                     </div>
-                    <h2 className="text-2xl font-bold text-foreground mb-4">No Sitter Profile Found</h2>
+                    <h2 className="text-2xl font-bold text-foreground mb-4">{t('sitterDashboard.noProfile.title')}</h2>
                     <p className="text-muted-foreground mb-6">
                         You haven't created a sitter profile yet. Start earning by becoming a pet sitter today!
                     </p>
@@ -296,20 +298,20 @@ const SitterDashboard: React.FC = () => {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-3xl font-display font-bold text-foreground">
-                            Sitter Dashboard
+                            {t('sitterDashboard.title')}
                         </h1>
                         <p className="text-muted-foreground mt-1">
-                            Manage your profile, services, and availability
+                            {t('sitterDashboard.subtitle')}
                         </p>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full md:w-auto">
                         <Button variant="outline" className="w-full sm:w-auto justify-center whitespace-nowrap" onClick={() => navigate('/dashboard')}>
                             <PawPrint className="w-4 h-4 mr-2 flex-shrink-0" />
-                            Pet Owner View
+                            {t('sitterDashboard.petOwnerView')}
                         </Button>
                         <Button variant="primary" className="w-full sm:w-auto justify-center whitespace-nowrap shadow-glow">
                             <Settings className="w-4 h-4 mr-2 flex-shrink-0" />
-                            Account Settings
+                            {t('sitterDashboard.accountSettings')}
                         </Button>
                     </div>
                 </div>
@@ -321,13 +323,13 @@ const SitterDashboard: React.FC = () => {
                             <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                         </div>
                         <div className="flex-1">
-                            <h4 className="font-semibold text-amber-800 dark:text-amber-200">Verification Pending</h4>
+                            <h4 className="font-semibold text-amber-800 dark:text-amber-200">{t('sitterDashboard.verification.pendingTitle')}</h4>
                             <p className="text-sm text-amber-700 dark:text-amber-300">
-                                Your profile is under review. You'll start receiving bookings once verified.
+                                {t('sitterDashboard.verification.pendingDesc')}
                             </p>
                         </div>
                         <Button variant="outline" size="sm" className="border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300">
-                            Learn More
+                            {t('sitterDashboard.verification.learnMore')}
                         </Button>
                     </div>
                 )}
@@ -338,7 +340,7 @@ const SitterDashboard: React.FC = () => {
                             <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
                         </div>
                         <div className="flex-1">
-                            <h4 className="font-semibold text-green-800 dark:text-green-200">Profile Verified</h4>
+                            <h4 className="font-semibold text-green-800 dark:text-green-200">{t('sitterDashboard.verification.verified')}</h4>
                             <p className="text-sm text-green-700 dark:text-green-300">
                                 You're all set! Pet parents can now book your services.
                             </p>
@@ -352,7 +354,7 @@ const SitterDashboard: React.FC = () => {
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-muted-foreground">Active Services</p>
+                                    <p className="text-sm font-medium text-muted-foreground">{t('sitterDashboard.stats.activeServices')}</p>
                                     <p className="text-2xl sm:text-3xl font-bold text-foreground">{activeServicesCount}</p>
                                 </div>
                                 <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
@@ -366,7 +368,7 @@ const SitterDashboard: React.FC = () => {
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-muted-foreground">Rate Range</p>
+                                    <p className="text-sm font-medium text-muted-foreground">{t('sitterDashboard.stats.rateRange')}</p>
                                     <p className="text-2xl sm:text-3xl font-bold text-foreground">
                                         €{minRate} - €{maxRate}
                                     </p>
@@ -382,7 +384,7 @@ const SitterDashboard: React.FC = () => {
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-muted-foreground">Service Radius</p>
+                                    <p className="text-sm font-medium text-muted-foreground">{t('sitterDashboard.stats.serviceRadius')}</p>
                                     <p className="text-2xl sm:text-3xl font-bold text-foreground">{Math.round((profile.serviceRadius || 5) * 1.60934)} km</p>
                                 </div>
                                 <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center">
@@ -396,7 +398,7 @@ const SitterDashboard: React.FC = () => {
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-muted-foreground">Experience</p>
+                                    <p className="text-sm font-medium text-muted-foreground">{t('sitterDashboard.stats.experience')}</p>
                                     <p className="text-2xl sm:text-3xl font-bold text-foreground">{profile.yearsExperience || 0} yrs</p>
                                 </div>
                                 <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/40 rounded-xl flex items-center justify-center">
@@ -414,7 +416,7 @@ const SitterDashboard: React.FC = () => {
                         <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle className="flex items-center gap-2">
                                 <User className="w-5 h-5 text-primary" />
-                                Profile
+                                {t('sitterDashboard.cards.profile')}
                             </CardTitle>
                             <Button variant="ghost" size="sm" onClick={() => openEditModal('profile')}>
                                 <Edit3 className="w-4 h-4" />
@@ -466,9 +468,9 @@ const SitterDashboard: React.FC = () => {
                             <div>
                                 <CardTitle className="flex items-center gap-2">
                                     <Briefcase className="w-5 h-5 text-primary" />
-                                    Services & Rates
+                                    {t('sitterDashboard.cards.servicesRates')}
                                 </CardTitle>
-                                <CardDescription>Your active services and pricing</CardDescription>
+                                <CardDescription>{t('sitterDashboard.sections.servicesDesc')}</CardDescription>
                             </div>
                             <Button variant="ghost" size="sm" onClick={() => openEditModal('services')}>
                                 <Edit3 className="w-4 h-4" />
@@ -528,7 +530,7 @@ const SitterDashboard: React.FC = () => {
                             <div>
                                 <CardTitle className="flex items-center gap-2">
                                     <Heart className="w-5 h-5 text-primary" />
-                                    Pet Preferences
+                                    {t('sitterDashboard.cards.petPreferences')}
                                 </CardTitle>
                                 <CardDescription>Types and sizes of pets you accept</CardDescription>
                             </div>
@@ -544,7 +546,7 @@ const SitterDashboard: React.FC = () => {
                                         <span key={type} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
                                             {type}
                                         </span>
-                                    )) || <span className="text-muted-foreground text-sm">None specified</span>}
+                                    )) || <span className="text-muted-foreground text-sm">{t('sitterDashboard.values.noneSpecified')}</span>}
                                 </div>
                             </div>
                             <div>
@@ -554,7 +556,7 @@ const SitterDashboard: React.FC = () => {
                                         <span key={size} className="px-3 py-1 bg-secondary/10 text-secondary rounded-full text-sm font-medium">
                                             {size}
                                         </span>
-                                    )) || <span className="text-muted-foreground text-sm">None specified</span>}
+                                    )) || <span className="text-muted-foreground text-sm">{t('sitterDashboard.values.noneSpecified')}</span>}
                                 </div>
                             </div>
                             <div className="flex items-center gap-4 pt-2">
@@ -576,9 +578,9 @@ const SitterDashboard: React.FC = () => {
                             <div>
                                 <CardTitle className="flex items-center gap-2">
                                     <Home className="w-5 h-5 text-primary" />
-                                    Housing Details
+                                    {t('sitterDashboard.cards.housingDetails')}
                                 </CardTitle>
-                                <CardDescription>Your home environment</CardDescription>
+                                <CardDescription>{t('sitterDashboard.sections.housing')}</CardDescription>
                             </div>
                             <Button variant="ghost" size="sm" onClick={() => openEditModal('housing')}>
                                 <Edit3 className="w-4 h-4" />
@@ -588,11 +590,11 @@ const SitterDashboard: React.FC = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="p-3 bg-muted/30 rounded-lg">
                                     <p className="text-xs text-muted-foreground">Home Type</p>
-                                    <p className="font-medium text-foreground">{profile.housing?.homeType || 'Not specified'}</p>
+                                    <p className="font-medium text-foreground">{profile.housing?.homeType || t('sitterDashboard.values.notSpecified')}</p>
                                 </div>
                                 <div className="p-3 bg-muted/30 rounded-lg">
                                     <p className="text-xs text-muted-foreground">Outdoor Space</p>
-                                    <p className="font-medium text-foreground">{profile.housing?.outdoorSpace || 'Not specified'}</p>
+                                    <p className="font-medium text-foreground">{profile.housing?.outdoorSpace || t('sitterDashboard.values.notSpecified')}</p>
                                 </div>
                             </div>
                             <div className="flex flex-wrap gap-3 mt-4">
@@ -631,9 +633,9 @@ const SitterDashboard: React.FC = () => {
                             <div>
                                 <CardTitle className="flex items-center gap-2">
                                     <Award className="w-5 h-5 text-primary" />
-                                    Skills & Certifications
+                                    {t('sitterDashboard.cards.skillsCerts')}
                                 </CardTitle>
-                                <CardDescription>Your expertise and qualifications</CardDescription>
+                                <CardDescription>{t('sitterDashboard.sections.experienceDesc')}</CardDescription>
                             </div>
                             <Button variant="ghost" size="sm" onClick={() => openEditModal('experience')}>
                                 <Edit3 className="w-4 h-4" />
@@ -641,13 +643,13 @@ const SitterDashboard: React.FC = () => {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground mb-2">Skills</p>
+                                <p className="text-sm font-medium text-muted-foreground mb-2">{t('sitterDashboard.fields.skills')}</p>
                                 <div className="flex flex-wrap gap-2">
                                     {profile.skills?.map((skill) => (
                                         <span key={skill} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
                                             {skill}
                                         </span>
-                                    )) || <span className="text-muted-foreground text-sm">None added</span>}
+                                    )) || <span className="text-muted-foreground text-sm">{t('sitterDashboard.values.noneAdded')}</span>}
                                 </div>
                             </div>
                             {profile.certifications && profile.certifications.length > 0 && (
@@ -673,8 +675,8 @@ const SitterDashboard: React.FC = () => {
                         <CardHeader>
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <CardTitle>Booking Requests</CardTitle>
-                                    <CardDescription>Manage your incoming and past booking requests</CardDescription>
+                                    <CardTitle>{t('sitterDashboard.bookings.title')}</CardTitle>
+                                    <CardDescription>{t('sitterDashboard.bookings.subtitle')}</CardDescription>
                                 </div>
                             </div>
 
@@ -726,7 +728,7 @@ const SitterDashboard: React.FC = () => {
                         </CardHeader>
                         <CardContent className="pt-6">
                             {bookingsLoading ? (
-                                <div className="text-center py-8">Loading bookings...</div>
+                                <div className="text-center py-8">{t('sitterDashboard.bookings.loading')}</div>
                             ) : displayedBookings.length === 0 ? (
                                 <div className="text-center py-12">
                                     <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -892,9 +894,9 @@ const SitterDashboard: React.FC = () => {
                             <div>
                                 <CardTitle className="flex items-center gap-2">
                                     <Calendar className="w-5 h-5 text-primary" />
-                                    Availability
+                                    {t('sitterDashboard.cards.availability')}
                                 </CardTitle>
-                                <CardDescription>When you're available for bookings</CardDescription>
+                                <CardDescription>{t('sitterDashboard.sections.availabilityDesc')}</CardDescription>
                             </div>
                             <Button variant="ghost" size="sm" onClick={() => openEditModal('availability')}>
                                 <Edit3 className="w-4 h-4" />
@@ -902,7 +904,7 @@ const SitterDashboard: React.FC = () => {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground mb-2">General Availability</p>
+                                <p className="text-sm font-medium text-muted-foreground mb-2">{t('sitterDashboard.sections.availabilityTitle')}</p>
                                 <div className="flex flex-wrap gap-2">
                                     {profile.availability?.general?.map((day) => (
                                         <span key={day} className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-sm font-medium">
@@ -913,7 +915,7 @@ const SitterDashboard: React.FC = () => {
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground mb-2">Notice Period</p>
-                                <p className="text-foreground font-medium">{profile.noticePeriod || 'Not specified'}</p>
+                                <p className="text-foreground font-medium">{profile.noticePeriod || t('sitterDashboard.values.notSpecified')}</p>
                             </div>
                             {profile.availability?.blockedDates && profile.availability.blockedDates.length > 0 && (
                                 <div>
@@ -958,7 +960,7 @@ const SitterDashboard: React.FC = () => {
                                         </span>
                                     )}
                                 </div>
-                                <p className="text-sm text-gray-500">Chat with pet owners</p>
+                                <p className="text-sm text-gray-500">{t('sitterDashboard.quickActions.messages.desc')}</p>
                             </div>
                         </div>
                         <Link to="/sitter-messages">
@@ -1010,7 +1012,7 @@ const SitterDashboard: React.FC = () => {
                 {/* Quick Actions */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Quick Actions</CardTitle>
+                        <CardTitle>{t('sitterDashboard.quickActions.title')}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1024,8 +1026,8 @@ const SitterDashboard: React.FC = () => {
                                         <Edit3 className="w-5 h-5 text-primary" />
                                     </div>
                                     <div className="text-left">
-                                        <p className="font-medium text-foreground">Edit Full Profile</p>
-                                        <p className="text-xs text-muted-foreground">Update all your information</p>
+                                        <p className="font-medium text-foreground">{t('sitterDashboard.quickActions.editFull.title')}</p>
+                                        <p className="text-xs text-muted-foreground">{t('sitterDashboard.quickActions.editFull.desc')}</p>
                                     </div>
                                 </div>
                                 <ChevronRight className="w-5 h-5 ml-auto text-muted-foreground" />
@@ -1041,8 +1043,8 @@ const SitterDashboard: React.FC = () => {
                                         <Calendar className="w-5 h-5 text-blue-600" />
                                     </div>
                                     <div className="text-left">
-                                        <p className="font-medium text-foreground">Update Availability</p>
-                                        <p className="text-xs text-muted-foreground">Block dates or change schedule</p>
+                                        <p className="font-medium text-foreground">{t('sitterDashboard.quickActions.availability.title')}</p>
+                                        <p className="text-xs text-muted-foreground">{t('sitterDashboard.quickActions.availability.desc')}</p>
                                     </div>
                                 </div>
                                 <ChevronRight className="w-5 h-5 ml-auto text-muted-foreground" />
@@ -1058,8 +1060,8 @@ const SitterDashboard: React.FC = () => {
                                         <DollarSign className="w-5 h-5 text-green-600" />
                                     </div>
                                     <div className="text-left">
-                                        <p className="font-medium text-foreground">Adjust Rates</p>
-                                        <p className="text-xs text-muted-foreground">Update your service pricing</p>
+                                        <p className="font-medium text-foreground">{t('sitterDashboard.quickActions.rates.title')}</p>
+                                        <p className="text-xs text-muted-foreground">{t('sitterDashboard.quickActions.rates.desc')}</p>
                                     </div>
                                 </div>
                                 <ChevronRight className="w-5 h-5 ml-auto text-muted-foreground" />

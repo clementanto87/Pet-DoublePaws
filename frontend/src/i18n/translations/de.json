@@ -391,6 +391,18 @@
       "editProfile": {
         "title": "Profil bearbeiten",
         "desc": "Aktualisieren Sie Ihre Informationen"
+      },
+      "editFull": {
+        "title": "Vollständiges Profil bearbeiten",
+        "desc": "Aktualisiere all deine Angaben"
+      },
+      "availability": {
+        "title": "Verfügbarkeit aktualisieren",
+        "desc": "Termine sperren oder Zeitplan ändern"
+      },
+      "rates": {
+        "title": "Preise anpassen",
+        "desc": "Aktualisiere deine Servicepreise"
       }
     },
     "bookings": {
@@ -412,12 +424,82 @@
         "cancelled": "Storniert"
       },
       "petDetails": "Haustierdetails",
-      "bookingDetails": "Buchungsdetails"
+      "bookingDetails": "Buchungsdetails",
+      "subtitle": "Verwalte deine eingehenden und vergangenen Buchungsanfragen",
+      "loading": "Buchungen werden geladen...",
+      "cancel": "Abbrechen"
     },
     "stats": {
       "activeServices": "Aktive Dienstleistungen",
       "rateRange": "Preisspanne",
-      "totalBookings": "Gesamtbuchungen"
+      "totalBookings": "Gesamtbuchungen",
+      "serviceRadius": "Einsatzradius",
+      "experience": "Erfahrung",
+      "years": "J."
+    },
+    "subtitle": "Verwalte dein Profil, deine Services und Verfügbarkeit",
+    "petOwnerView": "Tierhalter-Ansicht",
+    "accountSettings": "Kontoeinstellungen",
+    "verification": {
+      "pendingTitle": "Verifizierung ausstehend",
+      "pendingDesc": "Dein Profil wird überprüft. Sobald es verifiziert ist, erhältst du Buchungen.",
+      "learnMore": "Mehr erfahren",
+      "verified": "Profil verifiziert"
+    },
+    "sections": {
+      "services": "Aktive Services",
+      "servicesDesc": "Deine aktiven Services und Preise",
+      "experience": "Erfahrung",
+      "experienceDesc": "Deine Expertise und Qualifikationen",
+      "housing": "Dein Zuhause",
+      "preferences": "Arten und Größen der Tiere, die du annimmst",
+      "availabilityTitle": "Allgemeine Verfügbarkeit",
+      "availabilityDesc": "Wann du für Buchungen verfügbar bist"
+    },
+    "fields": {
+      "address": "Adresse",
+      "phone": "Telefonnummer",
+      "bio": "Über mich",
+      "headline": "Überschrift",
+      "skills": "Fähigkeiten",
+      "certifications": "Zertifikate",
+      "yearsExperience": "Jahre Erfahrung",
+      "serviceRadius": "Einsatzradius",
+      "noticePeriod": "Vorlaufzeit",
+      "homeType": "Wohnungstyp",
+      "outdoorSpace": "Außenbereich",
+      "hasChildren": "Kinder im Haushalt",
+      "hasOtherPets": "Andere Haustiere",
+      "nonSmoking": "Nichtraucherhaushalt",
+      "petTypes": "Akzeptierte Tierarten",
+      "petSizes": "Akzeptierte Tiergrößen",
+      "neuteredOnly": "Nur kastrierte Tiere",
+      "neuteredDesc": "Nur kastrierte/sterilisierte Tiere annehmen"
+    },
+    "values": {
+      "noneAdded": "Keine hinzugefügt",
+      "noneSpecified": "Keine angegeben",
+      "notSpecified": "Nicht angegeben"
+    },
+    "options": {
+      "house": "Haus",
+      "apartment": "Wohnung",
+      "farm": "Bauernhof",
+      "fencedYard": "Eingezäunter Garten",
+      "unfencedYard": "Nicht eingezäunter Garten",
+      "noYard": "Kein Garten",
+      "sameDay": "Am selben Tag",
+      "selectHomeType": "Wohnungstyp wählen",
+      "selectOutdoorSpace": "Außenbereich wählen",
+      "selectNoticePeriod": "Vorlaufzeit wählen"
+    },
+    "cards": {
+      "profile": "Profil",
+      "servicesRates": "Services & Preise",
+      "petPreferences": "Tier-Präferenzen",
+      "housingDetails": "Wohnverhältnisse",
+      "skillsCerts": "Fähigkeiten & Zertifikate",
+      "availability": "Verfügbarkeit"
     }
   },
   "messages": {

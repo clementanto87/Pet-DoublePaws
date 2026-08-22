@@ -391,6 +391,18 @@
       "editProfile": {
         "title": "Edit Profile",
         "desc": "Update your information"
+      },
+      "editFull": {
+        "title": "Edit Full Profile",
+        "desc": "Update all your information"
+      },
+      "availability": {
+        "title": "Update Availability",
+        "desc": "Block dates or change schedule"
+      },
+      "rates": {
+        "title": "Adjust Rates",
+        "desc": "Update your service pricing"
       }
     },
     "bookings": {
@@ -412,12 +424,82 @@
         "cancelled": "Cancelled"
       },
       "petDetails": "Pet Details",
-      "bookingDetails": "Booking Details"
+      "bookingDetails": "Booking Details",
+      "subtitle": "Manage your incoming and past booking requests",
+      "loading": "Loading bookings...",
+      "cancel": "Cancel"
     },
     "stats": {
       "activeServices": "Active Services",
       "rateRange": "Rate Range",
-      "totalBookings": "Total Bookings"
+      "totalBookings": "Total Bookings",
+      "serviceRadius": "Service Radius",
+      "experience": "Experience",
+      "years": "yrs"
+    },
+    "subtitle": "Manage your profile, services, and availability",
+    "petOwnerView": "Pet Owner View",
+    "accountSettings": "Account Settings",
+    "verification": {
+      "pendingTitle": "Verification Pending",
+      "pendingDesc": "Your profile is under review. You'll start receiving bookings once verified.",
+      "learnMore": "Learn More",
+      "verified": "Profile Verified"
+    },
+    "sections": {
+      "services": "Active Services",
+      "servicesDesc": "Your active services and pricing",
+      "experience": "Experience",
+      "experienceDesc": "Your expertise and qualifications",
+      "housing": "Your home environment",
+      "preferences": "Types and sizes of pets you accept",
+      "availabilityTitle": "General Availability",
+      "availabilityDesc": "When you're available for bookings"
+    },
+    "fields": {
+      "address": "Address",
+      "phone": "Phone Number",
+      "bio": "Bio",
+      "headline": "Headline",
+      "skills": "Skills",
+      "certifications": "Certifications",
+      "yearsExperience": "Years of Experience",
+      "serviceRadius": "Service Radius",
+      "noticePeriod": "Notice Period",
+      "homeType": "Home Type",
+      "outdoorSpace": "Outdoor Space",
+      "hasChildren": "Has Children",
+      "hasOtherPets": "Has Other Pets",
+      "nonSmoking": "Non-Smoking Household",
+      "petTypes": "Accepted Pet Types",
+      "petSizes": "Accepted Pet Sizes",
+      "neuteredOnly": "Neutered only",
+      "neuteredDesc": "Only accept spayed/neutered pets"
+    },
+    "values": {
+      "noneAdded": "None added",
+      "noneSpecified": "None specified",
+      "notSpecified": "Not specified"
+    },
+    "options": {
+      "house": "House",
+      "apartment": "Apartment",
+      "farm": "Farm",
+      "fencedYard": "Fenced Yard",
+      "unfencedYard": "Unfenced Yard",
+      "noYard": "No Yard",
+      "sameDay": "Same Day",
+      "selectHomeType": "Select home type",
+      "selectOutdoorSpace": "Select outdoor space",
+      "selectNoticePeriod": "Select notice period"
+    },
+    "cards": {
+      "profile": "Profile",
+      "servicesRates": "Services & Rates",
+      "petPreferences": "Pet Preferences",
+      "housingDetails": "Housing Details",
+      "skillsCerts": "Skills & Certifications",
+      "availability": "Availability"
     }
   },
   "messages": {
