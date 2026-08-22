@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
@@ -34,6 +35,19 @@ const GOOGLE_CLIENT_ID =
   '148696767812-0m22i59jnp90ejdr9gp6itg52svthbqg.apps.googleusercontent.com';
 console.log("App: Initializing with Google Client ID:", GOOGLE_CLIENT_ID?.substring(0, 10) + "...");
 
+// React Router does not reset scroll position on navigation the way a traditional
+// multi-page site does, so landing on a new route (e.g. search results, a sitter
+// profile) can render mid-scroll if the previous page was scrolled down. Reset to
+// the top whenever the pathname changes; query-string-only updates (e.g. changing
+// search filters while staying on /search) intentionally don't trigger this.
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+};
+
 function App() {
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
@@ -42,6 +56,7 @@ function App() {
           <GoogleOneTap />
           <ToastProvider>
             <Router>
+              <ScrollToTop />
               <div className="min-h-screen flex flex-col bg-background text-foreground font-sans overflow-x-hidden">
                 <Navbar />
                 <main className="flex-1 w-full overflow-x-hidden">
