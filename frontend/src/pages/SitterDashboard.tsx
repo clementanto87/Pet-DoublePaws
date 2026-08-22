@@ -302,13 +302,13 @@ const SitterDashboard: React.FC = () => {
                             Manage your profile, services, and availability
                         </p>
                     </div>
-                    <div className="flex gap-3">
-                        <Button variant="outline" onClick={() => navigate('/dashboard')}>
-                            <PawPrint className="w-4 h-4 mr-2" />
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full md:w-auto">
+                        <Button variant="outline" className="w-full sm:w-auto justify-center whitespace-nowrap" onClick={() => navigate('/dashboard')}>
+                            <PawPrint className="w-4 h-4 mr-2 flex-shrink-0" />
                             Pet Owner View
                         </Button>
-                        <Button variant="primary" className="shadow-glow">
-                            <Settings className="w-4 h-4 mr-2" />
+                        <Button variant="primary" className="w-full sm:w-auto justify-center whitespace-nowrap shadow-glow">
+                            <Settings className="w-4 h-4 mr-2 flex-shrink-0" />
                             Account Settings
                         </Button>
                     </div>
@@ -353,7 +353,7 @@ const SitterDashboard: React.FC = () => {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm font-medium text-muted-foreground">Active Services</p>
-                                    <p className="text-3xl font-bold text-foreground">{activeServicesCount}</p>
+                                    <p className="text-2xl sm:text-3xl font-bold text-foreground">{activeServicesCount}</p>
                                 </div>
                                 <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
                                     <Briefcase className="w-6 h-6 text-primary" />
@@ -367,7 +367,7 @@ const SitterDashboard: React.FC = () => {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm font-medium text-muted-foreground">Rate Range</p>
-                                    <p className="text-3xl font-bold text-foreground">
+                                    <p className="text-2xl sm:text-3xl font-bold text-foreground">
                                         €{minRate} - €{maxRate}
                                     </p>
                                 </div>
@@ -383,7 +383,7 @@ const SitterDashboard: React.FC = () => {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm font-medium text-muted-foreground">Service Radius</p>
-                                    <p className="text-3xl font-bold text-foreground">{Math.round((profile.serviceRadius || 5) * 1.60934)} km</p>
+                                    <p className="text-2xl sm:text-3xl font-bold text-foreground">{Math.round((profile.serviceRadius || 5) * 1.60934)} km</p>
                                 </div>
                                 <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center">
                                     <MapPin className="w-6 h-6 text-blue-600" />
@@ -397,7 +397,7 @@ const SitterDashboard: React.FC = () => {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm font-medium text-muted-foreground">Experience</p>
-                                    <p className="text-3xl font-bold text-foreground">{profile.yearsExperience || 0} yrs</p>
+                                    <p className="text-2xl sm:text-3xl font-bold text-foreground">{profile.yearsExperience || 0} yrs</p>
                                 </div>
                                 <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/40 rounded-xl flex items-center justify-center">
                                     <Award className="w-6 h-6 text-purple-600" />
