@@ -476,7 +476,11 @@
       "petTypes": "Akzeptierte Tierarten",
       "petSizes": "Akzeptierte Tiergrößen",
       "neuteredOnly": "Nur kastrierte Tiere",
-      "neuteredDesc": "Nur kastrierte/sterilisierte Tiere annehmen"
+      "neuteredDesc": "Nur kastrierte/sterilisierte Tiere annehmen",
+      "serviceRadiusKm": "Einsatzradius (Kilometer)",
+      "generalAvailability": "Allgemeine Verfügbarkeit",
+      "blockedDates": "Gesperrte Termine",
+      "neuteredAccept": "Nur kastrierte/sterilisierte Tiere annehmen"
     },
     "values": {
       "noneAdded": "Keine hinzugefügt",
@@ -502,7 +506,47 @@
       "housingDetails": "Wohnverhältnisse",
       "skillsCerts": "Fähigkeiten & Zertifikate",
       "availability": "Verfügbarkeit"
-    }
+    },
+    "modal": {
+      "cancel": "Abbrechen",
+      "save": "Änderungen speichern",
+      "saving": "Wird gespeichert..."
+    },
+    "editTitles": {
+      "profile": "Profil bearbeiten",
+      "services": "Services & Preise bearbeiten",
+      "preferences": "Tier-Präferenzen bearbeiten",
+      "housing": "Wohnverhältnisse bearbeiten",
+      "experience": "Erfahrung & Fähigkeiten bearbeiten",
+      "availability": "Verfügbarkeit bearbeiten"
+    },
+    "placeholders": {
+      "phone": "Deine Telefonnummer",
+      "address": "Beginne, deine Adresse einzugeben...",
+      "headline": "Eine einprägsame Überschrift für dein Profil",
+      "bio": "Erzähle Tierhaltern von dir..."
+    },
+    "days": {
+      "Mon": "Mo",
+      "Tue": "Di",
+      "Wed": "Mi",
+      "Thu": "Do",
+      "Fri": "Fr",
+      "Sat": "Sa",
+      "Sun": "So",
+      "Weekdays": "Wochentags",
+      "Weekends": "Wochenenden",
+      "Holidays": "Feiertage",
+      "Full-Time": "Vollzeit"
+    },
+    "noticeOpts": {
+      "Same Day": "Am selben Tag",
+      "1 Day": "1 Tag",
+      "2 Days": "2 Tage",
+      "3 Days": "3 Tage",
+      "1 Week": "1 Woche"
+    },
+    "availTip": "Tipp: Wähle \"Wochentags\" oder \"Wochenenden\", um deine Präferenz schnell anzuzeigen. Nutze den Kalender im Dashboard, um bestimmte Termine zu sperren."
   },
   "messages": {
     "title": "Nachrichten",

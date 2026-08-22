@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { dfOpts } from '../../lib/dateLocale';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { messageService } from '../../services/message.service';
@@ -173,7 +174,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ defaultSelectedUse
                                                     "text-xs flex-shrink-0 ml-2 md:ml-3",
                                                     selectedUserId === conv.user.id ? "text-white/80" : "text-gray-400"
                                                 )}>
-                                                    {format(new Date(conv.lastMessage.createdAt), 'h:mm a')}
+                                                    {format(new Date(conv.lastMessage.createdAt), 'h:mm a', dfOpts())}
                                                 </span>
                                             </div>
                                             <p className={cn(
@@ -271,7 +272,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ defaultSelectedUse
                                                     )}
                                                 </div>
                                                 <span className="text-[10px] md:text-xs text-gray-400 px-2">
-                                                    {format(new Date(msg.createdAt), 'h:mm a')}
+                                                    {format(new Date(msg.createdAt), 'h:mm a', dfOpts())}
                                                 </span>
                                             </div>
                                         </motion.div>

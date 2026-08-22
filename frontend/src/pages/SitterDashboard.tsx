@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { dfOpts } from '../lib/dateLocale';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -68,6 +69,7 @@ interface EditModalProps {
 }
 
 const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, title, children, onSave, isSaving }) => {
+    const { t } = useTranslation();
     if (!isOpen) return null;
 
     return (
@@ -84,9 +86,9 @@ const EditModal: React.FC<EditModalProps> = ({ isOpen, onClose, title, children,
                     {children}
                 </div>
                 <div className="flex justify-end gap-3 p-6 border-t border-border">
-                    <Button variant="outline" onClick={onClose}>Cancel</Button>
+                    <Button variant="outline" onClick={onClose}>{t('sitterDashboard.modal.cancel')}</Button>
                     <Button onClick={onSave} disabled={isSaving}>
-                        {isSaving ? 'Saving...' : <><Save className="w-4 h-4 mr-2" /> Save Changes</>}
+                        {isSaving ? t('sitterDashboard.modal.saving') : <><Save className="w-4 h-4 mr-2" /> {t('sitterDashboard.modal.save')}</>}
                     </Button>
                 </div>
             </div>
@@ -540,7 +542,7 @@ const SitterDashboard: React.FC = () => {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground mb-2">Pet Types</p>
+                                <p className="text-sm font-medium text-muted-foreground mb-2">{t('sitterDashboard.fields.petTypes')}</p>
                                 <div className="flex flex-wrap gap-2">
                                     {profile.preferences?.acceptedPetTypes?.map((type) => (
                                         <span key={type} className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
@@ -550,7 +552,7 @@ const SitterDashboard: React.FC = () => {
                                 </div>
                             </div>
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground mb-2">Pet Sizes</p>
+                                <p className="text-sm font-medium text-muted-foreground mb-2">{t('sitterDashboard.fields.petSizes')}</p>
                                 <div className="flex flex-wrap gap-2">
                                     {profile.preferences?.acceptedPetSizes?.map((size) => (
                                         <span key={size} className="px-3 py-1 bg-secondary/10 text-secondary rounded-full text-sm font-medium">
@@ -566,7 +568,7 @@ const SitterDashboard: React.FC = () => {
                                     ) : (
                                         <X className="w-4 h-4 text-muted-foreground" />
                                     )}
-                                    <span className="text-sm text-foreground">Neutered only</span>
+                                    <span className="text-sm text-foreground">{t('sitterDashboard.fields.neuteredOnly')}</span>
                                 </div>
                             </div>
                         </CardContent>
@@ -589,11 +591,11 @@ const SitterDashboard: React.FC = () => {
                         <CardContent>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="p-3 bg-muted/30 rounded-lg">
-                                    <p className="text-xs text-muted-foreground">Home Type</p>
+                                    <p className="text-xs text-muted-foreground">{t('sitterDashboard.fields.homeType')}</p>
                                     <p className="font-medium text-foreground">{profile.housing?.homeType || t('sitterDashboard.values.notSpecified')}</p>
                                 </div>
                                 <div className="p-3 bg-muted/30 rounded-lg">
-                                    <p className="text-xs text-muted-foreground">Outdoor Space</p>
+                                    <p className="text-xs text-muted-foreground">{t('sitterDashboard.fields.outdoorSpace')}</p>
                                     <p className="font-medium text-foreground">{profile.housing?.outdoorSpace || t('sitterDashboard.values.notSpecified')}</p>
                                 </div>
                             </div>
@@ -654,7 +656,7 @@ const SitterDashboard: React.FC = () => {
                             </div>
                             {profile.certifications && profile.certifications.length > 0 && (
                                 <div>
-                                    <p className="text-sm font-medium text-muted-foreground mb-2">Certifications</p>
+                                    <p className="text-sm font-medium text-muted-foreground mb-2">{t('sitterDashboard.fields.certifications')}</p>
                                     <div className="flex flex-wrap gap-2">
                                         {profile.certifications.map((cert) => (
                                             <span key={cert} className="px-3 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-full text-sm font-medium flex items-center gap-1">
@@ -762,7 +764,7 @@ const SitterDashboard: React.FC = () => {
                                                         {booking.status}
                                                     </span>
                                                     <span className="text-sm text-muted-foreground">
-                                                        {format(new Date(booking.createdAt), 'MMM d, yyyy')}
+                                                        {format(new Date(booking.createdAt), 'MMM d, yyyy', dfOpts())}
                                                     </span>
                                                 </div>
                                                 <h4 className="font-bold text-lg mb-1 text-foreground">
@@ -775,7 +777,7 @@ const SitterDashboard: React.FC = () => {
                                                     </p>
                                                     <p className="flex items-center gap-2">
                                                         <Calendar className="w-4 h-4" />
-                                                        {format(new Date(booking.startDate), 'MMM d')} - {format(new Date(booking.endDate), 'MMM d, yyyy')}
+                                                        {format(new Date(booking.startDate), 'MMM d', dfOpts())} - {format(new Date(booking.endDate), 'MMM d, yyyy', dfOpts())}
                                                     </p>
                                                     <p className="flex items-center gap-2">
                                                         <DollarSign className="w-4 h-4" />
@@ -908,18 +910,18 @@ const SitterDashboard: React.FC = () => {
                                 <div className="flex flex-wrap gap-2">
                                     {profile.availability?.general?.map((day) => (
                                         <span key={day} className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-sm font-medium">
-                                            {day}
+                                            {t(`sitterDashboard.days.${day}`, day)}
                                         </span>
                                     )) || <span className="text-muted-foreground text-sm">Not specified</span>}
                                 </div>
                             </div>
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground mb-2">Notice Period</p>
+                                <p className="text-sm font-medium text-muted-foreground mb-2">{t('sitterDashboard.fields.noticePeriod')}</p>
                                 <p className="text-foreground font-medium">{profile.noticePeriod || t('sitterDashboard.values.notSpecified')}</p>
                             </div>
                             {profile.availability?.blockedDates && profile.availability.blockedDates.length > 0 && (
                                 <div>
-                                    <p className="text-sm font-medium text-muted-foreground mb-2">Blocked Dates</p>
+                                    <p className="text-sm font-medium text-muted-foreground mb-2">{t('sitterDashboard.fields.blockedDates')}</p>
                                     <p className="text-sm text-foreground">{profile.availability.blockedDates.length} dates blocked</p>
                                 </div>
                             )}
@@ -1075,26 +1077,26 @@ const SitterDashboard: React.FC = () => {
                 <EditModal
                     isOpen={editModal.isOpen && editModal.section === 'profile'}
                     onClose={() => setEditModal({ isOpen: false, section: '' })}
-                    title="Edit Profile"
+                    title={t('sitterDashboard.editTitles.profile')}
                     onSave={handleSave}
                     isSaving={updateMutation.isPending}
                 >
                     <div className="space-y-4">
                         <div>
-                            <Label>Phone Number</Label>
+                            <Label>{t('sitterDashboard.fields.phone')}</Label>
                             <Input
                                 value={editFormData.phone || ''}
                                 onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
-                                placeholder="Your phone number"
+                                placeholder={t('sitterDashboard.placeholders.phone')}
                             />
                         </div>
                         <div className="relative">
-                            <Label>Address</Label>
+                            <Label>{t('sitterDashboard.fields.address')}</Label>
                             <div className="relative">
                                 <Input
                                     value={editFormData.address || ''}
                                     onChange={handleAddressChange}
-                                    placeholder="Start typing your address..."
+                                    placeholder={t('sitterDashboard.placeholders.address')}
                                     className="pl-10"
                                     onFocus={() => (editFormData.address?.length || 0) > 2 && setShowSuggestions(true)}
                                     onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
@@ -1125,20 +1127,20 @@ const SitterDashboard: React.FC = () => {
                             )}
                         </div>
                         <div>
-                            <Label>Headline</Label>
+                            <Label>{t('sitterDashboard.fields.headline')}</Label>
                             <Input
                                 value={editFormData.headline || ''}
                                 onChange={(e) => setEditFormData({ ...editFormData, headline: e.target.value })}
-                                placeholder="A catchy headline for your profile"
+                                placeholder={t('sitterDashboard.placeholders.headline')}
                             />
                         </div>
                         <div>
-                            <Label>Bio</Label>
+                            <Label>{t('sitterDashboard.fields.bio')}</Label>
                             <textarea
                                 className="w-full min-h-[100px] px-3 py-2 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                                 value={editFormData.bio || ''}
                                 onChange={(e) => setEditFormData({ ...editFormData, bio: e.target.value })}
-                                placeholder="Tell pet parents about yourself..."
+                                placeholder={t('sitterDashboard.placeholders.bio')}
                             />
                         </div>
                     </div>
@@ -1147,7 +1149,7 @@ const SitterDashboard: React.FC = () => {
                 <EditModal
                     isOpen={editModal.isOpen && editModal.section === 'services'}
                     onClose={() => setEditModal({ isOpen: false, section: '' })}
-                    title="Edit Services & Rates"
+                    title={t('sitterDashboard.editTitles.services')}
                     onSave={handleSave}
                     isSaving={updateMutation.isPending}
                 >
@@ -1190,7 +1192,7 @@ const SitterDashboard: React.FC = () => {
                             );
                         })}
                         <div>
-                            <Label>Service Radius (kilometers)</Label>
+                            <Label>{t('sitterDashboard.fields.serviceRadiusKm')}</Label>
                             <Input
                                 type="number"
                                 value={editFormData.serviceRadius || 5}
@@ -1204,13 +1206,13 @@ const SitterDashboard: React.FC = () => {
                 <EditModal
                     isOpen={editModal.isOpen && editModal.section === 'preferences'}
                     onClose={() => setEditModal({ isOpen: false, section: '' })}
-                    title="Edit Pet Preferences"
+                    title={t('sitterDashboard.editTitles.preferences')}
                     onSave={handleSave}
                     isSaving={updateMutation.isPending}
                 >
                     <div className="space-y-6">
                         <div>
-                            <Label className="mb-2 block">Accepted Pet Types</Label>
+                            <Label className="mb-2 block">{t('sitterDashboard.fields.petTypes')}</Label>
                             <div className="flex flex-wrap gap-2">
                                 {['Dog', 'Cat', 'Bird', 'Small Animal', 'Reptile'].map(type => (
                                     <label key={type} className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-muted/50">
@@ -1236,7 +1238,7 @@ const SitterDashboard: React.FC = () => {
                         </div>
 
                         <div>
-                            <Label className="mb-2 block">Accepted Pet Sizes</Label>
+                            <Label className="mb-2 block">{t('sitterDashboard.fields.petSizes')}</Label>
                             <div className="flex flex-wrap gap-2">
                                 {['Small', 'Medium', 'Large', 'Giant'].map(size => (
                                     <label key={size} className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-muted/50">
@@ -1272,7 +1274,7 @@ const SitterDashboard: React.FC = () => {
                                 })}
                                 className="rounded border-gray-300 text-primary focus:ring-primary"
                             />
-                            <Label htmlFor="neutered">Only accept spayed/neutered pets</Label>
+                            <Label htmlFor="neutered">{t('sitterDashboard.fields.neuteredAccept')}</Label>
                         </div>
                     </div>
                 </EditModal>
@@ -1281,13 +1283,13 @@ const SitterDashboard: React.FC = () => {
                 <EditModal
                     isOpen={editModal.isOpen && editModal.section === 'housing'}
                     onClose={() => setEditModal({ isOpen: false, section: '' })}
-                    title="Edit Housing Details"
+                    title={t('sitterDashboard.editTitles.housing')}
                     onSave={handleSave}
                     isSaving={updateMutation.isPending}
                 >
                     <div className="space-y-4">
                         <div>
-                            <Label>Home Type</Label>
+                            <Label>{t('sitterDashboard.fields.homeType')}</Label>
                             <select
                                 className="w-full px-3 py-2 rounded-lg border border-input bg-background"
                                 value={editFormData.housing?.homeType || ''}
@@ -1296,14 +1298,14 @@ const SitterDashboard: React.FC = () => {
                                     housing: { ...(editFormData.housing || { homeType: '', outdoorSpace: '', hasChildren: false, hasOtherPets: false, isNonSmoking: false }), homeType: e.target.value }
                                 })}
                             >
-                                <option value="">Select home type</option>
-                                <option value="House">House</option>
-                                <option value="Apartment">Apartment</option>
-                                <option value="Farm">Farm</option>
+                                <option value="">{t('sitterDashboard.options.selectHomeType')}</option>
+                                <option value="House">{t('sitterDashboard.options.house')}</option>
+                                <option value="Apartment">{t('sitterDashboard.options.apartment')}</option>
+                                <option value="Farm">{t('sitterDashboard.options.farm')}</option>
                             </select>
                         </div>
                         <div>
-                            <Label>Outdoor Space</Label>
+                            <Label>{t('sitterDashboard.fields.outdoorSpace')}</Label>
                             <select
                                 className="w-full px-3 py-2 rounded-lg border border-input bg-background"
                                 value={editFormData.housing?.outdoorSpace || ''}
@@ -1312,10 +1314,10 @@ const SitterDashboard: React.FC = () => {
                                     housing: { ...(editFormData.housing || { homeType: '', outdoorSpace: '', hasChildren: false, hasOtherPets: false, isNonSmoking: false }), outdoorSpace: e.target.value }
                                 })}
                             >
-                                <option value="">Select outdoor space</option>
-                                <option value="Fenced Yard">Fenced Yard</option>
-                                <option value="Unfenced Yard">Unfenced Yard</option>
-                                <option value="No Yard">No Yard</option>
+                                <option value="">{t('sitterDashboard.options.selectOutdoorSpace')}</option>
+                                <option value="Fenced Yard">{t('sitterDashboard.options.fencedYard')}</option>
+                                <option value="Unfenced Yard">{t('sitterDashboard.options.unfencedYard')}</option>
+                                <option value="No Yard">{t('sitterDashboard.options.noYard')}</option>
                             </select>
                         </div>
                         <div className="space-y-2">
@@ -1363,13 +1365,13 @@ const SitterDashboard: React.FC = () => {
                 <EditModal
                     isOpen={editModal.isOpen && editModal.section === 'experience'}
                     onClose={() => setEditModal({ isOpen: false, section: '' })}
-                    title="Edit Experience & Skills"
+                    title={t('sitterDashboard.editTitles.experience')}
                     onSave={handleSave}
                     isSaving={updateMutation.isPending}
                 >
                     <div className="space-y-4">
                         <div>
-                            <Label>Years of Experience</Label>
+                            <Label>{t('sitterDashboard.fields.yearsExperience')}</Label>
                             <Input
                                 type="number"
                                 min="0"
@@ -1378,7 +1380,7 @@ const SitterDashboard: React.FC = () => {
                             />
                         </div>
                         <div>
-                            <Label className="mb-2 block">Skills</Label>
+                            <Label className="mb-2 block">{t('sitterDashboard.fields.skills')}</Label>
                             <div className="grid grid-cols-2 gap-2">
                                 {['Oral Medication', 'Injected Medication', 'Senior Dog Experience', 'Puppy Training', 'Special Needs Care'].map(skill => (
                                     <label key={skill} className="flex items-center gap-2">
@@ -1400,7 +1402,7 @@ const SitterDashboard: React.FC = () => {
                             </div>
                         </div>
                         <div>
-                            <Label className="mb-2 block">Certifications</Label>
+                            <Label className="mb-2 block">{t('sitterDashboard.fields.certifications')}</Label>
                             <div className="grid grid-cols-2 gap-2">
                                 {['Pet CPR', 'First Aid', 'Professional Dog Trainer', 'Vet Tech'].map(cert => (
                                     <label key={cert} className="flex items-center gap-2">
@@ -1428,13 +1430,13 @@ const SitterDashboard: React.FC = () => {
                 <EditModal
                     isOpen={editModal.isOpen && editModal.section === 'availability'}
                     onClose={() => setEditModal({ isOpen: false, section: '' })}
-                    title="Edit Availability"
+                    title={t('sitterDashboard.editTitles.availability')}
                     onSave={handleSave}
                     isSaving={updateMutation.isPending}
                 >
                     <div className="space-y-4">
                         <div>
-                            <Label className="mb-2 block">General Availability</Label>
+                            <Label className="mb-2 block">{t('sitterDashboard.fields.generalAvailability')}</Label>
                             <div className="flex flex-wrap gap-2">
                                 {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Weekdays', 'Weekends', 'Holidays', 'Full-Time'].map(day => (
                                     <label key={day} className="flex items-center gap-2 p-2 border rounded-lg cursor-pointer hover:bg-muted/50">
@@ -1550,27 +1552,27 @@ const SitterDashboard: React.FC = () => {
                                             }}
                                             className="rounded border-gray-300 text-primary focus:ring-primary"
                                         />
-                                        <span className="text-sm">{day}</span>
+                                        <span className="text-sm">{t(`sitterDashboard.days.${day}`, day)}</span>
                                     </label>
                                 ))}
                             </div>
                             <p className="text-xs text-muted-foreground mt-2">
-                                Tip: Select "Weekdays" or "Weekends" to quickly show your preference. Use the calendar on the dashboard to block specific dates.
+                                {t('sitterDashboard.availTip')}
                             </p>
                         </div>
                         <div>
-                            <Label>Notice Period</Label>
+                            <Label>{t('sitterDashboard.fields.noticePeriod')}</Label>
                             <select
                                 className="w-full px-3 py-2 rounded-lg border border-input bg-background"
                                 value={editFormData.noticePeriod || ''}
                                 onChange={(e) => setEditFormData({ ...editFormData, noticePeriod: e.target.value })}
                             >
-                                <option value="">Select notice period</option>
-                                <option value="Same Day">Same Day</option>
-                                <option value="1 Day">1 Day</option>
-                                <option value="2 Days">2 Days</option>
-                                <option value="3 Days">3 Days</option>
-                                <option value="1 Week">1 Week</option>
+                                <option value="">{t('sitterDashboard.options.selectNoticePeriod')}</option>
+                                <option value="Same Day">{t('sitterDashboard.noticeOpts.Same Day')}</option>
+                                <option value="1 Day">{t('sitterDashboard.noticeOpts.1 Day')}</option>
+                                <option value="2 Days">{t('sitterDashboard.noticeOpts.2 Days')}</option>
+                                <option value="3 Days">{t('sitterDashboard.noticeOpts.3 Days')}</option>
+                                <option value="1 Week">{t('sitterDashboard.noticeOpts.1 Week')}</option>
                             </select>
                         </div>
                     </div>

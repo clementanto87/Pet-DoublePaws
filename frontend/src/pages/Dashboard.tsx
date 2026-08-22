@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { dfOpts } from '../lib/dateLocale';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -25,7 +26,6 @@ import { cn } from '../lib/utils';
 import type { Booking } from '../services/booking.service';
 import { bookingService, BookingStatus } from '../services/booking.service';
 import { format } from 'date-fns';
-import { de } from 'date-fns/locale';
 import { Modal } from '../components/ui/Modal';
 import { reviewService } from '../services/review.service';
 import { messageService } from '../services/message.service';
@@ -39,7 +39,7 @@ const Dashboard: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const { showToast } = useToast();
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
 
     const [reviewModalOpen, setReviewModalOpen] = useState(false);
     const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
@@ -140,7 +140,7 @@ const Dashboard: React.FC = () => {
                     <div className="absolute -bottom-16 right-1/4 text-white/10 text-[10rem] leading-none select-none pointer-events-none hidden sm:block">🐾</div>
                     <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="min-w-0 flex-1">
-                            <p className="text-white/80 text-xs sm:text-sm font-medium">{format(new Date(), 'EEEE, MMMM d', i18n.language === 'de' ? { locale: de } : undefined)}</p>
+                            <p className="text-white/80 text-xs sm:text-sm font-medium">{format(new Date(), 'EEEE, MMMM d', dfOpts())}</p>
                             <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold mt-1">
                                 {getGreeting()}, {user?.firstName}! 👋
                             </h1>
@@ -428,7 +428,7 @@ const Dashboard: React.FC = () => {
                                                                     </div>
                                                                     <div className="flex items-center gap-1.5">
                                                                         <Calendar className="w-3.5 h-3.5" />
-                                                                        {format(new Date(booking.startDate), 'MMM d')} - {format(new Date(booking.endDate), 'MMM d, yyyy')}
+                                                                        {format(new Date(booking.startDate), 'MMM d', dfOpts())} - {format(new Date(booking.endDate), 'MMM d, yyyy', dfOpts())}
                                                                     </div>
                                                                 </div>
                                                             </div>

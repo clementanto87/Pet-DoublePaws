@@ -476,7 +476,11 @@
       "petTypes": "Accepted Pet Types",
       "petSizes": "Accepted Pet Sizes",
       "neuteredOnly": "Neutered only",
-      "neuteredDesc": "Only accept spayed/neutered pets"
+      "neuteredDesc": "Only accept spayed/neutered pets",
+      "serviceRadiusKm": "Service Radius (kilometers)",
+      "generalAvailability": "General Availability",
+      "blockedDates": "Blocked Dates",
+      "neuteredAccept": "Only accept spayed/neutered pets"
     },
     "values": {
       "noneAdded": "None added",
@@ -502,7 +506,47 @@
       "housingDetails": "Housing Details",
       "skillsCerts": "Skills & Certifications",
       "availability": "Availability"
-    }
+    },
+    "modal": {
+      "cancel": "Cancel",
+      "save": "Save Changes",
+      "saving": "Saving..."
+    },
+    "editTitles": {
+      "profile": "Edit Profile",
+      "services": "Edit Services & Rates",
+      "preferences": "Edit Pet Preferences",
+      "housing": "Edit Housing Details",
+      "experience": "Edit Experience & Skills",
+      "availability": "Edit Availability"
+    },
+    "placeholders": {
+      "phone": "Your phone number",
+      "address": "Start typing your address...",
+      "headline": "A catchy headline for your profile",
+      "bio": "Tell pet parents about yourself..."
+    },
+    "days": {
+      "Mon": "Mon",
+      "Tue": "Tue",
+      "Wed": "Wed",
+      "Thu": "Thu",
+      "Fri": "Fri",
+      "Sat": "Sat",
+      "Sun": "Sun",
+      "Weekdays": "Weekdays",
+      "Weekends": "Weekends",
+      "Holidays": "Holidays",
+      "Full-Time": "Full-Time"
+    },
+    "noticeOpts": {
+      "Same Day": "Same Day",
+      "1 Day": "1 Day",
+      "2 Days": "2 Days",
+      "3 Days": "3 Days",
+      "1 Week": "1 Week"
+    },
+    "availTip": "Tip: Select \"Weekdays\" or \"Weekends\" to quickly show your preference. Use the calendar on the dashboard to block specific dates."
   },
   "messages": {
     "title": "Messages",

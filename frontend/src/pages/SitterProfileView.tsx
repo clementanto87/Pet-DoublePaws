@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { dfOpts } from '../lib/dateLocale';
 import { useNavigate, useLocation, useSearchParams, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -492,7 +493,7 @@ const SitterProfileView: React.FC = () => {
                                                                 {review.owner?.firstName} {review.owner?.lastName}
                                                             </p>
                                                             <p className="text-xs text-gray-500">
-                                                                {format(new Date(review.createdAt), 'MMM d, yyyy')}
+                                                                {format(new Date(review.createdAt), 'MMM d, yyyy', dfOpts())}
                                                             </p>
                                                         </div>
                                                     </div>
