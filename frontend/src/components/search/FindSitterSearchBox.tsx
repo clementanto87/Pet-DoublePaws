@@ -9,7 +9,8 @@ import {
     CheckCircle,
     Navigation,
     Loader2,
-    AlertCircle
+    AlertCircle,
+    ChevronDown
 } from 'lucide-react';
 import { AddressAutocomplete } from '../ui/AddressAutocomplete';
 import { getCurrentPosition, reverseGeocode, formatAddressShort, type Address } from '../../utils/geocoding';
@@ -124,13 +125,44 @@ const FindSitterSearchBox: React.FC<FindSitterSearchBoxProps> = ({
                 ? 'border-primary shadow-primary/20 shadow-lg sm:shadow-xl md:shadow-2xl scale-[1.005] sm:scale-[1.01] md:scale-[1.02]'
                 : 'border-gray-100 dark:border-gray-700'
                 }`}>
-                {/* Service Selection - Compact Grid Design for Mobile */}
+                {/* Service Selection */}
                 <div className="p-2.5 sm:p-3 md:p-6 pb-2 sm:pb-2.5 md:pb-4 border-b border-gray-100 dark:border-gray-700 [@media(max-height:750px)]:p-2 [@media(max-height:750px)]:pb-1.5">
                     <p className="text-[10px] sm:text-xs md:text-sm font-semibold text-gray-500 dark:text-gray-400 mb-1.5 sm:mb-2 md:mb-4 flex items-center gap-1 sm:gap-1.5 md:gap-2 px-1 [@media(max-height:750px)]:mb-1">
                         <span className="text-xs sm:text-sm md:text-lg">🎯</span> <span className="truncate">{t('landing.whatServiceNeeded')}</span>
                     </p>
-                    {/* Flex Layout for centered items - 3 columns mobile, 5 desktop */}
-                    <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 md:gap-3 [@media(max-height:750px)]:gap-1">
+
+                    {/* A single native control keeps the mobile card compact and touch-friendly. */}
+                    <div className="md:hidden relative">
+                        <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 shadow-sm dark:border-gray-600 dark:bg-gray-700/50">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm dark:bg-gray-600">
+                                {serviceOptions.find((service) => service.id === selectedService)?.icon}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-bold text-gray-900 dark:text-white">
+                                    {serviceOptions.find((service) => service.id === selectedService)?.label}
+                                </p>
+                                <p className="truncate text-[11px] text-gray-500 dark:text-gray-400">
+                                    {serviceOptions.find((service) => service.id === selectedService)?.desc}
+                                </p>
+                            </div>
+                            <select
+                                aria-label={t('landing.whatServiceNeeded')}
+                                value={selectedService}
+                                onChange={(event) => setSelectedService(event.target.value)}
+                                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                            >
+                                {serviceOptions.map((service) => (
+                                    <option key={service.id} value={service.id}>
+                                        {service.icon} {service.label}
+                                    </option>
+                                ))}
+                            </select>
+                            <ChevronDown aria-hidden="true" className="pointer-events-none h-4 w-4 shrink-0 text-gray-400" />
+                        </div>
+                    </div>
+
+                    {/* Card picker remains available on larger screens. */}
+                    <div className="hidden flex-wrap justify-center gap-1.5 sm:gap-2 md:flex md:gap-3 [@media(max-height:750px)]:gap-1">
                         {serviceOptions.map((service, index) => (
                             <motion.button
                                 key={service.id}
