@@ -292,6 +292,7 @@ const SearchResultsPage: React.FC = () => {
     const [showSidebarFilters, setShowSidebarFilters] = useState(true); // Desktop sidebar (toggled on lg+)
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false); // Mobile filters drawer
     const [filterResetSignal, setFilterResetSignal] = useState(0); // Bump to reset filters from the drawer header
+    const [drawerBox, setDrawerBox] = useState<{ top: number; height: number } | null>(null); // Visual-viewport box so the drawer footer stays above the keyboard
     const [sortMenuOpen, setSortMenuOpen] = useState(false); // Sort dropdown (click-toggle, touch-friendly)
     const [sortBy, setSortBy] = useState<SortOption>('distance');
     const [favorites, setFavorites] = useState<Set<string>>(new Set());
@@ -426,6 +427,22 @@ const SearchResultsPage: React.FC = () => {
     }, []);
 
     // Initial Fetch on Mount or when search params change from URL (not from filter changes)
+    // While the mobile filters drawer is open, track the visual viewport so the panel
+    // (and its "Show results" footer) shrinks to sit above the on-screen keyboard.
+    useEffect(() => {
+        if (!mobileFiltersOpen) { setDrawerBox(null); return; }
+        const vv = window.visualViewport;
+        if (!vv) return;
+        const update = () => setDrawerBox({ top: vv.offsetTop, height: vv.height });
+        update();
+        vv.addEventListener('resize', update);
+        vv.addEventListener('scroll', update);
+        return () => {
+            vv.removeEventListener('resize', update);
+            vv.removeEventListener('scroll', update);
+        };
+    }, [mobileFiltersOpen]);
+
     useEffect(() => {
         // Prevent React Strict Mode double fetch
         const currentParamsString = searchParams.toString();
@@ -1117,7 +1134,10 @@ const SearchResultsPage: React.FC = () => {
 
             {/* Mobile Filters Drawer */}
             {mobileFiltersOpen && (
-                <div className="lg:hidden fixed inset-0 z-[60] flex">
+                <div
+                    className="lg:hidden fixed left-0 right-0 z-[60] flex"
+                    style={drawerBox ? { top: drawerBox.top, height: drawerBox.height } : { top: 0, bottom: 0 }}
+                >
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileFiltersOpen(false)} />
                     <div className="relative ml-auto h-full w-[88%] max-w-sm bg-white dark:bg-gray-900 shadow-2xl flex flex-col">
                         <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
