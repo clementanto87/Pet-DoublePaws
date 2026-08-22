@@ -145,15 +145,15 @@ const Dashboard: React.FC = () => {
                             </h1>
                             <p className="text-sm sm:text-base text-white/90 mt-1.5">
                                 {petCount > 0
-                                    ? `You have ${petCount} adorable pet${petCount === 1 ? '' : 's'} in your care`
-                                    : 'Welcome to your pet care dashboard'
+                                    ? t('dashboard.petsInCare', { count: petCount })
+                                    : t('dashboard.welcome')
                                 }
                             </p>
                         </div>
                         <Link to="/booking" className="flex-shrink-0">
                             <Button className="bg-white text-primary hover:bg-white/90 shadow-lg font-semibold text-sm">
                                 <Calendar className="w-4 h-4 mr-2" />
-                                Book Now
+                                {t('dashboard.bookNow')}
                             </Button>
                         </Link>
                     </div>
@@ -163,17 +163,17 @@ const Dashboard: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                     {[
                         {
-                            label: 'My Pets', value: petCount, sub: petCount === 1 ? 'pet in your care' : 'pets in your care',
+                            label: t('dashboard.stats.myPets'), value: petCount, sub: t('dashboard.statsSub.myPets'),
                             icon: PawPrint, accent: 'text-primary', chip: 'bg-primary/10',
                             onClick: () => navigate('/pet-profile'),
                         },
                         {
-                            label: 'Upcoming', value: upcomingBookings.length, sub: 'active & pending',
+                            label: t('dashboard.stats.upcoming'), value: upcomingBookings.length, sub: t('dashboard.statsSub.upcoming'),
                             icon: Calendar, accent: 'text-blue-600', chip: 'bg-blue-100 dark:bg-blue-900/40',
                             onClick: () => setActiveTab('upcoming'),
                         },
                         {
-                            label: 'Completed', value: bookings?.filter((b: Booking) => b.status === BookingStatus.COMPLETED).length || 0, sub: 'past stays',
+                            label: t('dashboard.stats.completed'), value: bookings?.filter((b: Booking) => b.status === BookingStatus.COMPLETED).length || 0, sub: t('dashboard.statsSub.completed'),
                             icon: CheckCircle, accent: 'text-emerald-600', chip: 'bg-emerald-100 dark:bg-emerald-900/40',
                             onClick: () => setActiveTab('history'),
                         },
@@ -199,7 +199,7 @@ const Dashboard: React.FC = () => {
 
                 {/* Quick Actions Row */}
                 <div>
-                    <h3 className="text-lg font-bold text-foreground mb-4">Quick Actions</h3>
+                    <h3 className="text-lg font-bold text-foreground mb-4">{t('dashboard.quickActions.title')}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <Link to="/booking">
                             <Card className="hover:shadow-lg hover:-translate-y-0.5 hover:border-gray-300 transition-all cursor-pointer h-full group">
@@ -209,8 +209,8 @@ const Dashboard: React.FC = () => {
                                             <Search className="w-6 h-6 text-orange-600" />
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-foreground">Book a Sitter</h4>
-                                            <p className="text-sm text-muted-foreground">Find trusted pet sitters</p>
+                                            <h4 className="font-bold text-foreground">{t('dashboard.quickActions.bookSitter.title')}</h4>
+                                            <p className="text-sm text-muted-foreground">{t('dashboard.quickActions.bookSitter.desc')}</p>
                                         </div>
                                     </div>
                                     <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
@@ -226,8 +226,8 @@ const Dashboard: React.FC = () => {
                                             <Plus className="w-6 h-6 text-blue-600" />
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-foreground">Add Pet</h4>
-                                            <p className="text-sm text-muted-foreground">Create pet profile</p>
+                                            <h4 className="font-bold text-foreground">{t('dashboard.quickActions.addPet.title')}</h4>
+                                            <p className="text-sm text-muted-foreground">{t('dashboard.quickActions.addPet.desc')}</p>
                                         </div>
                                     </div>
                                     <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
@@ -246,8 +246,8 @@ const Dashboard: React.FC = () => {
                                             )}
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-foreground">Messages</h4>
-                                            <p className="text-sm text-muted-foreground">Chat with sitters</p>
+                                            <h4 className="font-bold text-foreground">{t('dashboard.quickActions.messages.title')}</h4>
+                                            <p className="text-sm text-muted-foreground">{t('dashboard.quickActions.messages.desc')}</p>
                                         </div>
                                     </div>
                                     <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
@@ -266,11 +266,11 @@ const Dashboard: React.FC = () => {
                         {/* My Pets Section */}
                         <div>
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-bold text-foreground">My Pets</h3>
+                                <h3 className="text-lg font-bold text-foreground">{t('dashboard.myPetsTitle')}</h3>
                                 <Link to="/pet-profile">
                                     <Button variant="outline" size="sm">
                                         <Plus className="w-4 h-4 mr-2" />
-                                        Add Pet
+                                        {t('dashboard.addPet')}
                                     </Button>
                                 </Link>
                             </div>
@@ -281,10 +281,10 @@ const Dashboard: React.FC = () => {
                                         <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
                                             <PawPrint className="w-8 h-8 text-muted-foreground" />
                                         </div>
-                                        <h3 className="font-semibold text-foreground mb-1">No pets yet</h3>
-                                        <p className="text-muted-foreground text-sm mb-4">Add your furry friend to get started</p>
+                                        <h3 className="font-semibold text-foreground mb-1">{t('dashboard.petCard.noPetsTitle')}</h3>
+                                        <p className="text-muted-foreground text-sm mb-4">{t('dashboard.petCard.noPetsDesc')}</p>
                                         <Link to="/pet-profile">
-                                            <Button size="sm">Create Profile</Button>
+                                            <Button size="sm">{t('dashboard.petCard.createProfile')}</Button>
                                         </Link>
                                     </CardContent>
                                 </Card>
@@ -323,7 +323,7 @@ const Dashboard: React.FC = () => {
                                                 <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                                                     <div className="flex items-center gap-1.5">
                                                         <Clock className="w-3.5 h-3.5" />
-                                                        {pet.age} yrs
+                                                        {pet.age} {t('dashboard.petCard.yrs')}
                                                     </div>
                                                     {pet.weight && (
                                                         <div className="flex items-center gap-1.5">
@@ -334,10 +334,10 @@ const Dashboard: React.FC = () => {
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-2">
                                                     <Button variant="outline" size="sm" className="w-full" onClick={() => navigate('/pet-profile', { state: { pet } })}>
-                                                        Edit
+                                                        {t('dashboard.petCard.edit')}
                                                     </Button>
                                                     <Button size="sm" className="w-full" onClick={() => navigate('/booking')}>
-                                                        Book
+                                                        {t('dashboard.petCard.book')}
                                                     </Button>
                                                 </div>
                                             </CardContent>
@@ -350,7 +350,7 @@ const Dashboard: React.FC = () => {
                         {/* Bookings Section */}
                         <div>
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-bold text-foreground">My Bookings</h3>
+                                <h3 className="text-lg font-bold text-foreground">{t('dashboard.myBookingsTitle')}</h3>
                                 <div className="flex bg-muted p-1 rounded-lg">
                                     <button
                                         onClick={() => setActiveTab('upcoming')}
@@ -361,7 +361,7 @@ const Dashboard: React.FC = () => {
                                                 : "text-muted-foreground hover:text-foreground"
                                         )}
                                     >
-                                        Upcoming
+                                        {t('dashboard.tabs.upcoming')}
                                     </button>
                                     <button
                                         onClick={() => setActiveTab('history')}
@@ -372,7 +372,7 @@ const Dashboard: React.FC = () => {
                                                 : "text-muted-foreground hover:text-foreground"
                                         )}
                                     >
-                                        History
+                                        {t('dashboard.tabs.history')}
                                     </button>
                                 </div>
                             </div>
@@ -386,8 +386,8 @@ const Dashboard: React.FC = () => {
                                             </div>
                                             <p className="text-muted-foreground text-sm">
                                                 {activeTab === 'upcoming'
-                                                    ? "No upcoming bookings found."
-                                                    : "No booking history found."}
+                                                    ? t('dashboard.emptyUpcoming')
+                                                    : t('dashboard.emptyHistory')}
                                             </p>
                                         </div>
                                     ) : (
@@ -416,7 +416,7 @@ const Dashboard: React.FC = () => {
                                                                                 booking.status === BookingStatus.COMPLETED ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
                                                                                     "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400"
                                                                     )}>
-                                                                        {booking.status}
+                                                                        {String(t(`dashboard.bookings.status.${booking.status.toLowerCase()}`, { defaultValue: booking.status }))}
                                                                     </span>
                                                                 </div>
 
@@ -436,7 +436,7 @@ const Dashboard: React.FC = () => {
                                                         <div className="flex items-center gap-2 self-start sm:self-center">
                                                             {booking.status === BookingStatus.PENDING && (
                                                                 <Button variant="ghost" size="sm" onClick={() => handleCancel(booking.id)} className="text-red-600 hover:text-red-700 hover:bg-red-50">
-                                                                    Cancel
+                                                                    {t('dashboard.bookings.cancel')}
                                                                 </Button>
                                                             )}
                                                             {booking.status === BookingStatus.COMPLETED && !(booking as any).review && (
@@ -444,7 +444,7 @@ const Dashboard: React.FC = () => {
                                                                     setSelectedBookingId(booking.id);
                                                                     setReviewModalOpen(true);
                                                                 }}>
-                                                                    Review
+                                                                    {t('dashboard.bookings.review')}
                                                                 </Button>
                                                             )}
                                                             <Button size="sm" variant="ghost" onClick={() => navigate('/messages', { state: { userId: booking.sitter?.userId } })}>
@@ -468,21 +468,21 @@ const Dashboard: React.FC = () => {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2 text-orange-900 dark:text-orange-100">
                                     <Shield className="w-5 h-5 text-orange-500" />
-                                    Why Choose Us
+                                    {t('dashboard.whyChooseUs.title')}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="flex gap-3">
                                     <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                    <p className="text-sm text-muted-foreground">All sitters are verified and background-checked</p>
+                                    <p className="text-sm text-muted-foreground">{t('dashboard.whyChooseUs.p1')}</p>
                                 </div>
                                 <div className="flex gap-3">
                                     <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                    <p className="text-sm text-muted-foreground">Every booking includes pet insurance</p>
+                                    <p className="text-sm text-muted-foreground">{t('dashboard.whyChooseUs.p2')}</p>
                                 </div>
                                 <div className="flex gap-3">
                                     <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                    <p className="text-sm text-muted-foreground">24/7 support when you need us</p>
+                                    <p className="text-sm text-muted-foreground">{t('dashboard.whyChooseUs.p3')}</p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -492,12 +492,12 @@ const Dashboard: React.FC = () => {
                             <div className="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 bg-white/10 rounded-full blur-xl" />
                             <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-32 h-32 bg-black/10 rounded-full blur-xl" />
                             <CardContent className="p-6 relative z-10">
-                                <h3 className="font-bold text-lg mb-2">Need Help?</h3>
+                                <h3 className="font-bold text-lg mb-2">{t('dashboard.help.title')}</h3>
                                 <p className="text-primary-foreground/90 text-sm mb-4">
-                                    Our support team is always here for you and your pets.
+                                    {t('dashboard.help.desc')}
                                 </p>
                                 <Button variant="secondary" size="sm" className="w-full">
-                                    Contact Support
+                                    {t('dashboard.help.contact')}
                                 </Button>
                             </CardContent>
                         </Card>
@@ -510,7 +510,7 @@ const Dashboard: React.FC = () => {
             <Modal
                 isOpen={reviewModalOpen}
                 onClose={() => setReviewModalOpen(false)}
-                title="Rate your experience"
+                title={t('dashboard.review.title')}
             >
                 <div className="space-y-4">
                     <div className="flex flex-col items-center gap-2 mb-4">
@@ -532,17 +532,17 @@ const Dashboard: React.FC = () => {
                             ))}
                         </div>
                         <span className="text-sm font-medium text-muted-foreground">
-                            {rating === 5 ? 'Excellent!' : rating === 4 ? 'Good' : rating === 3 ? 'Okay' : rating === 2 ? 'Poor' : 'Terrible'}
+                            {rating === 5 ? t('dashboard.review.excellent') : rating === 4 ? t('dashboard.review.good') : rating === 3 ? t('dashboard.review.okay') : rating === 2 ? t('dashboard.review.poor') : t('dashboard.review.terrible')}
                         </span>
                     </div>
 
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-foreground">
-                            Share your experience
+                            {t('dashboard.review.share')}
                         </label>
                         <textarea
                             className="w-full min-h-[100px] p-3 rounded-xl border border-input bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none transition-all"
-                            placeholder="How was the service? Would you recommend this sitter?"
+                            placeholder={t('dashboard.review.placeholder')}
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
                         />
@@ -554,13 +554,13 @@ const Dashboard: React.FC = () => {
                             onClick={() => setReviewModalOpen(false)}
                             disabled={submittingReview}
                         >
-                            Cancel
+                            {t('dashboard.review.cancel')}
                         </Button>
                         <Button
                             onClick={handleSubmitReview}
                             disabled={submittingReview || !comment.trim()}
                         >
-                            {submittingReview ? 'Submitting...' : 'Submit Review'}
+                            {submittingReview ? t('dashboard.review.submitting') : t('dashboard.review.submit')}
                         </Button>
                     </div>
                 </div>

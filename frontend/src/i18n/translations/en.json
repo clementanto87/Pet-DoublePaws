@@ -313,6 +313,52 @@
       "title": "Oops! Something went wrong",
       "message": "We couldn't load your dashboard. Please try again.",
       "refresh": "Refresh Page"
+    },
+    "myPetsTitle": "My Pets",
+    "addPet": "Add Pet",
+    "myBookingsTitle": "My Bookings",
+    "statsSub": {
+      "myPets": "in your care",
+      "upcoming": "active & pending",
+      "completed": "past stays"
+    },
+    "petCard": {
+      "edit": "Edit",
+      "book": "Book",
+      "yrs": "yrs",
+      "noPetsTitle": "No pets yet",
+      "noPetsDesc": "Add your furry friend to get started",
+      "createProfile": "Create Profile"
+    },
+    "tabs": {
+      "upcoming": "Upcoming",
+      "history": "History"
+    },
+    "emptyUpcoming": "No upcoming bookings found.",
+    "emptyHistory": "No booking history found.",
+    "whyChooseUs": {
+      "title": "Why Choose Us",
+      "p1": "All sitters are verified and background-checked",
+      "p2": "Every booking includes pet insurance",
+      "p3": "24/7 support when you need us"
+    },
+    "help": {
+      "title": "Need Help?",
+      "desc": "Our support team is always here for you and your pets.",
+      "contact": "Contact Support"
+    },
+    "review": {
+      "title": "Rate your experience",
+      "share": "Share your experience",
+      "placeholder": "How was the service? Would you recommend this sitter?",
+      "submit": "Submit Review",
+      "submitting": "Submitting...",
+      "cancel": "Cancel",
+      "excellent": "Excellent!",
+      "good": "Good",
+      "okay": "Okay",
+      "poor": "Poor",
+      "terrible": "Terrible"
     }
   },
   "sitterDashboard": {

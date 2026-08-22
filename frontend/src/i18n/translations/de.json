@@ -313,6 +313,52 @@
       "title": "Ups! Etwas ist schief gelaufen",
       "message": "Wir konnten Ihr Dashboard nicht laden. Bitte versuchen Sie es erneut.",
       "refresh": "Seite aktualisieren"
+    },
+    "myPetsTitle": "Meine Haustiere",
+    "addPet": "Haustier hinzufügen",
+    "myBookingsTitle": "Meine Buchungen",
+    "statsSub": {
+      "myPets": "in deiner Obhut",
+      "upcoming": "aktiv & ausstehend",
+      "completed": "vergangene Aufenthalte"
+    },
+    "petCard": {
+      "edit": "Bearbeiten",
+      "book": "Buchen",
+      "yrs": "J.",
+      "noPetsTitle": "Noch keine Haustiere",
+      "noPetsDesc": "Füge deinen Liebling hinzu, um zu starten",
+      "createProfile": "Profil erstellen"
+    },
+    "tabs": {
+      "upcoming": "Anstehend",
+      "history": "Verlauf"
+    },
+    "emptyUpcoming": "Keine anstehenden Buchungen gefunden.",
+    "emptyHistory": "Kein Buchungsverlauf gefunden.",
+    "whyChooseUs": {
+      "title": "Warum wir?",
+      "p1": "Alle Betreuer sind verifiziert und überprüft",
+      "p2": "Jede Buchung beinhaltet eine Tierversicherung",
+      "p3": "24/7-Support, wann immer du uns brauchst"
+    },
+    "help": {
+      "title": "Brauchst du Hilfe?",
+      "desc": "Unser Support-Team ist immer für dich und deine Tiere da.",
+      "contact": "Support kontaktieren"
+    },
+    "review": {
+      "title": "Bewerte deine Erfahrung",
+      "share": "Teile deine Erfahrung",
+      "placeholder": "Wie war der Service? Würdest du diesen Betreuer empfehlen?",
+      "submit": "Bewertung senden",
+      "submitting": "Wird gesendet...",
+      "cancel": "Abbrechen",
+      "excellent": "Ausgezeichnet!",
+      "good": "Gut",
+      "okay": "Okay",
+      "poor": "Schlecht",
+      "terrible": "Furchtbar"
     }
   },
   "sitterDashboard": {
