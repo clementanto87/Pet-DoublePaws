@@ -698,5 +698,36 @@
       "large": "Large",
       "giant": "Giant"
     }
+  },
+  "sitterProfile": {
+    "backToResults": "Back to Results",
+    "notFoundTitle": "Sitter Not Found",
+    "notFoundDesc": "We couldn't find this sitter's profile.",
+    "goBack": "Go Back",
+    "contactSitter": "Contact Sitter",
+    "checkAvailability": "Check Availability",
+    "readyToBook": "Ready to book?",
+    "perNight": "per night",
+    "reviewsCount": "({{count}} reviews)",
+    "aboutMe": "About Me",
+    "servicesRates": "Services & Rates",
+    "skillsCerts": "Skills & Certifications",
+    "accepts": "Accepts",
+    "homeEnvironment": "Home Environment",
+    "availability": "Availability",
+    "reviews": "Reviews",
+    "petTypes": "Pet Types",
+    "petSizes": "Pet Sizes",
+    "skills": "Skills",
+    "certifications": "Certifications",
+    "noServices": "No services listed yet.",
+    "noReviewsTitle": "No reviews yet",
+    "beFirst": "Be the first to leave a review!",
+    "loadingReviews": "Loading reviews...",
+    "available": "Available",
+    "booked": "Booked",
+    "notAvailable": "Not available",
+    "verified": "Verified",
+    "yearsExperience": "{{count}}+ years experience"
   }
 }

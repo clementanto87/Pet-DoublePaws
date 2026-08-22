@@ -698,5 +698,36 @@
       "large": "Groß",
       "giant": "Riesig"
     }
+  },
+  "sitterProfile": {
+    "backToResults": "Zurück zu den Ergebnissen",
+    "notFoundTitle": "Betreuer nicht gefunden",
+    "notFoundDesc": "Wir konnten dieses Betreuerprofil nicht finden.",
+    "goBack": "Zurück",
+    "contactSitter": "Betreuer kontaktieren",
+    "checkAvailability": "Verfügbarkeit prüfen",
+    "readyToBook": "Bereit zu buchen?",
+    "perNight": "pro Nacht",
+    "reviewsCount": "({{count}} Bewertungen)",
+    "aboutMe": "Über mich",
+    "servicesRates": "Services & Preise",
+    "skillsCerts": "Fähigkeiten & Zertifikate",
+    "accepts": "Akzeptiert",
+    "homeEnvironment": "Wohnumgebung",
+    "availability": "Verfügbarkeit",
+    "reviews": "Bewertungen",
+    "petTypes": "Tierarten",
+    "petSizes": "Tiergrößen",
+    "skills": "Fähigkeiten",
+    "certifications": "Zertifikate",
+    "noServices": "Noch keine Services aufgeführt.",
+    "noReviewsTitle": "Noch keine Bewertungen",
+    "beFirst": "Sei der Erste, der eine Bewertung abgibt!",
+    "loadingReviews": "Bewertungen werden geladen...",
+    "available": "Verfügbar",
+    "booked": "Gebucht",
+    "notAvailable": "Nicht verfügbar",
+    "verified": "Verifiziert",
+    "yearsExperience": "{{count}}+ Jahre Erfahrung"
   }
 }

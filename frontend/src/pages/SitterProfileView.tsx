@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, useSearchParams, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
     ArrowLeft,
     MapPin,
@@ -194,6 +195,7 @@ const getMonthlyAvailability = (sitter: any, monthOffset: number = 0, bookings: 
 };
 
 const SitterProfileView: React.FC = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const location = useLocation();
     const [searchParams] = useSearchParams();
@@ -238,9 +240,9 @@ const SitterProfileView: React.FC = () => {
                     <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
                         <PawPrint className="w-8 h-8 text-gray-400" />
                     </div>
-                    <h2 className="text-xl font-bold text-foreground mb-2">Sitter Not Found</h2>
-                    <p className="text-muted-foreground mb-6">We couldn't find this sitter's profile.</p>
-                    <Button onClick={() => navigate(-1)}>Go Back</Button>
+                    <h2 className="text-xl font-bold text-foreground mb-2">{t('sitterProfile.notFoundTitle')}</h2>
+                    <p className="text-muted-foreground mb-6">{t('sitterProfile.notFoundDesc')}</p>
+                    <Button onClick={() => navigate(-1)}>{t('sitterProfile.goBack')}</Button>
                 </Card>
             </div>
         );
@@ -270,7 +272,7 @@ const SitterProfileView: React.FC = () => {
                         className="flex items-center gap-1.5 sm:gap-2 text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
                     >
                         <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
-                        <span className="font-medium text-sm sm:text-base">Back to Results</span>
+                        <span className="font-medium text-sm sm:text-base">{t('sitterProfile.backToResults')}</span>
                     </button>
                 </div>
             </div>
@@ -355,7 +357,7 @@ const SitterProfileView: React.FC = () => {
                                     onClick={() => navigate(`/contact-sitter/${sitter.id}${searchParamsString ? `?${searchParamsString}` : ''}`, { state: { sitter } })}
                                 >
                                     <MessageCircle className="w-5 h-5 mr-2" />
-                                    Contact Sitter
+                                    {t('sitterProfile.contactSitter')}
                                 </Button>
                             </div>
                         </div>
@@ -370,7 +372,7 @@ const SitterProfileView: React.FC = () => {
                             <CardContent className="p-6">
                                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                                     <Heart className="w-5 h-5 text-primary" />
-                                    About Me
+                                    {t('sitterProfile.aboutMe')}
                                 </h2>
                                 <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
                                     {sitter.bio || 'This sitter hasn\'t added a bio yet.'}
@@ -383,7 +385,7 @@ const SitterProfileView: React.FC = () => {
                             <CardContent className="p-6">
                                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                                     <Briefcase className="w-5 h-5 text-primary" />
-                                    Services & Rates
+                                    {t('sitterProfile.servicesRates')}
                                 </h2>
                                 <div className="space-y-4">
                                     {activeServices.map(([key, service]: [string, any]) => {
@@ -408,13 +410,13 @@ const SitterProfileView: React.FC = () => {
                                                 </div>
                                                 <div className="text-right">
                                                     <div className="text-xl font-bold text-primary">${service.rate}</div>
-                                                    <div className="text-sm text-gray-500">per night</div>
+                                                    <div className="text-sm text-gray-500">{t('sitterProfile.perNight')}</div>
                                                 </div>
                                             </div>
                                         );
                                     })}
                                     {activeServices.length === 0 && (
-                                        <p className="text-gray-500 text-center py-4">No services listed yet.</p>
+                                        <p className="text-gray-500 text-center py-4">{t('sitterProfile.noServices')}</p>
                                     )}
                                 </div>
                             </CardContent>
@@ -426,11 +428,11 @@ const SitterProfileView: React.FC = () => {
                                 <CardContent className="p-6">
                                     <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                                         <Award className="w-5 h-5 text-primary" />
-                                        Skills & Certifications
+                                        {t('sitterProfile.skillsCerts')}
                                     </h2>
                                     {sitter.skills?.length > 0 && (
                                         <div className="mb-4">
-                                            <h3 className="text-sm font-medium text-gray-500 mb-2">Skills</h3>
+                                            <h3 className="text-sm font-medium text-gray-500 mb-2">{t('sitterProfile.skills')}</h3>
                                             <div className="flex flex-wrap gap-2">
                                                 {sitter.skills.map((skill: string, index: number) => (
                                                     <span
@@ -445,7 +447,7 @@ const SitterProfileView: React.FC = () => {
                                     )}
                                     {sitter.certifications?.length > 0 && (
                                         <div>
-                                            <h3 className="text-sm font-medium text-gray-500 mb-2">Certifications</h3>
+                                            <h3 className="text-sm font-medium text-gray-500 mb-2">{t('sitterProfile.certifications')}</h3>
                                             <div className="flex flex-wrap gap-2">
                                                 {sitter.certifications.map((cert: string, index: number) => (
                                                     <span
@@ -468,10 +470,10 @@ const SitterProfileView: React.FC = () => {
                             <CardContent className="p-6">
                                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                                     <Star className="w-5 h-5 text-primary" />
-                                    Reviews ({reviews?.length || 0})
+                                    {t('sitterProfile.reviews')} ({reviews?.length || 0})
                                 </h2>
                                 {reviewsLoading ? (
-                                    <div className="text-center py-8">Loading reviews...</div>
+                                    <div className="text-center py-8">{t('sitterProfile.loadingReviews')}</div>
                                 ) : reviews && reviews.length > 0 ? (
                                     <div className="space-y-6">
                                         {reviews.map((review: Review) => (
@@ -510,8 +512,8 @@ const SitterProfileView: React.FC = () => {
                                         <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
                                             <Star className="w-8 h-8 text-gray-400" />
                                         </div>
-                                        <h3 className="font-medium text-gray-900 dark:text-white mb-1">No reviews yet</h3>
-                                        <p className="text-sm text-gray-500">Be the first to leave a review!</p>
+                                        <h3 className="font-medium text-gray-900 dark:text-white mb-1">{t('sitterProfile.noReviewsTitle')}</h3>
+                                        <p className="text-sm text-gray-500">{t('sitterProfile.beFirst')}</p>
                                     </div>
                                 )}
                             </CardContent>
@@ -525,11 +527,11 @@ const SitterProfileView: React.FC = () => {
                             <CardContent className="p-6">
                                 <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                                     <PawPrint className="w-5 h-5 text-primary" />
-                                    Accepts
+                                    {t('sitterProfile.accepts')}
                                 </h2>
                                 <div className="space-y-4">
                                     <div>
-                                        <h3 className="text-sm font-medium text-gray-500 mb-2">Pet Types</h3>
+                                        <h3 className="text-sm font-medium text-gray-500 mb-2">{t('sitterProfile.petTypes')}</h3>
                                         <div className="flex flex-wrap gap-2">
                                             {sitter.preferences?.acceptedPetTypes?.map((type: string) => (
                                                 <span
@@ -548,7 +550,7 @@ const SitterProfileView: React.FC = () => {
                                         </div>
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-medium text-gray-500 mb-2">Pet Sizes</h3>
+                                        <h3 className="text-sm font-medium text-gray-500 mb-2">{t('sitterProfile.petSizes')}</h3>
                                         <div className="flex flex-wrap gap-2">
                                             {sitter.preferences?.acceptedPetSizes?.map((size: string) => (
                                                 <span
@@ -569,7 +571,7 @@ const SitterProfileView: React.FC = () => {
                             <CardContent className="p-6">
                                 <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                                     <Home className="w-5 h-5 text-primary" />
-                                    Home Environment
+                                    {t('sitterProfile.homeEnvironment')}
                                 </h2>
                                 <div className="space-y-3">
                                     {sitter.housing?.homeType && (
@@ -613,7 +615,7 @@ const SitterProfileView: React.FC = () => {
                             <CardContent className="p-6">
                                 <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                                     <Calendar className="w-5 h-5 text-primary" />
-                                    Availability
+                                    {t('sitterProfile.availability')}
                                 </h2>
 
                                 {/* Calendar View */}
@@ -731,7 +733,7 @@ const SitterProfileView: React.FC = () => {
                         <Card className="bg-gradient-to-br from-primary/5 to-orange-400/5 border-primary/20">
                             <CardContent className="p-6 text-center">
                                 <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                                    Ready to book?
+                                    {t('sitterProfile.readyToBook')}
                                 </h2>
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                                     Contact {sitter.user?.firstName} to discuss your pet's needs
@@ -749,7 +751,7 @@ const SitterProfileView: React.FC = () => {
                                     onClick={() => navigate(`/contact-sitter/${sitter.id}${searchParamsString ? `?${searchParamsString}` : ''}`, { state: { sitter } })}
                                 >
                                     <Calendar className="w-4 h-4 mr-2" />
-                                    Check Availability
+                                    {t('sitterProfile.checkAvailability')}
                                 </Button>
                             </CardContent>
                         </Card>
