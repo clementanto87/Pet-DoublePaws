@@ -61,6 +61,18 @@
   html {
     scroll-behavior: smooth;
   }
+
+  /* Prevent iOS Safari from auto-zooming when a form field is focused.
+     Any control with a font-size below 16px triggers that zoom, which
+     throws off the fixed full-screen layouts (e.g. the chat view) and
+     hides what the user is typing. Enforce a 16px minimum on mobile. */
+  @media (max-width: 767px) {
+    input,
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+  }
 }
 
 @layer utilities {
