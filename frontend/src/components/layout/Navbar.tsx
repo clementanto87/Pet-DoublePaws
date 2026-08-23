@@ -126,7 +126,7 @@ const Navbar: React.FC = () => {
 
       {/* Mobile menu */}
       <div className={cn(
-        "md:hidden absolute w-full glass transition-all duration-300 ease-in-out overflow-hidden z-40",
+        "md:hidden absolute w-full bg-background/95 backdrop-blur-xl border-b border-border shadow-lg transition-all duration-300 ease-in-out overflow-hidden z-40",
         isMenuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
       )}>
         <div className="px-3 sm:px-4 pt-2 pb-4 sm:pb-6 space-y-1 sm:space-y-2">
