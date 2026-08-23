@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { dfOpts } from '../lib/dateLocale';
 import { Link, useNavigate } from 'react-router-dom';
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
     Plus,
@@ -31,7 +31,6 @@ import { messageService } from '../services/message.service';
 import { useToast } from '../components/ui/Toast';
 import { PayButton } from '../components/payment/PayButton';
 import { SupportRequestCard } from '../components/support/SupportRequestCard';
-import { paymentService } from '../services/payment.service';
 
 interface Pet extends PetData {
     id: string;
@@ -49,6 +48,8 @@ const Dashboard: React.FC = () => {
     const [comment, setComment] = useState('');
     const [submittingReview, setSubmittingReview] = useState(false);
     const [activeTab, setActiveTab] = useState<'upcoming' | 'history'>('upcoming');
+    const [bookingSearch, setBookingSearch] = useState('');
+    const [bookingPage, setBookingPage] = useState(1);
 
     // Fetch Pets
     const { data: pets, isLoading: petsLoading } = useQuery({
@@ -57,24 +58,16 @@ const Dashboard: React.FC = () => {
     });
 
     // Fetch Bookings
-    const { data: bookings, isLoading: bookingsLoading } = useQuery({
-        queryKey: ['myBookings'],
-        queryFn: () => bookingService.getBookings('owner'),
+    const { data: bookingPageData, isLoading: bookingsLoading } = useQuery({
+        queryKey: ['myBookings', activeTab, bookingSearch, bookingPage],
+        queryFn: () => bookingService.getBookings({
+            role: 'owner',
+            bucket: activeTab,
+            search: bookingSearch,
+            page: bookingPage,
+        }),
     });
-
-    // Completed services remain upcoming until Stripe confirms payment. The
-    // payment queries use the same keys as PayButton, so its webhook-driven
-    // status update automatically moves the booking to History.
-    const completedBookings = bookings?.filter(
-        (booking: Booking) => booking.status === BookingStatus.COMPLETED
-    ) || [];
-    const completedPaymentQueries = useQueries({
-        queries: completedBookings.map((booking: Booking) => ({
-            queryKey: ['payment', booking.id],
-            queryFn: () => paymentService.getForBooking(booking.id),
-            retry: false,
-        })),
-    });
+    const bookings = bookingPageData?.items || [];
 
     // Fetch conversations for unread count
     const { data: conversations } = useQuery({
@@ -127,25 +120,8 @@ const Dashboard: React.FC = () => {
 
     const petCount = pets?.length || 0;
 
-    const paidCompletedBookingIds = new Set(
-        completedBookings.filter((_booking: Booking, index: number) =>
-            (completedPaymentQueries[index]?.data as { status?: string } | undefined)?.status === 'SUCCEEDED'
-        ).map((booking: Booking) => booking.id)
-    );
-
-    const upcomingBookings = bookings?.filter((b: Booking) =>
-        b.status === BookingStatus.PENDING ||
-        b.status === BookingStatus.ACCEPTED ||
-        (b.status === BookingStatus.COMPLETED && !paidCompletedBookingIds.has(b.id))
-    ) || [];
-
-    const historicalBookings = bookings?.filter((b: Booking) =>
-        (b.status === BookingStatus.COMPLETED && paidCompletedBookingIds.has(b.id)) ||
-        b.status === BookingStatus.REJECTED ||
-        b.status === BookingStatus.CANCELLED
-    ) || [];
-
-    const displayedBookings = activeTab === 'upcoming' ? upcomingBookings : historicalBookings;
+    const displayedBookings = bookings;
+    const historicalBookings = activeTab === 'history' ? displayedBookings : [];
 
     if (petsLoading || bookingsLoading) {
         return (
@@ -187,8 +163,8 @@ const Dashboard: React.FC = () => {
                 <section className="grid gap-3 sm:grid-cols-3">
                     {[
                         { label: t('dashboard.stats.myPets'), value: petCount, note: t('dashboard.statsSub.myPets'), icon: PawPrint, tone: 'bg-orange-50 text-primary dark:bg-orange-950/30', action: () => navigate('/pet-profile') },
-                        { label: t('dashboard.stats.upcoming'), value: upcomingBookings.length, note: t('dashboard.statsSub.upcoming'), icon: Calendar, tone: 'bg-blue-50 text-blue-600 dark:bg-blue-950/30', action: () => setActiveTab('upcoming') },
-                        { label: t('dashboard.stats.completed'), value: historicalBookings.filter((booking: Booking) => booking.status === BookingStatus.COMPLETED).length, note: t('dashboard.statsSub.completed'), icon: CheckCircle, tone: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30', action: () => setActiveTab('history') },
+                        { label: t('dashboard.stats.upcoming'), value: activeTab === 'upcoming' ? (bookingPageData?.total || 0) : 0, note: t('dashboard.statsSub.upcoming'), icon: Calendar, tone: 'bg-blue-50 text-blue-600 dark:bg-blue-950/30', action: () => { setActiveTab('upcoming'); setBookingPage(1); } },
+                        { label: t('dashboard.stats.completed'), value: activeTab === 'history' ? historicalBookings.filter((booking: Booking) => booking.status === BookingStatus.COMPLETED).length : 0, note: t('dashboard.statsSub.completed'), icon: CheckCircle, tone: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30', action: () => { setActiveTab('history'); setBookingPage(1); } },
                     ].map((stat) => (
                         <button key={stat.label} onClick={stat.action} className="group flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
                             <div>
@@ -212,12 +188,16 @@ const Dashboard: React.FC = () => {
                                     </div>
                                     <div className="flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
                                         {(['upcoming', 'history'] as const).map((tab) => (
-                                            <button key={tab} onClick={() => setActiveTab(tab)} className={cn('rounded-lg px-3 py-2 text-xs font-semibold transition sm:px-4', activeTab === tab ? 'bg-white text-slate-950 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white')}>
+                                            <button key={tab} onClick={() => { setActiveTab(tab); setBookingPage(1); }} className={cn('rounded-lg px-3 py-2 text-xs font-semibold transition sm:px-4', activeTab === tab ? 'bg-white text-slate-950 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white')}>
                                                 {t(`dashboard.tabs.${tab}`)}
                                             </button>
                                         ))}
                                     </div>
                                 </div>
+                                <label className="relative mt-4 block">
+                                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                    <input value={bookingSearch} onChange={(event) => { setBookingSearch(event.target.value); setBookingPage(1); }} placeholder="Search by sitter, service, or date" className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/10 dark:border-slate-700 dark:bg-slate-800" />
+                                </label>
                             </CardHeader>
                             <CardContent className="p-0">
                                 {displayedBookings.length === 0 ? (
@@ -255,6 +235,12 @@ const Dashboard: React.FC = () => {
                                                 </div>
                                             );
                                         })}
+                                    </div>
+                                )}
+                                {bookingPageData && bookingPageData.totalPages > 1 && (
+                                    <div className="flex items-center justify-between border-t border-slate-100 px-5 py-4 text-sm dark:border-slate-800 sm:px-6">
+                                        <span className="text-slate-500">Page {bookingPageData.page} of {bookingPageData.totalPages} · {bookingPageData.total} bookings</span>
+                                        <div className="flex gap-2"><Button variant="outline" size="sm" disabled={bookingPage <= 1} onClick={() => setBookingPage((page) => page - 1)}>Previous</Button><Button variant="outline" size="sm" disabled={bookingPage >= bookingPageData.totalPages} onClick={() => setBookingPage((page) => page + 1)}>Next</Button></div>
                                     </div>
                                 )}
                             </CardContent>
