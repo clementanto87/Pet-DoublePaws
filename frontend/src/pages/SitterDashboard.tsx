@@ -275,13 +275,12 @@ const SitterDashboard: React.FC = () => {
         ? Object.values(profile.services).filter(s => s?.active).length
         : 0;
 
-    const minRate = profile.services
-        ? Math.min(...Object.values(profile.services).filter(s => s?.active).map(s => s?.rate || 0))
-        : 0;
+    const activeRates = profile.services
+        ? Object.values(profile.services).filter(s => s?.active).map(s => s?.rate || 0)
+        : [];
+    const minRate = activeRates.length > 0 ? Math.min(...activeRates) : 0;
 
-    const maxRate = profile.services
-        ? Math.max(...Object.values(profile.services).filter(s => s?.active).map(s => s?.rate || 0))
-        : 0;
+    const maxRate = activeRates.length > 0 ? Math.max(...activeRates) : 0;
 
     // Filter bookings based on active tab
     const upcomingBookings = bookings?.filter((booking: Booking) =>
@@ -297,9 +296,68 @@ const SitterDashboard: React.FC = () => {
     const displayedBookings = activeTab === 'upcoming' ? upcomingBookings : historicalBookings;
 
     return (
-        <div className="min-h-screen bg-gray-50/50 dark:bg-background-alt-dark pt-8 pb-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-7xl mx-auto space-y-8">
-                {/* Header */}
+        <div className="min-h-screen bg-[#f7f8fa] px-4 py-6 dark:bg-background-alt-dark sm:px-6 lg:px-8 lg:py-9">
+            <div className="mx-auto max-w-7xl space-y-6 lg:space-y-8">
+                <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <p className="text-sm font-medium text-muted-foreground">{format(new Date(), 'EEEE, MMMM d', dfOpts())}</p>
+                        <h1 className="mt-1 text-3xl font-display font-bold tracking-tight text-slate-950 dark:text-white sm:text-4xl">{t('sitterDashboard.title')}</h1>
+                        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 sm:text-base">{t('sitterDashboard.subtitle')}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Link to="/sitter-messages" className="relative hidden sm:block">
+                            <Button variant="outline" size="icon" aria-label="Messages"><MessageSquare className="h-4 w-4" /></Button>
+                            {totalUnreadCount > 0 && <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-[#f7f8fa] bg-primary" />}
+                        </Link>
+                        <Button variant="outline" className="h-11 rounded-xl px-4" onClick={() => navigate('/dashboard')}><PawPrint className="mr-2 h-4 w-4" />{t('sitterDashboard.petOwnerView')}</Button>
+                        <Button className="h-11 rounded-xl px-4 shadow-md shadow-primary/20" onClick={() => openEditModal('profile')}><Edit3 className="mr-2 h-4 w-4" />Edit profile</Button>
+                    </div>
+                </header>
+
+                <div className={cn('flex items-start gap-3 rounded-2xl border p-4', profile.isVerified ? 'border-emerald-100 bg-emerald-50 dark:border-emerald-900/30 dark:bg-emerald-950/20' : 'border-amber-200 bg-amber-50 dark:border-amber-900/30 dark:bg-amber-950/20')}>
+                    <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl', profile.isVerified ? 'bg-white text-emerald-600 dark:bg-slate-900' : 'bg-white text-amber-600 dark:bg-slate-900')}>{profile.isVerified ? <CheckCircle className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />}</span>
+                    <div className="min-w-0 flex-1"><h2 className={cn('font-semibold', profile.isVerified ? 'text-emerald-900 dark:text-emerald-200' : 'text-amber-900 dark:text-amber-200')}>{profile.isVerified ? t('sitterDashboard.verification.verified') : t('sitterDashboard.verification.pendingTitle')}</h2><p className={cn('mt-1 text-sm', profile.isVerified ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300')}>{profile.isVerified ? "You're all set! Pet parents can now book your services." : t('sitterDashboard.verification.pendingDesc')}</p></div>
+                    {!profile.isVerified && <Button variant="outline" size="sm" className="hidden shrink-0 border-amber-300 text-amber-700 sm:block">{t('sitterDashboard.verification.learnMore')}</Button>}
+                </div>
+
+                <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    {[
+                        { label: t('sitterDashboard.stats.activeServices'), value: activeServicesCount, note: 'Currently visible', icon: Briefcase, tone: 'bg-orange-50 text-primary dark:bg-orange-950/30' },
+                        { label: t('sitterDashboard.stats.rateRange'), value: `€${minRate} - €${maxRate}`, note: 'Your active rates', icon: DollarSign, tone: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30' },
+                        { label: t('sitterDashboard.stats.serviceRadius'), value: `${Math.round((profile.serviceRadius || 5) * 1.60934)} km`, note: 'Search coverage', icon: MapPin, tone: 'bg-blue-50 text-blue-600 dark:bg-blue-950/30' },
+                        { label: t('sitterDashboard.stats.experience'), value: `${profile.yearsExperience || 0} ${t('sitterDashboard.stats.years')}`, note: 'Professional experience', icon: Award, tone: 'bg-violet-50 text-violet-600 dark:bg-violet-950/30' },
+                    ].map((stat) => <div key={stat.label} className="flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"><div><p className="text-sm font-medium text-slate-500 dark:text-slate-400">{stat.label}</p><p className="mt-1 text-2xl font-bold tracking-tight text-slate-950 dark:text-white">{stat.value}</p><p className="mt-1 text-xs text-slate-400">{stat.note}</p></div><span className={cn('flex h-11 w-11 items-center justify-center rounded-xl', stat.tone)}><stat.icon className="h-5 w-5" /></span></div>)}
+                </section>
+
+                <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+                    <div className="space-y-6">
+                        <Card className="overflow-hidden rounded-2xl border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                            <CardHeader className="border-b border-slate-100 px-5 py-5 dark:border-slate-800 sm:px-6"><div className="flex items-center justify-between gap-4"><div><CardTitle className="text-xl text-slate-950 dark:text-white">{t('sitterDashboard.bookings.title')}</CardTitle><CardDescription className="mt-1">{t('sitterDashboard.bookings.subtitle')}</CardDescription></div><div className="flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800">{(['upcoming', 'history'] as const).map((tab) => <button key={tab} onClick={() => setActiveTab(tab)} className={cn('rounded-lg px-3 py-2 text-xs font-semibold transition sm:px-4', activeTab === tab ? 'bg-white text-slate-950 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white')}>{tab === 'upcoming' ? 'Upcoming' : 'History'}</button>)}</div></div></CardHeader>
+                            <CardContent className="p-0">
+                                {bookingsLoading ? <div className="px-6 py-14 text-center text-sm text-slate-500">{t('sitterDashboard.bookings.loading')}</div> : displayedBookings.length === 0 ? <div className="px-6 py-14 text-center"><Calendar className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-3 text-sm text-slate-500">{activeTab === 'upcoming' ? 'No upcoming booking requests.' : 'No booking history yet.'}</p></div> : <div className="divide-y divide-slate-100 dark:divide-slate-800">{displayedBookings.map((booking: Booking) => { const isPending = booking.status === BookingStatus.PENDING; const isAccepted = booking.status === BookingStatus.ACCEPTED; const statusStyle = isPending ? 'bg-amber-50 text-amber-700' : isAccepted ? 'bg-emerald-50 text-emerald-700' : booking.status === BookingStatus.COMPLETED ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-600'; return <div key={booking.id} className="flex flex-col gap-4 px-5 py-5 transition hover:bg-slate-50/70 dark:hover:bg-slate-800/40 sm:px-6"><div className="flex items-start justify-between gap-4"><div className="flex min-w-0 items-start gap-4"><span className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl', isPending ? 'bg-amber-50 text-amber-600' : isAccepted ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500')}><Calendar className="h-5 w-5" /></span><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold capitalize text-slate-950 dark:text-white">{booking.serviceType.replace(/([A-Z])/g, ' $1').trim()}</h3><span className={cn('rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide', statusStyle)}>{booking.status}</span></div><p className="mt-2 text-sm text-slate-500">{booking.owner?.user?.firstName} {booking.owner?.user?.lastName?.[0] ? `${booking.owner.user.lastName[0]}.` : ''}</p><p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500"><span className="inline-flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" />{format(new Date(booking.startDate), 'MMM d', dfOpts())} - {format(new Date(booking.endDate), 'MMM d, yyyy', dfOpts())}</span><span className="inline-flex items-center gap-1.5"><DollarSign className="h-3.5 w-3.5" />€{booking.totalPrice}</span></p></div></div><div className="flex shrink-0 items-center gap-2">{isPending && <><Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: BookingStatus.ACCEPTED })} disabled={updateBookingStatusMutation.isPending}>Accept</Button><Button size="sm" variant="outline" className="border-red-200 text-red-600 hover:bg-red-50" onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: BookingStatus.REJECTED })} disabled={updateBookingStatusMutation.isPending}>Reject</Button></>}{isAccepted && <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: BookingStatus.COMPLETED })} disabled={updateBookingStatusMutation.isPending}><CheckCircle className="mr-1.5 h-3.5 w-3.5" />Complete</Button>}<Button size="icon" variant="ghost" aria-label="Message owner" onClick={() => navigate('/sitter-messages', { state: { userId: booking.ownerId } })}><MessageSquare className="h-4 w-4" /></Button></div></div>{booking.message && <p className="ml-15 rounded-xl border-l-2 border-primary/40 bg-slate-50 px-4 py-3 text-sm italic text-slate-500 dark:bg-slate-800/50">“{booking.message}”</p>}</div>; })}</div>}
+                            </CardContent>
+                        </Card>
+
+                        <div className="grid gap-6 lg:grid-cols-2">
+                            <Card className="rounded-2xl border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"><CardHeader className="flex flex-row items-center justify-between px-5 py-5"><div><CardTitle className="flex items-center gap-2 text-lg"><Briefcase className="h-5 w-5 text-primary" />{t('sitterDashboard.cards.servicesRates')}</CardTitle><CardDescription className="mt-1">{t('sitterDashboard.sections.servicesDesc')}</CardDescription></div><Button variant="ghost" size="icon" onClick={() => openEditModal('services')}><Edit3 className="h-4 w-4" /></Button></CardHeader><CardContent className="grid gap-2 px-5 pb-5 sm:grid-cols-2">{profile.services && Object.entries(profile.services).map(([key, service]) => { if (!service) return null; const Icon = serviceIcons[key] || Briefcase; return <div key={key} className={cn('flex items-center justify-between rounded-xl border p-3', service.active ? 'border-emerald-100 bg-emerald-50/60 dark:border-emerald-900/30 dark:bg-emerald-950/20' : 'border-slate-200 bg-slate-50 opacity-60 dark:border-slate-800 dark:bg-slate-800/40')}><span className="flex min-w-0 items-center gap-2.5"><Icon className={cn('h-4 w-4 shrink-0', service.active ? 'text-emerald-600' : 'text-slate-400')} /><span className="truncate text-sm font-medium">{serviceNames[key]}</span></span><span className="text-sm font-bold">€{service.rate}</span></div>; })}</CardContent></Card>
+
+                            <Card className="rounded-2xl border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"><CardHeader className="flex flex-row items-center justify-between px-5 py-5"><div><CardTitle className="flex items-center gap-2 text-lg"><Calendar className="h-5 w-5 text-primary" />{t('sitterDashboard.cards.availability')}</CardTitle><CardDescription className="mt-1">{t('sitterDashboard.sections.availabilityDesc')}</CardDescription></div><Button variant="ghost" size="icon" onClick={() => openEditModal('availability')}><Edit3 className="h-4 w-4" /></Button></CardHeader><CardContent className="space-y-4 px-5 pb-5"><div className="flex flex-wrap gap-2">{profile.availability?.general?.map((day) => <span key={day} className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">{t(`sitterDashboard.days.${day}`, day)}</span>) || <span className="text-sm text-slate-500">Not specified</span>}</div><div className="flex items-center justify-between border-t border-slate-100 pt-4 text-sm dark:border-slate-800"><span className="text-slate-500">{t('sitterDashboard.fields.noticePeriod')}</span><span className="font-semibold">{profile.noticePeriod || t('sitterDashboard.values.notSpecified')}</span></div><AvailabilityCalendar blockedDates={profile.availability?.blockedDates || []} bookings={bookings || []} onToggleDate={handleToggleDate} className="w-full" /></CardContent></Card>
+                        </div>
+                    </div>
+
+                    <aside className="space-y-6">
+                        <Card className="overflow-hidden rounded-2xl border-0 bg-slate-950 text-white shadow-xl shadow-slate-900/10"><CardContent className="relative p-6"><div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-primary/30 blur-2xl" /><div className="relative"><div className="flex items-center gap-4"><span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-orange-400 text-lg font-bold">{user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}</span><div className="min-w-0"><h2 className="truncate text-xl font-semibold">{user?.firstName} {user?.lastName}</h2><p className="truncate text-sm text-slate-400">{user?.email}</p></div></div><div className="mt-6 space-y-3 border-t border-white/10 pt-5 text-sm text-slate-300"><p className="flex gap-2"><MapPin className="h-4 w-4 shrink-0 text-orange-300" />{profile.address || 'No address set'}</p><p className="flex gap-2"><Phone className="h-4 w-4 shrink-0 text-orange-300" />{profile.phone || 'No phone set'}</p><p className="flex gap-2"><Calendar className="h-4 w-4 shrink-0 text-orange-300" />Member since {new Date(profile.createdAt).toLocaleDateString()}</p></div><Button className="mt-6 w-full bg-white text-slate-950 hover:bg-slate-100" onClick={() => openEditModal('profile')}><Edit3 className="mr-2 h-4 w-4" />Edit profile</Button></div></CardContent></Card>
+
+                        <Card className="rounded-2xl border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"><CardHeader className="flex flex-row items-center justify-between px-5 py-5"><div><CardTitle className="flex items-center gap-2 text-lg"><MessageSquare className="h-5 w-5 text-blue-600" />Messages</CardTitle><CardDescription className="mt-1">{totalUnreadCount > 0 ? `${totalUnreadCount} unread message${totalUnreadCount > 1 ? 's' : ''}` : 'Stay connected with pet owners'}</CardDescription></div>{totalUnreadCount > 0 && <span className="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-bold text-rose-600">{totalUnreadCount} new</span>}</CardHeader><CardContent className="px-5 pb-5"><Link to="/sitter-messages"><Button variant="outline" className="w-full">Open messages<ArrowRight className="ml-auto h-4 w-4" /></Button></Link></CardContent></Card>
+
+                        <SupportRequestCard bookingOptions={bookings?.map((booking: Booking) => ({ id: booking.id, label: `${booking.serviceType.replace(/([A-Z])/g, ' $1').trim()} · ${format(new Date(booking.startDate), 'MMM d', dfOpts())}` }))} />
+
+                        <Card className="rounded-2xl border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"><CardHeader className="px-5 py-5"><CardTitle className="text-lg">Profile details</CardTitle><CardDescription className="mt-1">Keep your listing accurate and complete.</CardDescription></CardHeader><CardContent className="space-y-2 px-5 pb-5"><button onClick={() => openEditModal('preferences')} className="flex w-full items-center justify-between rounded-xl border border-slate-100 p-3 text-left text-sm transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800"><span className="flex items-center gap-3"><Heart className="h-4 w-4 text-primary" />Pet preferences</span><ChevronRight className="h-4 w-4 text-slate-400" /></button><button onClick={() => openEditModal('housing')} className="flex w-full items-center justify-between rounded-xl border border-slate-100 p-3 text-left text-sm transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800"><span className="flex items-center gap-3"><Home className="h-4 w-4 text-primary" />Housing details</span><ChevronRight className="h-4 w-4 text-slate-400" /></button><button onClick={() => openEditModal('experience')} className="flex w-full items-center justify-between rounded-xl border border-slate-100 p-3 text-left text-sm transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800"><span className="flex items-center gap-3"><Award className="h-4 w-4 text-primary" />Skills & certifications</span><ChevronRight className="h-4 w-4 text-slate-400" /></button><button onClick={() => openEditModal('services')} className="flex w-full items-center justify-between rounded-xl border border-slate-100 p-3 text-left text-sm transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800"><span className="flex items-center gap-3"><Settings className="h-4 w-4 text-primary" />Rates & services</span><ChevronRight className="h-4 w-4 text-slate-400" /></button></CardContent></Card>
+                    </aside>
+                </div>
+
+                <div className="hidden">
+                {/* Existing detailed dashboard markup retained for the edit workflow below. */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-3xl font-display font-bold text-foreground">
@@ -1093,6 +1151,8 @@ const SitterDashboard: React.FC = () => {
                     </CardContent>
                 </Card>
 
+
+                </div>
 
                 {/* Edit Modals */}
                 <EditModal
