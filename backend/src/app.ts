@@ -16,6 +16,8 @@ import reviewRoutes from './routes/review.routes';
 import messageRoutes from './routes/message.routes';
 import adminRoutes from './routes/admin.routes';
 import supportRoutes from './routes/support.routes';
+import paymentRoutes from './routes/payment.routes';
+import { handleStripeWebhook } from './controllers/payment.controller';
 
 // Middleware
 import { isAllowedOrigin } from './config/cors';
@@ -30,6 +32,15 @@ app.use(cors({
   },
   credentials: true
 }));
+
+// Stripe webhook MUST be registered before express.json(): signature
+// verification needs the untouched raw body, and a JSON parser would consume it.
+app.post(
+  '/api/payments/webhook',
+  express.raw({ type: 'application/json' }),
+  handleStripeWebhook
+);
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
@@ -42,6 +53,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/support-requests', supportRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Basic route
 app.get('/', (req, res) => {

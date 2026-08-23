@@ -1041,5 +1041,26 @@
     "notAvailable": "Not available",
     "verified": "Verified",
     "yearsExperience": "{{count}}+ years experience"
+  },
+  "payment": {
+    "title": "Payment",
+    "payNow": "Pay now",
+    "processing": "Processing...",
+    "done": "Done",
+    "close": "Close",
+    "successTitle": "Payment successful",
+    "successDesc": "Thanks! Your payment has been received.",
+    "secureNote": "Payments are securely processed by Stripe.",
+    "genericError": "Something went wrong with the payment. Please try again.",
+    "notCompleted": "The payment was not completed. Please try again.",
+    "notConfigured": "Payments are not configured yet. Please try again later.",
+    "testModeBadge": "Sandbox / test mode — no real money is charged.",
+    "testCardHint": "Use test card 4242 4242 4242 4242, any future expiry, any CVC.",
+    "pay": "Pay",
+    "paid": "Paid",
+    "paymentPending": "Payment pending",
+    "paymentFailed": "Payment failed",
+    "markCompleted": "Mark completed",
+    "awaitingPayment": "Awaiting payment"
   }
 }

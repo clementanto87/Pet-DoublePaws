@@ -156,6 +156,10 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
 
         if (isSitter && [BookingStatus.ACCEPTED, BookingStatus.REJECTED].includes(status)) {
             isValidUpdate = true;
+        } else if (isSitter && status === BookingStatus.COMPLETED) {
+            // A sitter marks the service as done, which is what makes the booking
+            // payable (the customer is charged after completion).
+            isValidUpdate = booking.status === BookingStatus.ACCEPTED;
         } else if (isOwner && status === BookingStatus.CANCELLED) {
             isValidUpdate = true;
         }

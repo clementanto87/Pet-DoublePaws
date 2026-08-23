@@ -30,6 +30,7 @@ import { Modal } from '../components/ui/Modal';
 import { reviewService } from '../services/review.service';
 import { messageService } from '../services/message.service';
 import { useToast } from '../components/ui/Toast';
+import { PayButton } from '../components/payment/PayButton';
 import { SupportRequestCard } from '../components/support/SupportRequestCard';
 
 interface Pet extends PetData {
@@ -440,6 +441,12 @@ const Dashboard: React.FC = () => {
                                                                 <Button variant="ghost" size="sm" onClick={() => handleCancel(booking.id)} className="text-red-600 hover:text-red-700 hover:bg-red-50">
                                                                     {t('dashboard.bookings.cancel')}
                                                                 </Button>
+                                                            )}
+                                                            {booking.status === BookingStatus.COMPLETED && (
+                                                                <PayButton
+                                                                    bookingId={booking.id}
+                                                                    amountLabel={booking.totalPrice ? `$${booking.totalPrice}` : undefined}
+                                                                />
                                                             )}
                                                             {booking.status === BookingStatus.COMPLETED && !(booking as any).review && (
                                                                 <Button size="sm" variant="outline" onClick={() => {
