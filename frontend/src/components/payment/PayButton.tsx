@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { CheckCircle, CreditCard } from 'lucide-react';
+import { CheckCircle, CreditCard, Loader2 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { PaymentModal } from './PaymentModal';
 import { paymentService } from '../../services/payment.service';
@@ -25,6 +25,9 @@ export const PayButton: React.FC<PayButtonProps> = ({ bookingId, amountLabel }) 
         queryFn: () => paymentService.getForBooking(bookingId),
         // Payments are enabled per-environment; a failure here shouldn't spam retries.
         retry: false,
+        // Stripe confirms in the browser first; the signed webhook updates our DB
+        // shortly afterwards. Poll only while that server-side status is pending.
+        refetchInterval: (query) => query.state.data?.status === 'PENDING' ? 2000 : false,
     });
 
     if (isLoading) return null;
@@ -35,6 +38,15 @@ export const PayButton: React.FC<PayButtonProps> = ({ bookingId, amountLabel }) 
                 <CheckCircle className="w-3 h-3" />
                 {t('payment.paid')}
             </span>
+        );
+    }
+
+    if (data?.status === 'PENDING') {
+        return (
+            <Button size="sm" disabled className="cursor-wait bg-amber-500 text-white hover:bg-amber-500">
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                {t('payment.processing')}
+            </Button>
         );
     }
 
