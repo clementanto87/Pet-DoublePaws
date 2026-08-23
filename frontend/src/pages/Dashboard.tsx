@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { dfOpts } from '../lib/dateLocale';
 import { Link, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
     Plus,
     Calendar,
     Dog,
     Cat,
-    Clock,
     Star,
     Search,
     Shield,
@@ -32,6 +31,7 @@ import { messageService } from '../services/message.service';
 import { useToast } from '../components/ui/Toast';
 import { PayButton } from '../components/payment/PayButton';
 import { SupportRequestCard } from '../components/support/SupportRequestCard';
+import { paymentService } from '../services/payment.service';
 
 interface Pet extends PetData {
     id: string;
@@ -60,6 +60,20 @@ const Dashboard: React.FC = () => {
     const { data: bookings, isLoading: bookingsLoading } = useQuery({
         queryKey: ['myBookings'],
         queryFn: () => bookingService.getBookings('owner'),
+    });
+
+    // Completed services remain upcoming until Stripe confirms payment. The
+    // payment queries use the same keys as PayButton, so its webhook-driven
+    // status update automatically moves the booking to History.
+    const completedBookings = bookings?.filter(
+        (booking: Booking) => booking.status === BookingStatus.COMPLETED
+    ) || [];
+    const completedPaymentQueries = useQueries({
+        queries: completedBookings.map((booking: Booking) => ({
+            queryKey: ['payment', booking.id],
+            queryFn: () => paymentService.getForBooking(booking.id),
+            retry: false,
+        })),
     });
 
     // Fetch conversations for unread count
@@ -113,12 +127,20 @@ const Dashboard: React.FC = () => {
 
     const petCount = pets?.length || 0;
 
+    const paidCompletedBookingIds = new Set(
+        completedBookings.filter((_booking: Booking, index: number) =>
+            (completedPaymentQueries[index]?.data as { status?: string } | undefined)?.status === 'SUCCEEDED'
+        ).map((booking: Booking) => booking.id)
+    );
+
     const upcomingBookings = bookings?.filter((b: Booking) =>
-        b.status === BookingStatus.PENDING || b.status === BookingStatus.ACCEPTED
+        b.status === BookingStatus.PENDING ||
+        b.status === BookingStatus.ACCEPTED ||
+        (b.status === BookingStatus.COMPLETED && !paidCompletedBookingIds.has(b.id))
     ) || [];
 
     const historicalBookings = bookings?.filter((b: Booking) =>
-        b.status === BookingStatus.COMPLETED ||
+        (b.status === BookingStatus.COMPLETED && paidCompletedBookingIds.has(b.id)) ||
         b.status === BookingStatus.REJECTED ||
         b.status === BookingStatus.CANCELLED
     ) || [];
@@ -134,390 +156,142 @@ const Dashboard: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50/50 dark:bg-background-alt-dark pt-4 sm:pt-6 md:pt-8 pb-6 sm:pb-8 md:pb-12 px-3 sm:px-4 md:px-6 lg:px-8 overflow-x-hidden">
-            <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 md:space-y-8">
-                {/* Header hero */}
-                <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-primary via-orange-500 to-amber-500 p-6 sm:p-8 text-white shadow-lg shadow-primary/20">
-                    <div className="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-                    <div className="absolute -bottom-16 right-1/4 text-white/10 text-[10rem] leading-none select-none pointer-events-none hidden sm:block">🐾</div>
-                    <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="min-w-0 flex-1">
-                            <p className="text-white/80 text-xs sm:text-sm font-medium">{format(new Date(), 'EEEE, MMMM d', dfOpts())}</p>
-                            <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold mt-1">
-                                {getGreeting()}, {user?.firstName}! 👋
-                            </h1>
-                            <p className="text-sm sm:text-base text-white/90 mt-1.5">
-                                {petCount > 0
-                                    ? t('dashboard.petsInCare', { count: petCount })
-                                    : t('dashboard.welcome')
-                                }
-                            </p>
-                        </div>
-                        <Link to="/booking" className="flex-shrink-0">
-                            <Button className="bg-white text-primary hover:bg-white/90 shadow-lg font-semibold text-sm">
-                                <Calendar className="w-4 h-4 mr-2" />
+        <div className="min-h-screen bg-[#f7f8fa] dark:bg-background-alt-dark px-4 py-6 sm:px-6 lg:px-8 lg:py-9">
+            <div className="mx-auto max-w-7xl space-y-6 lg:space-y-8">
+                <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <p className="text-sm font-medium text-muted-foreground">{format(new Date(), 'EEEE, MMMM d', dfOpts())}</p>
+                        <h1 className="mt-1 text-3xl font-display font-bold tracking-tight text-slate-950 dark:text-white sm:text-4xl">
+                            {getGreeting()}, {user?.firstName}
+                        </h1>
+                        <p className="mt-2 max-w-xl text-sm text-slate-500 dark:text-slate-400 sm:text-base">
+                            {petCount > 0 ? t('dashboard.petsInCare', { count: petCount }) : t('dashboard.welcome')}
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Link to="/messages" className="relative hidden sm:block">
+                            <Button variant="outline" size="icon" aria-label={t('dashboard.quickActions.messages.title')}>
+                                <MessageSquare className="h-4 w-4" />
+                            </Button>
+                            {totalUnreadCount > 0 && <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-[#f7f8fa] bg-primary" />}
+                        </Link>
+                        <Link to="/booking">
+                            <Button className="h-11 rounded-xl px-5 shadow-md shadow-primary/20">
+                                <Plus className="mr-2 h-4 w-4" />
                                 {t('dashboard.bookNow')}
                             </Button>
                         </Link>
                     </div>
-                </div>
+                </header>
 
-                {/* Stats Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+                <section className="grid gap-3 sm:grid-cols-3">
                     {[
-                        {
-                            label: t('dashboard.stats.myPets'), value: petCount, sub: t('dashboard.statsSub.myPets'),
-                            icon: PawPrint, accent: 'text-primary', chip: 'bg-primary/10',
-                            onClick: () => navigate('/pet-profile'),
-                        },
-                        {
-                            label: t('dashboard.stats.upcoming'), value: upcomingBookings.length, sub: t('dashboard.statsSub.upcoming'),
-                            icon: Calendar, accent: 'text-blue-600', chip: 'bg-blue-100 dark:bg-blue-900/40',
-                            onClick: () => setActiveTab('upcoming'),
-                        },
-                        {
-                            label: t('dashboard.stats.completed'), value: bookings?.filter((b: Booking) => b.status === BookingStatus.COMPLETED).length || 0, sub: t('dashboard.statsSub.completed'),
-                            icon: CheckCircle, accent: 'text-emerald-600', chip: 'bg-emerald-100 dark:bg-emerald-900/40',
-                            onClick: () => setActiveTab('history'),
-                        },
+                        { label: t('dashboard.stats.myPets'), value: petCount, note: t('dashboard.statsSub.myPets'), icon: PawPrint, tone: 'bg-orange-50 text-primary dark:bg-orange-950/30', action: () => navigate('/pet-profile') },
+                        { label: t('dashboard.stats.upcoming'), value: upcomingBookings.length, note: t('dashboard.statsSub.upcoming'), icon: Calendar, tone: 'bg-blue-50 text-blue-600 dark:bg-blue-950/30', action: () => setActiveTab('upcoming') },
+                        { label: t('dashboard.stats.completed'), value: historicalBookings.filter((booking: Booking) => booking.status === BookingStatus.COMPLETED).length, note: t('dashboard.statsSub.completed'), icon: CheckCircle, tone: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30', action: () => setActiveTab('history') },
                     ].map((stat) => (
-                        <button
-                            key={stat.label}
-                            onClick={stat.onClick}
-                            className="text-left bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 sm:p-6 shadow-sm hover:shadow-lg hover:border-gray-300 hover:-translate-y-0.5 transition-all"
-                        >
-                            <div className="flex items-start justify-between">
-                                <div>
-                                    <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
-                                    <p className="text-3xl sm:text-4xl font-bold text-foreground mt-1 tabular-nums">{stat.value}</p>
-                                    <p className="text-xs text-muted-foreground mt-1">{stat.sub}</p>
-                                </div>
-                                <div className={cn('w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0', stat.chip)}>
-                                    <stat.icon className={cn('w-6 h-6', stat.accent)} />
-                                </div>
+                        <button key={stat.label} onClick={stat.action} className="group flex items-center justify-between rounded-2xl border border-slate-200/80 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+                            <div>
+                                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{stat.label}</p>
+                                <p className="mt-1 text-3xl font-bold tracking-tight text-slate-950 dark:text-white">{stat.value}</p>
+                                <p className="mt-1 text-xs text-slate-400">{stat.note}</p>
                             </div>
+                            <span className={cn('flex h-11 w-11 items-center justify-center rounded-xl', stat.tone)}><stat.icon className="h-5 w-5" /></span>
                         </button>
                     ))}
-                </div>
+                </section>
 
-                {/* Quick Actions Row */}
-                <div>
-                    <h3 className="text-lg font-bold text-foreground mb-4">{t('dashboard.quickActions.title')}</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <Link to="/booking">
-                            <Card className="hover:shadow-lg hover:-translate-y-0.5 hover:border-gray-300 transition-all cursor-pointer h-full group">
-                                <CardContent className="p-6 flex items-center justify-between">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                            <Search className="w-6 h-6 text-orange-600" />
-                                        </div>
-                                        <div>
-                                            <h4 className="font-bold text-foreground">{t('dashboard.quickActions.bookSitter.title')}</h4>
-                                            <p className="text-sm text-muted-foreground">{t('dashboard.quickActions.bookSitter.desc')}</p>
-                                        </div>
+                <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+                    <div className="space-y-6">
+                        <Card className="overflow-hidden rounded-2xl border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                            <CardHeader className="border-b border-slate-100 px-5 py-5 dark:border-slate-800 sm:px-6">
+                                <div className="flex items-center justify-between gap-4">
+                                    <div>
+                                        <CardTitle className="text-xl text-slate-950 dark:text-white">{t('dashboard.myBookingsTitle')}</CardTitle>
+                                        <p className="mt-1 text-sm text-slate-500">{activeTab === 'upcoming' ? t('dashboard.tabs.upcoming') : t('dashboard.tabs.history')}</p>
                                     </div>
-                                    <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                                </CardContent>
-                            </Card>
-                        </Link>
-
-                        <Link to="/pet-profile">
-                            <Card className="hover:shadow-lg hover:-translate-y-0.5 hover:border-gray-300 transition-all cursor-pointer h-full group">
-                                <CardContent className="p-6 flex items-center justify-between">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                            <Plus className="w-6 h-6 text-blue-600" />
-                                        </div>
-                                        <div>
-                                            <h4 className="font-bold text-foreground">{t('dashboard.quickActions.addPet.title')}</h4>
-                                            <p className="text-sm text-muted-foreground">{t('dashboard.quickActions.addPet.desc')}</p>
-                                        </div>
+                                    <div className="flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+                                        {(['upcoming', 'history'] as const).map((tab) => (
+                                            <button key={tab} onClick={() => setActiveTab(tab)} className={cn('rounded-lg px-3 py-2 text-xs font-semibold transition sm:px-4', activeTab === tab ? 'bg-white text-slate-950 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white')}>
+                                                {t(`dashboard.tabs.${tab}`)}
+                                            </button>
+                                        ))}
                                     </div>
-                                    <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                                </CardContent>
-                            </Card>
-                        </Link>
-
-                        <Link to="/messages">
-                            <Card className="hover:shadow-lg hover:-translate-y-0.5 hover:border-gray-300 transition-all cursor-pointer h-full group">
-                                <CardContent className="p-6 flex items-center justify-between">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center group-hover:scale-110 transition-transform relative">
-                                            <MessageSquare className="w-6 h-6 text-purple-600" />
-                                            {totalUnreadCount > 0 && (
-                                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white dark:border-gray-900" />
-                                            )}
-                                        </div>
-                                        <div>
-                                            <h4 className="font-bold text-foreground">{t('dashboard.quickActions.messages.title')}</h4>
-                                            <p className="text-sm text-muted-foreground">{t('dashboard.quickActions.messages.desc')}</p>
-                                        </div>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="p-0">
+                                {displayedBookings.length === 0 ? (
+                                    <div className="px-6 py-14 text-center">
+                                        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 dark:bg-slate-800"><Calendar className="h-6 w-6" /></span>
+                                        <p className="mt-4 text-sm text-slate-500">{activeTab === 'upcoming' ? t('dashboard.emptyUpcoming') : t('dashboard.emptyHistory')}</p>
+                                        {activeTab === 'upcoming' && <Link to="/booking" className="mt-4 inline-block"><Button size="sm">{t('dashboard.bookNow')}</Button></Link>}
                                     </div>
-                                    <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                                </CardContent>
-                            </Card>
-                        </Link>
-                    </div>
-                </div>
-
-                {/* Main Content Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6 items-start">
-
-                    {/* Left Column (2/3) - My Pets & Bookings (Now separate, but stacked) */}
-                    <div className="lg:col-span-2 space-y-4 sm:space-y-6 md:space-y-8">
-
-                        {/* My Pets Section */}
-                        <div>
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-bold text-foreground">{t('dashboard.myPetsTitle')}</h3>
-                                <Link to="/pet-profile">
-                                    <Button variant="outline" size="sm">
-                                        <Plus className="w-4 h-4 mr-2" />
-                                        {t('dashboard.addPet')}
-                                    </Button>
-                                </Link>
-                            </div>
-
-                            {!pets || pets.length === 0 ? (
-                                <Card className="bg-muted/30 border-dashed">
-                                    <CardContent className="p-8 text-center">
-                                        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                                            <PawPrint className="w-8 h-8 text-muted-foreground" />
-                                        </div>
-                                        <h3 className="font-semibold text-foreground mb-1">{t('dashboard.petCard.noPetsTitle')}</h3>
-                                        <p className="text-muted-foreground text-sm mb-4">{t('dashboard.petCard.noPetsDesc')}</p>
-                                        <Link to="/pet-profile">
-                                            <Button size="sm">{t('dashboard.petCard.createProfile')}</Button>
-                                        </Link>
-                                    </CardContent>
-                                </Card>
-                            ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {pets.map((pet: Pet) => (
-                                        <Card key={pet.id} className="overflow-hidden group hover:shadow-md transition-all">
-                                            <div className="relative h-32 bg-gray-100">
-                                                {pet.imageUrl ? (
-                                                    <img src={pet.imageUrl} alt={pet.name} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <div className={cn(
-                                                        "w-full h-full flex items-center justify-center",
-                                                        "bg-gradient-to-br",
-                                                        pet.species?.toLowerCase() === 'dog'
-                                                            ? "from-orange-100 to-amber-100"
-                                                            : "from-purple-100 to-pink-100"
-                                                    )}>
-                                                        {pet.species?.toLowerCase() === 'dog' ? (
-                                                            <Dog className="w-12 h-12 text-orange-300" />
-                                                        ) : (
-                                                            <Cat className="w-12 h-12 text-purple-300" />
-                                                        )}
-                                                    </div>
-                                                )}
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                                                <div className="absolute bottom-3 left-4">
-                                                    <h4 className="text-white font-bold text-lg">{pet.name}</h4>
-                                                    <p className="text-white/80 text-xs">{pet.breed || pet.species}</p>
-                                                </div>
-                                                <span className="absolute top-3 right-3 px-2 py-0.5 bg-white/90 dark:bg-black/50 backdrop-blur-sm rounded text-[10px] font-bold uppercase tracking-wider text-foreground">
-                                                    {pet.species}
-                                                </span>
-                                            </div>
-                                            <CardContent className="p-4">
-                                                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <Clock className="w-3.5 h-3.5" />
-                                                        {pet.age} {t('dashboard.petCard.yrs')}
-                                                    </div>
-                                                    {pet.weight && (
-                                                        <div className="flex items-center gap-1.5">
-                                                            <span className="text-xs">⚖️</span>
-                                                            {pet.weight} kg
+                                ) : (
+                                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                                        {displayedBookings.map((booking: Booking) => {
+                                            const isCompleted = booking.status === BookingStatus.COMPLETED;
+                                            const statusStyle = booking.status === BookingStatus.ACCEPTED ? 'bg-emerald-50 text-emerald-700' : booking.status === BookingStatus.PENDING ? 'bg-amber-50 text-amber-700' : isCompleted ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-600';
+                                            return (
+                                                <div key={booking.id} className="group flex flex-col gap-4 px-5 py-5 transition hover:bg-slate-50/70 dark:hover:bg-slate-800/40 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                                                    <div className="flex min-w-0 items-start gap-4">
+                                                        <span className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl', isCompleted ? 'bg-blue-50 text-blue-600' : booking.status === BookingStatus.ACCEPTED ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600')}><Calendar className="h-5 w-5" /></span>
+                                                        <div className="min-w-0">
+                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                <h3 className="truncate font-semibold capitalize text-slate-950 dark:text-white">{booking.serviceType.replace(/([A-Z])/g, ' $1').trim()}</h3>
+                                                                <span className={cn('rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide', statusStyle)}>{String(t(`dashboard.bookings.status.${booking.status.toLowerCase()}`, { defaultValue: booking.status }))}</span>
+                                                            </div>
+                                                            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
+                                                                <span className="inline-flex items-center gap-1.5"><User className="h-3.5 w-3.5" />{booking.sitter?.user?.firstName} {booking.sitter?.user?.lastName?.[0]}.</span>
+                                                                <span className="inline-flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" />{format(new Date(booking.startDate), 'MMM d', dfOpts())} - {format(new Date(booking.endDate), 'MMM d, yyyy', dfOpts())}</span>
+                                                            </div>
                                                         </div>
-                                                    )}
+                                                    </div>
+                                                    <div className="flex items-center gap-2 pl-15 sm:pl-0">
+                                                        {booking.status === BookingStatus.PENDING && <Button variant="ghost" size="sm" onClick={() => handleCancel(booking.id)} className="text-red-600 hover:bg-red-50 hover:text-red-700">{t('dashboard.bookings.cancel')}</Button>}
+                                                        {isCompleted && <PayButton bookingId={booking.id} amountLabel={booking.totalPrice ? `$${booking.totalPrice}` : undefined} />}
+                                                        {isCompleted && !(booking as any).review && <Button size="sm" variant="outline" onClick={() => { setSelectedBookingId(booking.id); setReviewModalOpen(true); }}>{t('dashboard.bookings.review')}</Button>}
+                                                        <Button size="icon" variant="ghost" aria-label={t('dashboard.quickActions.messages.title')} onClick={() => navigate('/messages', { state: { userId: booking.sitter?.userId } })}><MessageSquare className="h-4 w-4" /></Button>
+                                                    </div>
                                                 </div>
-                                                <div className="grid grid-cols-2 gap-2">
-                                                    <Button variant="outline" size="sm" className="w-full" onClick={() => navigate('/pet-profile', { state: { pet } })}>
-                                                        {t('dashboard.petCard.edit')}
-                                                    </Button>
-                                                    <Button size="sm" className="w-full" onClick={() => navigate('/booking')}>
-                                                        {t('dashboard.petCard.book')}
-                                                    </Button>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        <section>
+                            <div className="mb-4 flex items-center justify-between">
+                                <div><h2 className="text-xl font-bold text-slate-950 dark:text-white">{t('dashboard.myPetsTitle')}</h2><p className="mt-1 text-sm text-slate-500">{petCount ? t('dashboard.petsInCare', { count: petCount }) : t('dashboard.petCard.noPetsDesc')}</p></div>
+                                <Link to="/pet-profile"><Button variant="outline" size="sm"><Plus className="mr-1.5 h-4 w-4" />{t('dashboard.addPet')}</Button></Link>
+                            </div>
+                            {!pets || pets.length === 0 ? (
+                                <Card className="rounded-2xl border-dashed bg-white dark:bg-slate-900"><CardContent className="flex flex-col items-center px-6 py-10 text-center"><PawPrint className="h-8 w-8 text-slate-300" /><h3 className="mt-3 font-semibold text-slate-950 dark:text-white">{t('dashboard.petCard.noPetsTitle')}</h3><Link to="/pet-profile" className="mt-4"><Button size="sm">{t('dashboard.petCard.createProfile')}</Button></Link></CardContent></Card>
+                            ) : (
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    {pets.slice(0, 4).map((pet: Pet) => (
+                                        <div key={pet.id} className="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                                            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-orange-50 dark:bg-orange-950/30">
+                                                {pet.imageUrl ? <img src={pet.imageUrl} alt={pet.name} className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center">{pet.species?.toLowerCase() === 'dog' ? <Dog className="h-8 w-8 text-orange-300" /> : <Cat className="h-8 w-8 text-purple-300" />}</div>}
+                                            </div>
+                                            <div className="min-w-0 flex-1"><h3 className="font-semibold text-slate-950 dark:text-white">{pet.name}</h3><p className="mt-1 text-sm capitalize text-slate-500">{pet.breed || pet.species} · {pet.age} {t('dashboard.petCard.yrs')}</p><button onClick={() => navigate('/pet-profile', { state: { pet } })} className="mt-2 text-xs font-semibold text-primary hover:underline">{t('dashboard.petCard.edit')}</button></div>
+                                            <button onClick={() => navigate('/booking')} className="rounded-lg p-2 text-slate-400 transition hover:bg-orange-50 hover:text-primary" aria-label={t('dashboard.petCard.book')}><ArrowRight className="h-4 w-4" /></button>
+                                        </div>
                                     ))}
                                 </div>
                             )}
-                        </div>
-
-                        {/* Bookings Section */}
-                        <div>
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-bold text-foreground">{t('dashboard.myBookingsTitle')}</h3>
-                                <div className="flex bg-muted p-1 rounded-lg">
-                                    <button
-                                        onClick={() => setActiveTab('upcoming')}
-                                        className={cn(
-                                            "px-3 py-1 text-xs font-semibold rounded-md transition-all",
-                                            activeTab === 'upcoming'
-                                                ? "bg-background text-foreground shadow-sm"
-                                                : "text-muted-foreground hover:text-foreground"
-                                        )}
-                                    >
-                                        {t('dashboard.tabs.upcoming')}
-                                    </button>
-                                    <button
-                                        onClick={() => setActiveTab('history')}
-                                        className={cn(
-                                            "px-3 py-1 text-xs font-semibold rounded-md transition-all",
-                                            activeTab === 'history'
-                                                ? "bg-background text-foreground shadow-sm"
-                                                : "text-muted-foreground hover:text-foreground"
-                                        )}
-                                    >
-                                        {t('dashboard.tabs.history')}
-                                    </button>
-                                </div>
-                            </div>
-
-                            <Card>
-                                <CardContent className="p-0">
-                                    {displayedBookings.length === 0 ? (
-                                        <div className="p-8 text-center">
-                                            <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-3">
-                                                <Calendar className="w-6 h-6 text-muted-foreground" />
-                                            </div>
-                                            <p className="text-muted-foreground text-sm">
-                                                {activeTab === 'upcoming'
-                                                    ? t('dashboard.emptyUpcoming')
-                                                    : t('dashboard.emptyHistory')}
-                                            </p>
-                                        </div>
-                                    ) : (
-                                        <div className="divide-y divide-border">
-                                            {displayedBookings.map((booking: Booking) => (
-                                                <div key={booking.id} className="p-4 hover:bg-muted/30 transition-colors">
-                                                    <div className="flex flex-col sm:flex-row gap-4 justify-between">
-                                                        <div className="flex gap-4">
-                                                            <div className={cn(
-                                                                "w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0",
-                                                                booking.status === BookingStatus.ACCEPTED ? "bg-green-100 text-green-600" :
-                                                                    booking.status === BookingStatus.PENDING ? "bg-amber-100 text-amber-600" :
-                                                                        "bg-gray-100 text-gray-500"
-                                                            )}>
-                                                                <Calendar className="w-5 h-5" />
-                                                            </div>
-                                                            <div>
-                                                                <div className="flex items-center gap-2 mb-1">
-                                                                    <h4 className="font-bold text-foreground">
-                                                                        {booking.serviceType.replace(/([A-Z])/g, ' $1').trim()}
-                                                                    </h4>
-                                                                    <span className={cn(
-                                                                        "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase",
-                                                                        booking.status === BookingStatus.ACCEPTED ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
-                                                                            booking.status === BookingStatus.PENDING ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
-                                                                                booking.status === BookingStatus.COMPLETED ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
-                                                                                    "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400"
-                                                                    )}>
-                                                                        {String(t(`dashboard.bookings.status.${booking.status.toLowerCase()}`, { defaultValue: booking.status }))}
-                                                                    </span>
-                                                                </div>
-
-                                                                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                                                                    <div className="flex items-center gap-1.5">
-                                                                        <User className="w-3.5 h-3.5" />
-                                                                        {booking.sitter?.user?.firstName} {booking.sitter?.user?.lastName?.[0]}.
-                                                                    </div>
-                                                                    <div className="flex items-center gap-1.5">
-                                                                        <Calendar className="w-3.5 h-3.5" />
-                                                                        {format(new Date(booking.startDate), 'MMM d', dfOpts())} - {format(new Date(booking.endDate), 'MMM d, yyyy', dfOpts())}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="flex items-center gap-2 self-start sm:self-center">
-                                                            {booking.status === BookingStatus.PENDING && (
-                                                                <Button variant="ghost" size="sm" onClick={() => handleCancel(booking.id)} className="text-red-600 hover:text-red-700 hover:bg-red-50">
-                                                                    {t('dashboard.bookings.cancel')}
-                                                                </Button>
-                                                            )}
-                                                            {booking.status === BookingStatus.COMPLETED && (
-                                                                <PayButton
-                                                                    bookingId={booking.id}
-                                                                    amountLabel={booking.totalPrice ? `$${booking.totalPrice}` : undefined}
-                                                                />
-                                                            )}
-                                                            {booking.status === BookingStatus.COMPLETED && !(booking as any).review && (
-                                                                <Button size="sm" variant="outline" onClick={() => {
-                                                                    setSelectedBookingId(booking.id);
-                                                                    setReviewModalOpen(true);
-                                                                }}>
-                                                                    {t('dashboard.bookings.review')}
-                                                                </Button>
-                                                            )}
-                                                            <Button size="sm" variant="ghost" onClick={() => navigate('/messages', { state: { userId: booking.sitter?.userId } })}>
-                                                                <MessageSquare className="w-4 h-4" />
-                                                            </Button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </div>
-
+                        </section>
                     </div>
 
-                    {/* Right Column (1/3) - Sidebar */}
-                    <div className="space-y-6">
-                        <Card className="bg-orange-50 dark:bg-orange-900/10 border-orange-100 dark:border-orange-900/20">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2 text-orange-900 dark:text-orange-100">
-                                    <Shield className="w-5 h-5 text-orange-500" />
-                                    {t('dashboard.whyChooseUs.title')}
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="flex gap-3">
-                                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                    <p className="text-sm text-muted-foreground">{t('dashboard.whyChooseUs.p1')}</p>
-                                </div>
-                                <div className="flex gap-3">
-                                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                    <p className="text-sm text-muted-foreground">{t('dashboard.whyChooseUs.p2')}</p>
-                                </div>
-                                <div className="flex gap-3">
-                                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                                    <p className="text-sm text-muted-foreground">{t('dashboard.whyChooseUs.p3')}</p>
-                                </div>
-                            </CardContent>
+                    <aside className="space-y-6">
+                        <Card className="overflow-hidden rounded-2xl border-0 bg-slate-950 text-white shadow-xl shadow-slate-900/10">
+                            <CardContent className="relative p-6"><div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-primary/30 blur-2xl" /><div className="relative"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10"><Shield className="h-5 w-5 text-orange-300" /></span><h2 className="mt-5 text-xl font-semibold">{t('dashboard.whyChooseUs.title')}</h2><p className="mt-2 text-sm leading-6 text-slate-300">{t('dashboard.whyChooseUs.p1')}</p><div className="mt-5 space-y-3 text-sm text-slate-200"><p className="flex gap-2"><CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />{t('dashboard.whyChooseUs.p2')}</p><p className="flex gap-2"><CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />{t('dashboard.whyChooseUs.p3')}</p></div></div></CardContent>
                         </Card>
 
-                        {/* Help / Promo Card */}
-                        <Card className="bg-primary text-primary-foreground overflow-hidden relative">
-                            <div className="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 bg-white/10 rounded-full blur-xl" />
-                            <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-32 h-32 bg-black/10 rounded-full blur-xl" />
-                            <CardContent className="p-6 relative z-10">
-                                <h3 className="font-bold text-lg mb-2">{t('dashboard.help.title')}</h3>
-                                <p className="text-primary-foreground/90 text-sm mb-4">
-                                    {t('dashboard.help.desc')}
-                                </p>
-                                <Button variant="secondary" size="sm" className="w-full">
-                                    {t('dashboard.help.contact')}
-                                </Button>
-                            </CardContent>
-                        </Card>
-                        <SupportRequestCard
-                            bookingOptions={bookings?.map((booking: Booking) => ({
-                                id: booking.id,
-                                label: `${booking.serviceType.replace(/([A-Z])/g, ' $1').trim()} · ${format(new Date(booking.startDate), 'MMM d', dfOpts())}`,
-                            }))}
-                        />
-                    </div>
+                        <div className="rounded-2xl border border-orange-100 bg-orange-50 p-5 dark:border-orange-900/30 dark:bg-orange-950/20"><div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-primary shadow-sm dark:bg-slate-900"><Search className="h-5 w-5" /></span><div><h3 className="font-semibold text-slate-950 dark:text-white">{t('dashboard.quickActions.bookSitter.title')}</h3><p className="mt-1 text-sm leading-5 text-slate-600 dark:text-slate-300">{t('dashboard.quickActions.bookSitter.desc')}</p><Link to="/booking" className="mt-3 inline-flex items-center text-sm font-semibold text-primary hover:underline">{t('dashboard.bookNow')}<ArrowRight className="ml-1.5 h-4 w-4" /></Link></div></div></div>
 
+                        <SupportRequestCard bookingOptions={bookings?.map((booking: Booking) => ({ id: booking.id, label: `${booking.serviceType.replace(/([A-Z])/g, ' $1').trim()} · ${format(new Date(booking.startDate), 'MMM d', dfOpts())}` }))} />
+                    </aside>
                 </div>
             </div>
 
