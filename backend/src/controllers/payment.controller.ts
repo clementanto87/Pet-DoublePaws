@@ -3,9 +3,21 @@ import { AppDataSource } from '../config/database';
 import { Payment, PaymentStatus } from '../entities/Payment.entity';
 import { Booking, BookingStatus } from '../entities/Booking.entity';
 import { stripe, isStripeConfigured, stripeCurrency, stripeWebhookSecret, isStripeTestMode } from '../config/stripe';
+import { emailService } from '../services/email.service';
 
 const paymentRepository = () => AppDataSource.getRepository(Payment);
 const bookingRepository = () => AppDataSource.getRepository(Booking);
+
+const notifyPaymentStatus = (payment: Payment, status: 'succeeded' | 'failed' | 'refunded') => {
+    if (!payment.booking) return;
+
+    if (payment.booking.owner) {
+        void emailService.sendPaymentStatus(payment.booking.owner, payment.booking, status);
+    }
+    if (payment.booking.sitter?.user) {
+        void emailService.sendPaymentStatus(payment.booking.sitter.user, payment.booking, status);
+    }
+};
 
 /** Money is stored/sent to Stripe in the smallest currency unit (cents). */
 const toMinorUnits = (amount: number | string): number =>
@@ -211,30 +223,51 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
         switch (event.type) {
             case 'payment_intent.succeeded': {
                 const intent = event.data.object as any;
-                await paymentRepository().update(
-                    { stripePaymentIntentId: intent.id },
-                    { status: PaymentStatus.SUCCEEDED, failureReason: null }
-                );
+                const payment = await paymentRepository().findOne({
+                    where: { stripePaymentIntentId: intent.id },
+                    relations: ['booking', 'booking.owner', 'booking.sitter', 'booking.sitter.user'],
+                });
+                if (payment && payment.status !== PaymentStatus.SUCCEEDED) {
+                    await paymentRepository().update(
+                        { stripePaymentIntentId: intent.id },
+                        { status: PaymentStatus.SUCCEEDED, failureReason: null }
+                    );
+                    notifyPaymentStatus(payment, 'succeeded');
+                }
                 break;
             }
             case 'payment_intent.payment_failed': {
                 const intent = event.data.object as any;
-                await paymentRepository().update(
-                    { stripePaymentIntentId: intent.id },
-                    {
-                        status: PaymentStatus.FAILED,
-                        failureReason: intent.last_payment_error?.message ?? 'Payment failed',
-                    }
-                );
+                const payment = await paymentRepository().findOne({
+                    where: { stripePaymentIntentId: intent.id },
+                    relations: ['booking', 'booking.owner', 'booking.sitter', 'booking.sitter.user'],
+                });
+                if (payment && payment.status !== PaymentStatus.FAILED) {
+                    await paymentRepository().update(
+                        { stripePaymentIntentId: intent.id },
+                        {
+                            status: PaymentStatus.FAILED,
+                            failureReason: intent.last_payment_error?.message ?? 'Payment failed',
+                        }
+                    );
+                    notifyPaymentStatus(payment, 'failed');
+                }
                 break;
             }
             case 'charge.refunded': {
                 const charge = event.data.object as any;
                 if (charge.payment_intent) {
-                    await paymentRepository().update(
-                        { stripePaymentIntentId: charge.payment_intent },
-                        { status: PaymentStatus.REFUNDED }
-                    );
+                    const payment = await paymentRepository().findOne({
+                        where: { stripePaymentIntentId: charge.payment_intent },
+                        relations: ['booking', 'booking.owner', 'booking.sitter', 'booking.sitter.user'],
+                    });
+                    if (payment && payment.status !== PaymentStatus.REFUNDED) {
+                        await paymentRepository().update(
+                            { stripePaymentIntentId: charge.payment_intent },
+                            { status: PaymentStatus.REFUNDED }
+                        );
+                        notifyPaymentStatus(payment, 'refunded');
+                    }
                 }
                 break;
             }

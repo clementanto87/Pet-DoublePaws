@@ -5,6 +5,7 @@ import { SitterProfile } from '../entities/SitterProfile.entity';
 import { User } from '../entities/User.entity';
 import { Message } from '../entities/Message.entity';
 import { getIO } from '../socket';
+import { emailService } from '../services/email.service';
 
 const bookingRepository = AppDataSource.getRepository(Booking);
 const sitterRepository = AppDataSource.getRepository(SitterProfile);
@@ -34,6 +35,14 @@ export const createBooking = async (req: Request, res: Response) => {
         });
 
         await bookingRepository.save(booking);
+
+        const [owner, sitterUser] = await Promise.all([
+            userRepository.findOneBy({ id: ownerId }),
+            userRepository.findOneBy({ id: sitter.userId }),
+        ]);
+        if (owner && sitterUser) {
+            void emailService.sendBookingCreated(owner, sitterUser, booking);
+        }
 
         // Notify Sitter via Socket
         try {
@@ -137,7 +146,7 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
 
         const booking = await bookingRepository.findOne({
             where: { id },
-            relations: ['sitter']
+            relations: ['sitter', 'sitter.user', 'owner']
         });
 
         if (!booking) {
@@ -170,6 +179,18 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
 
         booking.status = status;
         await bookingRepository.save(booking);
+
+        if (status === BookingStatus.ACCEPTED || status === BookingStatus.REJECTED || status === BookingStatus.COMPLETED) {
+            if (booking.owner) {
+                void emailService.sendBookingStatus(
+                    booking.owner,
+                    booking,
+                    status === BookingStatus.ACCEPTED ? 'accepted' : status === BookingStatus.REJECTED ? 'rejected' : 'completed',
+                );
+            }
+        } else if (status === BookingStatus.CANCELLED && booking.sitter?.user) {
+            void emailService.sendBookingStatus(booking.sitter.user, booking, 'cancelled');
+        }
 
         return res.json(booking);
     } catch (error) {

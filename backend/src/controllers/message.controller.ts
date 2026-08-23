@@ -5,6 +5,7 @@ import { User } from '../entities/User.entity';
 import { Booking } from '../entities/Booking.entity';
 import { In } from 'typeorm';
 import { getIO } from '../socket';
+import { emailService } from '../services/email.service';
 
 const messageRepository = AppDataSource.getRepository(Message);
 const userRepository = AppDataSource.getRepository(User);
@@ -39,12 +40,14 @@ export const sendMessage = async (req: Request, res: Response) => {
 
         await messageRepository.save(message);
 
+        const sender = await userRepository.findOneBy({ id: senderId });
+        if (sender) {
+            void emailService.sendNewMessage(receiver, sender, content || 'You received an image attachment.');
+        }
+
         // Notify Receiver via Socket
         try {
             const io = getIO();
-            // Fetch sender details for the notification
-            const sender = await userRepository.findOne({ where: { id: senderId } });
-
             io.to(receiverId).emit('new_message', {
                 message: content || 'New image received',
                 senderId: senderId,

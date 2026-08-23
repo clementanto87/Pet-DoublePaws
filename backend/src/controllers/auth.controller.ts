@@ -4,6 +4,7 @@ import { User } from '../entities/User.entity';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
+import { emailService } from '../services/email.service';
 
 const userRepository = AppDataSource.getRepository(User);
 const googleClient = new OAuth2Client();
@@ -39,6 +40,8 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
         });
 
         await userRepository.save(newUser);
+
+        void emailService.sendWelcome(newUser);
 
         // Generate JWT
         const token = jwt.sign(
@@ -215,6 +218,7 @@ export const googleLogin = async (req: Request, res: Response): Promise<void> =>
                 password: '', // No password for Google users
             });
             await userRepository.save(user);
+            void emailService.sendWelcome(user);
         }
 
         // Generate JWT

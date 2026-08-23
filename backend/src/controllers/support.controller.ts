@@ -4,10 +4,13 @@ import { Booking } from '../entities/Booking.entity';
 import { SitterProfile } from '../entities/SitterProfile.entity';
 import { SupportRequest, SupportRequestStatus, SupportRequestType } from '../entities/SupportRequest.entity';
 import { AuthRequest } from '../middleware/auth.middleware';
+import { User } from '../entities/User.entity';
+import { emailService } from '../services/email.service';
 
 const requestRepository = AppDataSource.getRepository(SupportRequest);
 const bookingRepository = AppDataSource.getRepository(Booking);
 const sitterRepository = AppDataSource.getRepository(SitterProfile);
+const userRepository = AppDataSource.getRepository(User);
 
 export const createSupportRequest = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
@@ -38,6 +41,10 @@ export const createSupportRequest = async (req: AuthRequest, res: Response): Pro
             status: SupportRequestStatus.OPEN,
         });
         await requestRepository.save(request);
+        const reporter = await userRepository.findOneBy({ id: reporterId });
+        if (reporter) {
+            void emailService.sendSupportUpdate(reporter, request);
+        }
         res.status(201).json(request);
     } catch (error) {
         console.error('Error creating support request:', error);
@@ -68,7 +75,7 @@ export const updateSupportRequest = async (req: AuthRequest, res: Response): Pro
             return;
         }
 
-        const request = await requestRepository.findOne({ where: { id } });
+        const request = await requestRepository.findOne({ where: { id }, relations: ['reporter'] });
         if (!request) {
             res.status(404).json({ message: 'Support request not found' });
             return;
@@ -80,6 +87,9 @@ export const updateSupportRequest = async (req: AuthRequest, res: Response): Pro
             request.firstResponseAt ??= new Date();
         }
         await requestRepository.save(request);
+        if (request.adminResponse && request.reporter) {
+            void emailService.sendSupportUpdate(request.reporter, request);
+        }
         res.json(request);
     } catch (error) {
         console.error('Error updating support request:', error);
