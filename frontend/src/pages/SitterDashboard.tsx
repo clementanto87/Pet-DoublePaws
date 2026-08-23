@@ -148,6 +148,8 @@ const SitterDashboard: React.FC = () => {
                 showToast('Booking accepted successfully!', 'success');
             } else if (variables.status === BookingStatus.REJECTED) {
                 showToast('Booking rejected', 'info');
+            } else if (variables.status === BookingStatus.COMPLETED) {
+                showToast('Service marked as completed. The owner can now pay.', 'success');
             }
         },
         onError: () => {
@@ -880,6 +882,17 @@ const SitterDashboard: React.FC = () => {
                                             {/* Chat Button for Upcoming/In-Progress */}
                                             {(booking.status === BookingStatus.ACCEPTED || booking.status === BookingStatus.PENDING) && activeTab === 'upcoming' && (
                                                 <div className="flex justify-end mt-2 md:mt-0 md:self-start">
+                                                    {booking.status === BookingStatus.ACCEPTED && (
+                                                        <Button
+                                                            size="sm"
+                                                            className="gap-2 bg-emerald-600 hover:bg-emerald-700"
+                                                            onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: BookingStatus.COMPLETED })}
+                                                            disabled={updateBookingStatusMutation.isPending}
+                                                        >
+                                                            <CheckCircle className="w-4 h-4" />
+                                                            Complete service
+                                                        </Button>
+                                                    )}
                                                     <Button
                                                         size="sm"
                                                         variant="outline"
