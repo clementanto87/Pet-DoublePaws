@@ -23,26 +23,30 @@ const PawGlyph: React.FC<{ strokeWidth: number; className?: string }> = ({ strok
     </>
 );
 
+// Two paws laid out side by side within one viewBox. Each group first
+// normalizes the glyph's bounding box to the origin (translate -4.46,-2),
+// scales it up, then positions it — so the blue (left) and orange (right)
+// paws sit in their own horizontal lanes with a clear gap between them and
+// never overlap, at any size. A gentle opposite tilt keeps the mark lively.
 export const Logo: React.FC<LogoProps> = ({ className }) => {
     return (
         <svg
-            viewBox="0 0 56 40"
+            viewBox="0 0 62 40"
             className={cn('w-14 h-10', className)}
             fill="none"
             strokeLinecap="round"
             strokeLinejoin="round"
         >
-            {/* Blue paw (back) */}
-            <g transform="translate(0,4) rotate(-12,16,16) scale(1.3333)">
-                <PawGlyph strokeWidth={1.5} className="fill-secondary stroke-secondary" />
+            {/* Blue paw (left lane). translate(-4.46,-2) normalizes the glyph
+                bbox to the origin; scale enlarges it; rotate spins it about its
+                own centre so it stays inside its lane; translate positions it. */}
+            <g transform="translate(3,8) rotate(-8,10.96,10.94) scale(1.25) translate(-4.46,-2)">
+                <PawGlyph strokeWidth={1.4} className="fill-secondary stroke-secondary" />
             </g>
 
-            {/* Orange paw (front) — background-colored halo first for separation, then the solid paw */}
-            <g transform="translate(24,0) rotate(12,16,16) scale(1.3333)">
-                <PawGlyph strokeWidth={6} className="stroke-background" />
-            </g>
-            <g transform="translate(24,0) rotate(12,16,16) scale(1.3333)">
-                <PawGlyph strokeWidth={1.5} className="fill-primary stroke-primary" />
+            {/* Orange paw (right lane) */}
+            <g transform="translate(34,8) rotate(8,10.96,10.94) scale(1.25) translate(-4.46,-2)">
+                <PawGlyph strokeWidth={1.4} className="fill-primary stroke-primary" />
             </g>
         </svg>
     );

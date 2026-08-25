@@ -29,6 +29,7 @@ import { format } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { Logo } from '../components/ui/Logo';
+import { Wordmark } from '../components/ui/Wordmark';
 import { cn } from '../lib/utils';
 import { adminService } from '../services/admin.service';
 
@@ -141,7 +142,7 @@ const AdminPage: React.FC = () => {
                 <div className="flex items-center justify-between px-2">
                     <a href="/" className="flex items-center gap-2.5">
                         <Logo className="h-9 w-12" />
-                        <span className="font-display text-lg font-bold text-gradient">Double Paws</span>
+                        <Wordmark className="text-lg" />
                     </a>
                     <button onClick={() => setIsSidebarOpen(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 lg:hidden" aria-label="Close navigation">
                         <X className="h-5 w-5" />

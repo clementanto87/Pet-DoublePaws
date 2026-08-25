@@ -4,6 +4,7 @@ import { Button } from '../ui/Button';
 import { cn } from '../../lib/utils';
 import { Menu, X } from 'lucide-react';
 import { Logo } from '../ui/Logo';
+import { Wordmark } from '../ui/Wordmark';
 import { LanguageDropdown } from '../ui/LanguageDropdown';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -51,7 +52,7 @@ const Navbar: React.FC = () => {
           <div className="flex-shrink-0 flex items-center min-w-0">
             <Link to="/" className="flex items-center gap-1.5 sm:gap-2 md:gap-3 group min-w-0">
               <Logo className="w-10 h-8 sm:w-12 sm:h-10 md:w-16 md:h-12 transition-transform group-hover:scale-110 flex-shrink-0" />
-              <span className="text-base sm:text-lg md:text-xl lg:text-2xl font-display font-bold text-gradient whitespace-nowrap">Double Paws</span>
+              <Wordmark className="text-base sm:text-lg md:text-xl lg:text-2xl" />
             </Link>
           </div>
 

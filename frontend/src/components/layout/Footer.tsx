@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
 import { Logo } from '../ui/Logo';
+import { Wordmark } from '../ui/Wordmark';
 
 const Footer: React.FC = () => {
     const { t } = useTranslation();
@@ -13,7 +14,7 @@ const Footer: React.FC = () => {
                     <div>
                         <Link to="/" className="flex items-center gap-2 mb-6">
                             <Logo className="w-12 h-9" />
-                            <span className="text-xl font-display font-bold text-gradient">Double Paws</span>
+                            <Wordmark className="text-xl" />
                         </Link>
                         <p className="text-muted-foreground mb-6">
                             {t('footer.description')}
