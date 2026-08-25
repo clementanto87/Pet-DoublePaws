@@ -1,13 +1,17 @@
 import { Router } from 'express';
-import { authenticateToken } from '../middleware/auth.middleware';
-import { getAdminOverview, getAdminBookings } from '../controllers/admin.controller';
+import { authenticateToken, requireAdmin } from '../middleware/auth.middleware';
+import { getAdminAudit, getAdminBookings, getAdminOverview, getAdminPayments, getAdminReports, getAdminSettings, getAdminUsers, getAdminVerification, updateVerification } from '../controllers/admin.controller';
 
 const router = Router();
-
-// Temporary authenticated access for the admin preview. Add an admin-role
-// middleware before production launch.
-router.use(authenticateToken);
+router.use(authenticateToken, requireAdmin);
 router.get('/overview', getAdminOverview);
+router.get('/verification', getAdminVerification);
+router.patch('/verification/:id', updateVerification);
+router.get('/users', getAdminUsers);
 router.get('/bookings', getAdminBookings);
+router.get('/payments', getAdminPayments);
+router.get('/reports', getAdminReports);
+router.get('/settings', getAdminSettings);
+router.get('/audit', getAdminAudit);
 
 export default router;

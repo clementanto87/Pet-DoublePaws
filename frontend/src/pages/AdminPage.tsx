@@ -36,12 +36,12 @@ import { adminService } from '../services/admin.service';
 type Status = 'Pending' | 'Confirmed' | 'Completed' | 'Needs review';
 
 const navItems = [
-    { label: 'Overview', icon: LayoutDashboard },
-    { label: 'Verification queue', icon: ClipboardCheck, badge: 12 },
-    { label: 'Users & sitters', icon: Users },
-    { label: 'Bookings', icon: CalendarDays },
-    { label: 'Payments', icon: DollarSign },
-    { label: 'Reports', icon: BarChart3 },
+    { label: 'Overview', path: '/admin', icon: LayoutDashboard },
+    { label: 'Verification queue', path: '/admin/verification', icon: ClipboardCheck, badge: 12 },
+    { label: 'Users & sitters', path: '/admin/users', icon: Users },
+    { label: 'Bookings', path: '/admin/bookings', icon: CalendarDays },
+    { label: 'Payments', path: '/admin/payments', icon: DollarSign },
+    { label: 'Reports', path: '/admin/reports', icon: BarChart3 },
 ];
 
 const statusStyles: Record<Status, string> = {
@@ -56,20 +56,6 @@ const toneStyles: Record<string, string> = {
     blue: 'bg-sky-50 text-sky-600',
     green: 'bg-emerald-50 text-emerald-600',
     violet: 'bg-violet-50 text-violet-600',
-};
-
-const sectionTargets: Record<string, string> = {
-    Overview: 'admin-overview',
-    'Verification queue': 'admin-verification',
-    'Users & sitters': 'admin-users',
-    Bookings: 'admin-bookings',
-    Payments: 'admin-payments',
-    Reports: 'admin-reports',
-};
-
-const sectionHeadings: Record<string, string> = {
-    'Verification queue': 'Verification queue',
-    Reports: 'Operations activity',
 };
 
 const statusLabel = (status: string): Status => ({
@@ -95,18 +81,6 @@ const AdminPage: React.FC = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [bookingFilter, setBookingFilter] = useState<'All' | Status>('All');
     const [search, setSearch] = useState('');
-
-    const handleNavClick = (label: string) => {
-        setActiveNav(label);
-        setIsSidebarOpen(false);
-        const targetId = sectionTargets[label];
-        if (targetId) {
-            requestAnimationFrame(() => {
-                const target = document.getElementById(targetId) || Array.from(document.querySelectorAll('h3')).find((heading) => heading.textContent?.trim() === sectionHeadings[label]);
-                target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            });
-        }
-    };
 
     const firstName = user?.firstName || 'Alex';
 
@@ -153,9 +127,10 @@ const AdminPage: React.FC = () => {
                     {navItems.map((item) => {
                         const Icon = item.icon;
                         return (
-                            <button
+                            <Link
                                 key={item.label}
-                                onClick={() => handleNavClick(item.label)}
+                                to={item.path}
+                                onClick={() => { setActiveNav(item.label); setIsSidebarOpen(false); }}
                                 className={cn(
                                     'group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold transition-colors',
                                     activeNav === item.label ? 'bg-orange-50 text-orange-700 dark:bg-orange-500/10 dark:text-orange-300' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white'
@@ -164,18 +139,18 @@ const AdminPage: React.FC = () => {
                                 <Icon className={cn('h-[18px] w-[18px]', activeNav === item.label ? 'text-orange-500' : 'text-slate-400 group-hover:text-slate-600')} />
                                 <span className="flex-1">{item.label}</span>
                                 {item.badge && <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[10px] font-bold text-white">{item.badge}</span>}
-                            </button>
+                            </Link>
                         );
                     })}
                 </nav>
                 <div className="mt-8 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Administration</div>
                 <nav className="mt-3 space-y-1">
-                    <button onClick={() => setActiveNav('Settings')} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white">
+                    <Link to="/admin/settings" onClick={() => setIsSidebarOpen(false)} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white">
                         <Settings className="h-[18px] w-[18px] text-slate-400" /> Settings
-                    </button>
-                    <button onClick={() => setActiveNav('Audit log')} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white">
+                    </Link>
+                    <Link to="/admin/audit" onClick={() => setIsSidebarOpen(false)} className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white">
                         <FileCheck2 className="h-[18px] w-[18px] text-slate-400" /> Audit log
-                    </button>
+                    </Link>
                 </nav>
                 <div className="mt-auto rounded-2xl bg-slate-900 p-4 text-white dark:bg-slate-800">
                     <div className="flex items-center gap-3">

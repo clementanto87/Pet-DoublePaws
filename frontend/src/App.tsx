@@ -19,6 +19,14 @@ import MessagesPage from './pages/MessagesPage';
 import SitterMessagesPage from './pages/SitterMessagesPage';
 import AdminPage from './pages/AdminPage';
 import AdminBookingsPage from './pages/AdminBookingsPage';
+import {
+  AdminAuditPage,
+  AdminPaymentsPage,
+  AdminReportsPage,
+  AdminSettingsPage,
+  AdminUsersPage,
+  AdminVerificationPage,
+} from './pages/AdminSectionPages';
 
 
 import { AuthProvider } from './context/AuthContext';
@@ -123,6 +131,13 @@ const AppShell: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route path="/admin/verification" element={<ProtectedRoute><AdminVerificationPage /></ProtectedRoute>} />
+          <Route path="/admin/users" element={<ProtectedRoute><AdminUsersPage /></ProtectedRoute>} />
+          <Route path="/admin/bookings" element={<ProtectedRoute><AdminBookingsPage /></ProtectedRoute>} />
+          <Route path="/admin/payments" element={<ProtectedRoute><AdminPaymentsPage /></ProtectedRoute>} />
+          <Route path="/admin/reports" element={<ProtectedRoute><AdminReportsPage /></ProtectedRoute>} />
+          <Route path="/admin/settings" element={<ProtectedRoute><AdminSettingsPage /></ProtectedRoute>} />
+          <Route path="/admin/audit" element={<ProtectedRoute><AdminAuditPage /></ProtectedRoute>} />
 
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
