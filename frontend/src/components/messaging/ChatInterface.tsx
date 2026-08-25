@@ -3,6 +3,7 @@ import { dfOpts } from '../../lib/dateLocale';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { messageService } from '../../services/message.service';
+import { createUserSocket } from '../../services/socket.service';
 import { useAuth } from '../../context/AuthContext';
 import { Send, User, Search, MessageSquare, Circle, ArrowLeft, Image as ImageIcon, X } from 'lucide-react';
 import { Button } from '../ui/Button';
@@ -29,7 +30,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ defaultSelectedUse
     const { data: conversations, isLoading: loadingConversations } = useQuery({
         queryKey: ['conversations'],
         queryFn: messageService.getConversations,
-        refetchInterval: 5000
+        refetchInterval: 30000
     });
 
     // Filter conversations
@@ -43,8 +44,24 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ defaultSelectedUse
         queryKey: ['messages', selectedUserId],
         queryFn: () => selectedUserId ? messageService.getConversation(selectedUserId) : Promise.resolve([]),
         enabled: !!selectedUserId,
-        refetchInterval: 3000
+        refetchInterval: 15000
     });
+
+    useEffect(() => {
+        const socket = createUserSocket();
+        if (!socket) return;
+
+        const handleNewMessage = () => {
+            queryClient.invalidateQueries({ queryKey: ['conversations'] });
+            queryClient.invalidateQueries({ queryKey: ['messages'] });
+        };
+
+        socket.on('new_message', handleNewMessage);
+        return () => {
+            socket.off('new_message', handleNewMessage);
+            socket.disconnect();
+        };
+    }, [queryClient]);
 
     // Send message mutation
     const sendMessageMutation = useMutation({
