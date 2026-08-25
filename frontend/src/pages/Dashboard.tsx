@@ -31,6 +31,7 @@ import { messageService } from '../services/message.service';
 import { useToast } from '../components/ui/Toast';
 import { PayButton } from '../components/payment/PayButton';
 import { SupportRequestCard } from '../components/support/SupportRequestCard';
+import { bookingReference } from '../utils/bookingReference';
 
 interface Pet extends PetData {
     id: string;
@@ -276,7 +277,7 @@ const Dashboard: React.FC = () => {
 
                         <div className="rounded-2xl border border-orange-100 bg-orange-50 p-5 dark:border-orange-900/30 dark:bg-orange-950/20"><div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-primary shadow-sm dark:bg-slate-900"><Search className="h-5 w-5" /></span><div><h3 className="font-semibold text-slate-950 dark:text-white">{t('dashboard.quickActions.bookSitter.title')}</h3><p className="mt-1 text-sm leading-5 text-slate-600 dark:text-slate-300">{t('dashboard.quickActions.bookSitter.desc')}</p><Link to="/booking" className="mt-3 inline-flex items-center text-sm font-semibold text-primary hover:underline">{t('dashboard.bookNow')}<ArrowRight className="ml-1.5 h-4 w-4" /></Link></div></div></div>
 
-                        <SupportRequestCard bookingOptions={bookings?.map((booking: Booking) => ({ id: booking.id, label: `${booking.serviceType.replace(/([A-Z])/g, ' $1').trim()} · ${format(new Date(booking.startDate), 'MMM d', dfOpts())}` }))} />
+                        <SupportRequestCard bookingOptions={bookings?.map((booking: Booking) => ({ id: booking.id, label: `${bookingReference(booking.id, booking.referenceNumber)} · ${booking.serviceType.replace(/([A-Z])/g, ' $1').trim()} · ${format(new Date(booking.startDate), 'MMM d', dfOpts())}` }))} />
                     </aside>
                 </div>
             </div>

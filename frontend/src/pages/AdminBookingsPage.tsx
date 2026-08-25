@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { cn } from '../lib/utils';
 import { adminService } from '../services/admin.service';
+import { bookingReference } from '../utils/bookingReference';
 
 type Status = 'Pending' | 'Confirmed' | 'Completed' | 'Needs review';
 
@@ -194,7 +195,7 @@ const AdminBookingsPage: React.FC = () => {
                                                 >
                                                     <td className="px-6 py-4">
                                                         <p className="font-bold text-slate-900 dark:text-white">
-                                                            #{booking.id.slice(0, 8)}
+                                                            {bookingReference(booking.id, booking.referenceNumber)}
                                                         </p>
                                                         <p className="mt-1 text-xs text-slate-400">
                                                             {format(new Date(booking.createdAt), 'MMM d, h:mm a')}
@@ -243,7 +244,7 @@ const AdminBookingsPage: React.FC = () => {
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="min-w-0">
                                                     <p className="font-bold text-slate-900 dark:text-white">
-                                                        #{booking.id.slice(0, 8)}
+                                                    {bookingReference(booking.id, booking.referenceNumber)}
                                                     </p>
                                                     <p className="mt-0.5 text-xs text-slate-400">
                                                         {format(new Date(booking.createdAt), 'MMM d, h:mm a')}

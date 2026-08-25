@@ -10,7 +10,7 @@ export interface AdminOverview {
 }
 export interface AdminUser { id: string; email: string; firstName: string; lastName: string; createdAt: string; }
 export interface AdminSitter { id: string; createdAt: string; isVerified: boolean; headline?: string; user?: { firstName: string; lastName: string; email: string }; }
-export interface AdminBooking { id: string; serviceType: string; status: string; totalPrice: number; startDate: string; endDate: string; createdAt: string; owner?: { firstName: string; lastName: string; email?: string }; sitter?: { user?: { firstName: string; lastName: string } }; }
+export interface AdminBooking { id: string; referenceNumber?: string; serviceType: string; status: string; totalPrice: number; startDate: string; endDate: string; createdAt: string; owner?: { firstName: string; lastName: string; email?: string }; sitter?: { user?: { firstName: string; lastName: string } }; }
 export interface AdminBookingsResponse { bookings: AdminBooking[]; total: number; page: number; limit: number; totalPages: number; }
 export interface AdminBookingsParams { page?: number; limit?: number; status?: string; service?: string; search?: string; }
 export interface AdminPayment { id: string; status: string; amount: number; currency: string; createdAt: string; owner?: { firstName: string; lastName: string; email: string }; booking?: { id: string }; }

@@ -8,6 +8,7 @@ import { SitterProfile } from '../entities/SitterProfile.entity';
 import { SupportRequest, SupportRequestStatus, SupportRequestType } from '../entities/SupportRequest.entity';
 import { User } from '../entities/User.entity';
 import { Payment } from '../entities/Payment.entity';
+import { bookingReference } from '../utils/bookingReference';
 
 const dayStart = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
@@ -77,7 +78,7 @@ export const getAdminOverview = async (_req: Request, res: Response): Promise<vo
         const activity = [
             ...bookings.slice(0, 4).map((booking) => ({
                 kind: 'booking',
-                text: `Booking #${booking.id.slice(0, 8)} is ${booking.status.toLowerCase()}`,
+                text: `Booking ${bookingReference(booking.id)} is ${booking.status.toLowerCase()}`,
                 time: booking.createdAt,
             })),
             ...recentSitters.slice(0, 2).map((sitter) => ({

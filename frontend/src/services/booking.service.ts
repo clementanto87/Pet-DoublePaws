@@ -12,6 +12,7 @@ export type BookingStatus = typeof BookingStatus[keyof typeof BookingStatus];
 
 export interface Booking {
     id: string;
+    referenceNumber?: string;
     sitterId: string;
     ownerId: string;
     petIds: string[];
