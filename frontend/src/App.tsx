@@ -18,6 +18,7 @@ import SearchResultsPage from './pages/SearchResultsPage';
 import MessagesPage from './pages/MessagesPage';
 import SitterMessagesPage from './pages/SitterMessagesPage';
 import AdminPage from './pages/AdminPage';
+import AdminBookingsPage from './pages/AdminBookingsPage';
 
 
 import { AuthProvider } from './context/AuthContext';
@@ -111,6 +112,14 @@ const AppShell: React.FC = () => {
             element={
               <ProtectedRoute>
                 <AdminPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/bookings"
+            element={
+              <ProtectedRoute>
+                <AdminBookingsPage />
               </ProtectedRoute>
             }
           />

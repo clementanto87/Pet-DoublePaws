@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Between } from 'typeorm';
+import { Between, Brackets } from 'typeorm';
 import { AppDataSource } from '../config/database';
 import { Booking, BookingStatus } from '../entities/Booking.entity';
 import { Message } from '../entities/Message.entity';
@@ -131,5 +131,71 @@ export const getAdminOverview = async (_req: Request, res: Response): Promise<vo
     } catch (error) {
         console.error('Error fetching admin overview:', error);
         res.status(500).json({ message: 'Unable to load admin overview' });
+    }
+};
+
+// Maps the human-readable status filter used by the admin UI to the underlying
+// BookingStatus enum values. "Needs review" groups rejected and cancelled.
+const statusFilterMap: Record<string, BookingStatus[]> = {
+    Pending: [BookingStatus.PENDING],
+    Confirmed: [BookingStatus.ACCEPTED],
+    Completed: [BookingStatus.COMPLETED],
+    'Needs review': [BookingStatus.REJECTED, BookingStatus.CANCELLED],
+};
+
+export const getAdminBookings = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const bookingRepository = AppDataSource.getRepository(Booking);
+
+        const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit ?? '20'), 10) || 20));
+        const status = typeof req.query.status === 'string' ? req.query.status : 'All';
+        const service = typeof req.query.service === 'string' ? req.query.service : 'All';
+        const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+
+        const query = bookingRepository
+            .createQueryBuilder('booking')
+            .leftJoinAndSelect('booking.owner', 'owner')
+            .leftJoinAndSelect('booking.sitter', 'sitter')
+            .leftJoinAndSelect('sitter.user', 'sitterUser')
+            .orderBy('booking.createdAt', 'DESC');
+
+        const statuses = statusFilterMap[status];
+        if (statuses) {
+            query.andWhere('booking.status IN (:...statuses)', { statuses });
+        }
+
+        if (service && service !== 'All') {
+            query.andWhere('booking.serviceType = :service', { service });
+        }
+
+        if (search) {
+            const term = `%${search}%`;
+            query.andWhere(
+                new Brackets((qb) => {
+                    qb.where('owner.firstName ILIKE :term', { term })
+                        .orWhere('owner.lastName ILIKE :term', { term })
+                        .orWhere('sitterUser.firstName ILIKE :term', { term })
+                        .orWhere('sitterUser.lastName ILIKE :term', { term })
+                        .orWhere('CAST(booking.id AS TEXT) ILIKE :term', { term });
+                })
+            );
+        }
+
+        const [bookings, total] = await query
+            .skip((page - 1) * limit)
+            .take(limit)
+            .getManyAndCount();
+
+        res.json({
+            bookings,
+            total,
+            page,
+            limit,
+            totalPages: Math.max(1, Math.ceil(total / limit)),
+        });
+    } catch (error) {
+        console.error('Error fetching admin bookings:', error);
+        res.status(500).json({ message: 'Unable to load bookings' });
     }
 };
