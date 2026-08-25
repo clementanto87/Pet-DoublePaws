@@ -26,14 +26,36 @@ export interface Booking {
     owner?: any; // Type properly if needed
 }
 
+export interface PaginatedBookings {
+    items: Booking[];
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+}
+
+export interface BookingListParams {
+    role: 'owner' | 'sitter';
+    bucket?: 'upcoming' | 'history';
+    search?: string;
+    status?: BookingStatus | 'ALL';
+    page?: number;
+}
+
 export const bookingService = {
     createBooking: async (data: Partial<Booking>) => {
         const response = await api.post('/bookings', data);
         return response.data;
     },
 
-    getBookings: async (role: 'owner' | 'sitter' = 'owner') => {
-        const response = await api.get('/bookings', { params: { role } });
+    getBookings: async (params: BookingListParams | 'owner' | 'sitter' = 'owner'): Promise<PaginatedBookings> => {
+        const normalized = typeof params === 'string' ? { role: params } : params;
+        const response = await api.get('/bookings', {
+            params: {
+                ...normalized,
+                ...(normalized.status === 'ALL' ? { status: undefined } : {}),
+            },
+        });
         return response.data;
     },
 

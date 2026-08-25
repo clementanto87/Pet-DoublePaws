@@ -941,7 +941,9 @@
     "creating": "Wird erstellt...",
     "createProfile": "Profil erstellen",
     "changePhoto": "Zum Ändern des Fotos klicken",
-    "ageYears": "Jahre"
+    "ageYears": "Jahre",
+    "editTitle": "Bearbeite das",
+    "saveChanges": "Änderungen speichern"
   },
   "serviceProfile": {
     "title": "Dienstleistungsprofil",
@@ -1039,5 +1041,26 @@
     "notAvailable": "Nicht verfügbar",
     "verified": "Verifiziert",
     "yearsExperience": "{{count}}+ Jahre Erfahrung"
+  },
+  "payment": {
+    "title": "Zahlung",
+    "payNow": "Jetzt bezahlen",
+    "processing": "Wird verarbeitet...",
+    "done": "Fertig",
+    "close": "Schließen",
+    "successTitle": "Zahlung erfolgreich",
+    "successDesc": "Danke! Deine Zahlung ist eingegangen.",
+    "secureNote": "Zahlungen werden sicher über Stripe abgewickelt.",
+    "genericError": "Bei der Zahlung ist ein Fehler aufgetreten. Bitte versuche es erneut.",
+    "notCompleted": "Die Zahlung wurde nicht abgeschlossen. Bitte versuche es erneut.",
+    "notConfigured": "Zahlungen sind noch nicht eingerichtet. Bitte versuche es später erneut.",
+    "testModeBadge": "Sandbox / Testmodus – es wird kein echtes Geld abgebucht.",
+    "testCardHint": "Testkarte 4242 4242 4242 4242, beliebiges künftiges Datum, beliebiger CVC.",
+    "pay": "Bezahlen",
+    "paid": "Bezahlt",
+    "paymentPending": "Zahlung ausstehend",
+    "paymentFailed": "Zahlung fehlgeschlagen",
+    "markCompleted": "Als erledigt markieren",
+    "awaitingPayment": "Zahlung ausstehend"
   }
 }

@@ -17,6 +17,7 @@ import Dashboard from './pages/Dashboard';
 import SearchResultsPage from './pages/SearchResultsPage';
 import MessagesPage from './pages/MessagesPage';
 import SitterMessagesPage from './pages/SitterMessagesPage';
+import AdminPage from './pages/AdminPage';
 
 
 import { AuthProvider } from './context/AuthContext';
@@ -48,6 +49,82 @@ const ScrollToTop = () => {
   return null;
 };
 
+const AppShell: React.FC = () => {
+  const location = useLocation();
+  const isMessagingRoute = location.pathname === '/messages' || location.pathname === '/sitter-messages';
+
+  return (
+    <div className="min-h-screen flex flex-col bg-background text-foreground font-sans overflow-x-hidden">
+      {!isMessagingRoute && <Navbar />}
+      <main className="flex-1 w-full overflow-x-hidden">
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/messages"
+            element={
+              <ProtectedRoute>
+                <MessagesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pet-profile"
+            element={
+              <ProtectedRoute>
+                <PetProfileCreation />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route path="/booking" element={<BookingPage />} />
+          <Route path="/search" element={<SearchResultsPage />} />
+          <Route path="/sitter/:id" element={<SitterProfileView />} />
+          <Route path="/contact-sitter/:id" element={<ContactSitterPage />} />
+          <Route path="/become-a-sitter" element={<BecomeSitterLandingPage />} />
+          <Route path="/become-a-sitter/register" element={<PetSitterRegistration />} />
+          <Route
+            path="/sitter-dashboard"
+            element={
+              <ProtectedRoute>
+                <SitterDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sitter-messages"
+            element={
+              <ProtectedRoute>
+                <SitterMessagesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+      {!isMessagingRoute && <Footer />}
+    </div>
+  );
+};
+
 function App() {
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
@@ -57,66 +134,7 @@ function App() {
           <ToastProvider>
             <Router>
               <ScrollToTop />
-              <div className="min-h-screen flex flex-col bg-background text-foreground font-sans overflow-x-hidden">
-                <Navbar />
-                <main className="flex-1 w-full overflow-x-hidden">
-                  <Routes>
-                    <Route path="/" element={<LandingPage />} />
-                    <Route
-                      path="/dashboard"
-                      element={
-                        <ProtectedRoute>
-                          <Dashboard />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/messages"
-                      element={
-                        <ProtectedRoute>
-                          <MessagesPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/pet-profile"
-                      element={
-                        <ProtectedRoute>
-                          <PetProfileCreation />
-                        </ProtectedRoute>
-                      }
-                    />
-
-                    <Route path="/booking" element={<BookingPage />} />
-                    <Route path="/search" element={<SearchResultsPage />} />
-                    <Route path="/sitter/:id" element={<SitterProfileView />} />
-                    <Route path="/contact-sitter/:id" element={<ContactSitterPage />} />
-                    <Route path="/become-a-sitter" element={<BecomeSitterLandingPage />} />
-                    <Route path="/become-a-sitter/register" element={<PetSitterRegistration />} />
-                    <Route
-                      path="/sitter-dashboard"
-                      element={
-                        <ProtectedRoute>
-                          <SitterDashboard />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/sitter-messages"
-                      element={
-                        <ProtectedRoute>
-                          <SitterMessagesPage />
-                        </ProtectedRoute>
-                      }
-                    />
-
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route path="/signup" element={<SignupPage />} />
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
-                </main>
-                <Footer />
-              </div>
+              <AppShell />
             </Router>
           </ToastProvider>
         </AuthProvider>

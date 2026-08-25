@@ -20,8 +20,8 @@ interface ChatPageLayoutProps {
  * space plus the site Footer underneath the chat — not a proper full-screen
  * chat UI.
  *
- * Below md this renders as a `position: fixed` panel pinned between the
- * sticky site navbar and a slim back/title bar, sized to the *visual*
+ * Below md this renders as a `position: fixed` panel pinned below a slim
+ * back/title bar, sized to the *visual*
  * viewport (which shrinks correctly when the keyboard opens) so the input
  * is always reachable and the page behind it can never be scrolled into
  * view. Desktop is unchanged: normal page flow with its own header.
@@ -44,12 +44,10 @@ export const ChatPageLayout: React.FC<ChatPageLayoutProps> = ({ title, subtitle,
         if (isDesktop) { setMobileBox(null); return; }
 
         const update = () => {
-            const navEl = document.querySelector('header');
-            const navHeight = navEl ? navEl.getBoundingClientRect().height : 64;
             const subHeaderHeight = subHeaderRef.current ? subHeaderRef.current.getBoundingClientRect().height : 52;
             const vv = window.visualViewport;
             const viewportHeight = vv ? vv.height : window.innerHeight;
-            const top = navHeight + subHeaderHeight;
+            const top = subHeaderHeight;
             setMobileBox({ top, height: Math.max(viewportHeight - top, 240) });
         };
 
@@ -64,44 +62,26 @@ export const ChatPageLayout: React.FC<ChatPageLayoutProps> = ({ title, subtitle,
         };
     }, [isDesktop]);
 
-    // Lock page scroll while the fixed mobile chat is mounted, so the footer
-    // (further down the normal page flow) can never be scrolled into view.
-    //
-    // `overflow: hidden` on body alone is NOT enough on iOS Safari: it blocks
-    // touch-drag scrolling, but Safari's own "scroll the focused input into
-    // view" behavior on keyboard-open uses a separate internal mechanism that
-    // ignores that CSS property entirely — tapping the message input would
-    // still scroll the whole page down to the site Footer. Pinning body with
-    // `position: fixed` removes it from the document flow altogether, so
-    // there is nothing left for Safari to scroll to.
+    // Keep the page itself unscrollable while the fixed mobile chat is mounted.
+    // The messaging routes render without the site Navbar/Footer (see AppShell),
+    // so the document is already only as tall as the viewport — a simple
+    // overflow lock is enough here. Note: pinning <body> with position:fixed was
+    // tried and made things worse on iOS (it fought Safari's own keyboard
+    // focus-scrolling and left the page offset), so keep this minimal.
     useEffect(() => {
         if (isDesktop) return;
-        const scrollY = window.scrollY;
         const body = document.body.style;
-        const prev = { position: body.position, top: body.top, left: body.left, right: body.right, width: body.width, overflow: body.overflow };
-        body.position = 'fixed';
-        body.top = `-${scrollY}px`;
-        body.left = '0';
-        body.right = '0';
-        body.width = '100%';
+        const prevOverflow = body.overflow;
         body.overflow = 'hidden';
-        return () => {
-            body.position = prev.position;
-            body.top = prev.top;
-            body.left = prev.left;
-            body.right = prev.right;
-            body.width = prev.width;
-            body.overflow = prev.overflow;
-            window.scrollTo(0, scrollY);
-        };
+        return () => { body.overflow = prevOverflow; };
     }, [isDesktop]);
 
     if (isDesktop) {
         return (
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-                <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4 md:py-6">
-                    <div className="mb-4 md:mb-6">
-                        <Button variant="ghost" onClick={onBack} className="mb-3 md:mb-4 text-sm md:text-base">
+            <div className="min-h-[100dvh] bg-gray-50 dark:bg-gray-900">
+                <div className="mx-auto flex min-h-[100dvh] max-w-7xl flex-col px-4 py-4 md:px-6 md:py-6 lg:px-8">
+                    <div className="mb-4 shrink-0 md:mb-6">
+                        <Button variant="ghost" onClick={onBack} className="mb-3 px-2 text-sm md:mb-4 md:text-base">
                             <ArrowLeft className="w-4 h-4 mr-2" />
                             {backLabel}
                         </Button>
@@ -110,7 +90,7 @@ export const ChatPageLayout: React.FC<ChatPageLayoutProps> = ({ title, subtitle,
                             <p className="text-sm md:text-base text-gray-500 dark:text-gray-400 mt-1">{subtitle}</p>
                         </div>
                     </div>
-                    <div className="h-[calc(100vh-220px)]">
+                    <div className="min-h-0 flex-1">
                         <ChatInterface defaultSelectedUserId={defaultUserId} />
                     </div>
                 </div>
@@ -124,7 +104,7 @@ export const ChatPageLayout: React.FC<ChatPageLayoutProps> = ({ title, subtitle,
                 page's scrollable flow, so a back-to-dashboard action is always reachable. */}
             <div
                 ref={subHeaderRef}
-                className="md:hidden fixed inset-x-0 top-16 z-30 flex items-center gap-2 px-3 py-2.5 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700"
+                className="md:hidden fixed inset-x-0 top-0 z-30 flex items-center gap-2 px-3 py-2.5 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700"
             >
                 <button
                     onClick={onBack}

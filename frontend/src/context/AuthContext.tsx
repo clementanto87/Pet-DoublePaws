@@ -7,6 +7,7 @@ interface User {
     firstName: string;
     lastName: string;
     email: string;
+    role?: 'user' | 'sitter' | 'admin';
 }
 
 interface AuthContextType {
@@ -121,4 +122,3 @@ export const useAuth = () => {
     }
     return context;
 };
-
