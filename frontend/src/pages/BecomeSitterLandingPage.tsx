@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { useIsSitter } from '../hooks/useIsSitter';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -27,8 +28,15 @@ import { PawPrints } from '../components/ui/PawPrints';
 
 const BecomeSitterLandingPage: React.FC = () => {
   const navigate = useNavigate();
+  const { isSitter } = useIsSitter();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [selectedEarning, setSelectedEarning] = useState<'partTime' | 'fullTime'>('partTime');
+
+  // Existing sitters don't need the onboarding pitch — send them to their
+  // dashboard instead. Declared after all hooks to satisfy the Rules of Hooks.
+  if (isSitter) {
+    return <Navigate to="/sitter-dashboard" replace />;
+  }
 
   const earnings = {
     partTime: {

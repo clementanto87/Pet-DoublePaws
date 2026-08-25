@@ -7,12 +7,14 @@ import { Logo } from '../ui/Logo';
 import { Wordmark } from '../ui/Wordmark';
 import { LanguageDropdown } from '../ui/LanguageDropdown';
 import { useAuth } from '../../context/AuthContext';
+import { useIsSitter } from '../../hooks/useIsSitter';
 import { useTranslation } from 'react-i18next';
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { isAuthenticated, logout, user } = useAuth();
+  const { isSitter } = useIsSitter();
   const location = useLocation();
   const { t } = useTranslation();
 
@@ -39,7 +41,8 @@ const Navbar: React.FC = () => {
       { name: t('navigation.sitterDashboard'), path: '/sitter-dashboard' },
       { name: 'Admin', path: '/admin' },
     ] : []),
-    { name: t('navigation.becomeSitter'), path: '/become-a-sitter' },
+    // Hide "Become a Sitter" once the user already has a sitter profile.
+    ...(isSitter ? [] : [{ name: t('navigation.becomeSitter'), path: '/become-a-sitter' }]),
   ];
 
   return (
