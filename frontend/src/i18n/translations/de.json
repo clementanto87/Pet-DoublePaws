@@ -40,7 +40,7 @@
     "becomeSitter": "Sitter werden",
     "login": "Anmelden",
     "logout": "Abmelden",
-    "privacySettings": "Datenschutzeinstellungen",
+    "privacySettings": "Datenschutz & Sicherheit",
     "signup": "Registrieren",
     "profile": "Profil",
     "messages": "Nachrichten",
@@ -48,7 +48,14 @@
     "services": "Dienstleistungen",
     "about": "Über uns",
     "contact": "Kontakt",
-    "hi": "Hallo"
+    "hi": "Hallo",
+    "admin": "Admin-Konsole",
+    "petParent": "Haustierbesitzer",
+    "sitter": "Sitter",
+    "accountSettings": "Konto & Einstellungen",
+    "sitterServices": "Sitter-Bereich",
+    "mainNav": "Hauptmenü",
+    "findSitters": "Sitter finden"
   },
   "auth": {
     "loginTitle": "Willkommen zurück",
