@@ -98,9 +98,12 @@ export class SitterProfile {
     @Column({ nullable: true })
     noticePeriod?: string;
 
-    // Banking (JSON) - Encrypt in real app!
-    @Column('simple-json', { nullable: true })
-    bankDetails?: any;
+    // Payout details are collected and stored by Stripe Connect, never by us.
+    @Column({ nullable: true })
+    stripeConnectAccountId?: string;
+
+    @Column({ nullable: true })
+    stripeConnectStatus?: 'NOT_STARTED' | 'PENDING' | 'ENABLED';
 
     @CreateDateColumn()
     createdAt!: Date;

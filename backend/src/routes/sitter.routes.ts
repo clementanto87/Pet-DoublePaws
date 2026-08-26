@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createOrUpdateSitterProfile, getSitterProfile, getSitterById, searchSitters } from '../controllers/sitter.controller';
+import { createOrUpdateSitterProfile, getSitterProfile, getSitterById, searchSitters, createPayoutOnboardingLink, getPayoutStatus } from '../controllers/sitter.controller';
 import { authenticateToken } from '../middleware/auth.middleware';
 
 const router = Router();
@@ -10,6 +10,8 @@ router.post('/search', searchSitters);
 // `/me` (literal, protected) must be registered BEFORE the `/:id` param route
 // so a request to `/me` is not captured by `/:id`.
 router.get('/me', authenticateToken, getSitterProfile);
+router.post('/payouts/onboarding', authenticateToken, createPayoutOnboardingLink);
+router.get('/payouts/status', authenticateToken, getPayoutStatus);
 
 // Public: single sitter by id (deep links / page refresh)
 router.get('/:id', getSitterById);

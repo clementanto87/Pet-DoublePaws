@@ -923,6 +923,16 @@
         "routingNumber": "Bankleitzahl",
         "routingPlaceholder": "9 Ziffern",
         "secure": "Deine Zahlungsdaten sind verschlüsselt und sicher.",
+        "secureTitle": "Deine Bankdaten bleiben bei Stripe",
+        "secureDescription": "Double Paws sieht oder speichert niemals deine Konto- oder Bankleitzahl. Stripe erfasst, verifiziert und verwaltet deine Auszahlungsdaten sicher.",
+        "connectTitle": "Auszahlungskonto verbinden",
+        "connectDescription": "Schließe die sichere Identitäts- und Bankverifizierung bei Stripe ab, um Auszahlungen zu erhalten.",
+        "connected": "Auszahlungskonto verbunden",
+        "connectedDescription": "Stripe hat dein Konto für Auszahlungen aktiviert.",
+        "checking": "Auszahlungsverbindung wird geprüft...",
+        "opening": "Sicheres Onboarding wird geöffnet...",
+        "connectButton": "Mit Stripe verbinden",
+        "providerNote": "Du verlässt Double Paws und schließt das Onboarding auf der sicheren Stripe-Website ab. Gib Bankdaten niemals direkt bei Double Paws ein.",
         "note": "Hinweis: In einer Produktionsumgebung würde dies mit einem Zahlungsdienstleister wie Stripe Connect für sicheres Onboarding und Auszahlungen integriert.",
         "noteLabel": "Hinweis:"
       }

@@ -3,11 +3,19 @@ import { AppDataSource } from '../config/database';
 import { SitterProfile } from '../entities/SitterProfile.entity';
 import { User } from '../entities/User.entity';
 import { AuthRequest } from '../middleware/auth.middleware';
+import { stripe, isStripeConfigured } from '../config/stripe';
 
 export const createOrUpdateSitterProfile = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user.id;
-        const { profileImage, galleryImages, ...profileData } = req.body;
+        const {
+            profileImage,
+            galleryImages,
+            bankDetails: _legacyBankDetails,
+            stripeConnectAccountId: _clientAccountId,
+            stripeConnectStatus: _clientPayoutStatus,
+            ...profileData
+        } = req.body;
 
         const sitterRepository = AppDataSource.getRepository(SitterProfile);
         const userRepository = AppDataSource.getRepository(User);
@@ -290,5 +298,76 @@ export const getSitterById = async (req: Request, res: Response): Promise<void> 
     } catch (error) {
         console.error('Error fetching sitter by id:', error);
         res.status(500).json({ message: 'Server error' });
+    }
+};
+
+export const createPayoutOnboardingLink = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+        if (!isStripeConfigured() || !stripe) {
+            res.status(503).json({ message: 'Secure payouts are not configured yet' });
+            return;
+        }
+
+        const userId = req.user.id;
+        const userRepository = AppDataSource.getRepository(User);
+        const sitterRepository = AppDataSource.getRepository(SitterProfile);
+        const user = await userRepository.findOneBy({ id: userId });
+        if (!user) {
+            res.status(404).json({ message: 'User not found' });
+            return;
+        }
+
+        let profile = await sitterRepository.findOneBy({ userId });
+        if (!profile) profile = await sitterRepository.save(sitterRepository.create({ userId, user }));
+
+        let accountId = profile.stripeConnectAccountId;
+        if (!accountId) {
+            const account = await stripe.accounts.create({
+                type: 'express',
+                email: user.email,
+                country: process.env.STRIPE_CONNECT_COUNTRY || 'DE',
+                capabilities: { transfers: { requested: true } },
+            });
+            accountId = account.id;
+            profile.stripeConnectAccountId = accountId;
+        }
+
+        profile.stripeConnectStatus = 'PENDING';
+        await sitterRepository.save(profile);
+
+        const appUrl = (process.env.EMAIL_APP_URL || 'http://localhost:5173').replace(/\/$/, '');
+        const link = await stripe.accountLinks.create({
+            account: accountId,
+            refresh_url: `${appUrl}/become-a-sitter/register?connect=refresh`,
+            return_url: `${appUrl}/sitter-dashboard?connect=complete`,
+            type: 'account_onboarding',
+        });
+
+        res.json({ url: link.url });
+    } catch (error) {
+        console.error('Stripe Connect onboarding error:', error);
+        res.status(500).json({ message: 'Unable to start secure payout onboarding' });
+    }
+};
+
+export const getPayoutStatus = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+        const profile = await AppDataSource.getRepository(SitterProfile).findOneBy({ userId: req.user.id });
+        if (!profile?.stripeConnectAccountId || !stripe) {
+            res.json({ status: profile?.stripeConnectStatus || 'NOT_STARTED', payoutsEnabled: false });
+            return;
+        }
+
+        const account = await stripe.accounts.retrieve(profile.stripeConnectAccountId);
+        const payoutsEnabled = account.payouts_enabled === true;
+        const status = payoutsEnabled ? 'ENABLED' : 'PENDING';
+        if (profile.stripeConnectStatus !== status) {
+            profile.stripeConnectStatus = status;
+            await AppDataSource.getRepository(SitterProfile).save(profile);
+        }
+        res.json({ status, payoutsEnabled, accountIdLast4: profile.stripeConnectAccountId.slice(-4) });
+    } catch (error) {
+        console.error('Stripe Connect status error:', error);
+        res.status(500).json({ message: 'Unable to check payout status' });
     }
 };

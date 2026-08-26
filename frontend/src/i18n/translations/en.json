@@ -923,6 +923,16 @@
         "routingNumber": "Routing Number",
         "routingPlaceholder": "9 digits",
         "secure": "Your payment details are encrypted and secure.",
+        "secureTitle": "Your bank details stay with Stripe",
+        "secureDescription": "Double Paws never sees or stores your account or routing number. Stripe securely collects, verifies, and manages payout details.",
+        "connectTitle": "Connect your payout account",
+        "connectDescription": "Complete secure identity and bank verification with Stripe to receive payouts.",
+        "connected": "Payout account connected",
+        "connectedDescription": "Stripe has enabled your account for payouts.",
+        "checking": "Checking payout connection...",
+        "opening": "Opening secure onboarding...",
+        "connectButton": "Connect with Stripe",
+        "providerNote": "You will leave Double Paws and complete onboarding on Stripe's secure website. Never enter bank details directly into Double Paws.",
         "note": "Note: In a production environment, this would integrate with a payment processor like Stripe Connect for secure onboarding and payouts.",
         "noteLabel": "Note:"
       }
