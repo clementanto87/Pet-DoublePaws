@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '../ui/Button';
 import { cn } from '../../lib/utils';
 import { Menu, X } from 'lucide-react';
@@ -16,6 +16,7 @@ const Navbar: React.FC = () => {
   const { isAuthenticated, logout, user } = useAuth();
   const { isSitter } = useIsSitter();
   const location = useLocation();
+  const navigate = useNavigate();
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -28,6 +29,12 @@ const Navbar: React.FC = () => {
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleLogout = () => {
+    setIsMenuOpen(false);
+    logout();
+    navigate('/', { replace: true });
   };
 
   const isActive = (path: string) => {
@@ -94,7 +101,7 @@ const Navbar: React.FC = () => {
                 <Button
                   variant="ghost"
                   className="text-muted-foreground hover:text-primary"
-                  onClick={logout}
+                  onClick={handleLogout}
                 >
                   {t('navigation.logout')}
                 </Button>
@@ -159,7 +166,7 @@ const Navbar: React.FC = () => {
                   {t('navigation.hi')}, <span className="font-semibold text-foreground">{user?.firstName}</span>
                 </p>
                 <button
-                  onClick={() => { setIsMenuOpen(false); logout(); }}
+                  onClick={handleLogout}
                   className="block w-full text-left px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base font-medium rounded-xl text-muted-foreground hover:bg-muted hover:text-primary transition-colors"
                 >
                   {t('navigation.logout')}
