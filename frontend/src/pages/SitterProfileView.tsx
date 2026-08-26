@@ -256,7 +256,12 @@ const SitterProfileView: React.FC = () => {
         ? Object.entries(sitter.services).filter(([_, service]: [string, any]) => service?.active)
         : [];
 
-    const galleryImages = sitter.galleryImages || [];
+    // Keep the sitter's profile photo in the same public gallery as uploaded photos.
+    // Deduplication prevents the same image from appearing twice when it was also uploaded to the gallery.
+    const uploadedGalleryImages = sitter.galleryImages || [];
+    const galleryImages = sitter.user?.profileImage
+        ? [sitter.user.profileImage, ...uploadedGalleryImages.filter((image: string) => image !== sitter.user?.profileImage)]
+        : uploadedGalleryImages;
 
     // Get minimum rate
     const minRate = activeServices.length > 0
