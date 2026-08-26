@@ -37,6 +37,7 @@ const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
+  const isSitterRole = isSitter || Boolean(user?.isSitter) || user?.role === 'sitter' || Boolean(user?.sitterProfileId);
   const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
@@ -147,7 +148,7 @@ const Navbar: React.FC = () => {
             )}
 
             {/* Sitter Link: Sitter Dashboard if sitter, or Become a Sitter if not */}
-            {isSitter ? (
+            {isSitterRole ? (
               <Link
                 to="/sitter-dashboard"
                 className={cn(
@@ -226,7 +227,7 @@ const Navbar: React.FC = () => {
                         </p>
                         <div className="mt-2 flex items-center gap-1.5">
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300">
-                            {isAdmin ? '🛡️ Admin' : isSitter ? '💼 Sitter' : '🐾 Pet Parent'}
+                            {isAdmin ? '🛡️ Admin' : isSitterRole ? '💼 Sitter' : '🐾 Pet Parent'}
                           </span>
                         </div>
                       </div>
@@ -261,7 +262,7 @@ const Navbar: React.FC = () => {
                           <span>{t('navigation.messages')}</span>
                         </Link>
 
-                        {isSitter ? (
+                        {isSitterRole ? (
                           <Link
                             to="/sitter-dashboard"
                             onClick={() => setIsUserMenuOpen(false)}
@@ -387,7 +388,7 @@ const Navbar: React.FC = () => {
                   </p>
                 </div>
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300 shrink-0">
-                  {isAdmin ? 'Admin' : isSitter ? 'Sitter' : 'Pet Parent'}
+                  {isAdmin ? 'Admin' : isSitterRole ? 'Sitter' : 'Pet Parent'}
                 </span>
               </div>
             ) : null}
@@ -461,7 +462,7 @@ const Navbar: React.FC = () => {
                 {t('navigation.sitterServices', 'Sitter Services')}
               </p>
               <div className="space-y-1">
-                {isSitter ? (
+                {isSitterRole ? (
                   <Link
                     to="/sitter-dashboard"
                     onClick={() => setIsMenuOpen(false)}

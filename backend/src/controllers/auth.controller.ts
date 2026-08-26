@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { AppDataSource } from '../config/database';
 import { User } from '../entities/User.entity';
+import { SitterProfile } from '../entities/SitterProfile.entity';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
@@ -8,6 +9,31 @@ import { emailService } from '../services/email.service';
 
 const userRepository = AppDataSource.getRepository(User);
 const googleClient = new OAuth2Client();
+
+export const formatUserResponse = async (user: User) => {
+    const sitterRepo = AppDataSource.getRepository(SitterProfile);
+    const sitterProfile = await sitterRepo.findOneBy({ userId: user.id });
+    const isSitter = Boolean(sitterProfile);
+
+    const allowedEmails = (process.env.ADMIN_EMAILS || '')
+        .split(',')
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean);
+    const isAdmin = allowedEmails.includes(user.email.toLowerCase());
+
+    const role: 'admin' | 'sitter' | 'user' = isAdmin ? 'admin' : isSitter ? 'sitter' : 'user';
+
+    return {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        profileImage: user.profileImage,
+        role,
+        isSitter,
+        sitterProfileId: sitterProfile?.id,
+    };
+};
 
 export const signup = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -50,15 +76,12 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
             { expiresIn: '1d' }
         );
 
+        const userResponse = await formatUserResponse(newUser);
+
         res.status(201).json({
             message: 'User created successfully',
             token,
-            user: {
-                id: newUser.id,
-                firstName: newUser.firstName,
-                lastName: newUser.lastName,
-                email: newUser.email,
-            },
+            user: userResponse,
         });
     } catch (error) {
         console.error('Signup error:', error);
@@ -75,7 +98,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         // We need to explicitly select password because it's set to select: false in the entity
         const user = await userRepository.findOne({
             where: { email },
-            select: ['id', 'email', 'password', 'firstName', 'lastName'],
+            select: ['id', 'email', 'password', 'firstName', 'lastName', 'profileImage'],
         });
 
         if (!user) {
@@ -97,15 +120,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             { expiresIn: '1d' }
         );
 
+        const userResponse = await formatUserResponse(user);
+
         res.json({
             message: 'Login successful',
             token,
-            user: {
-                id: user.id,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                email: user.email,
-            },
+            user: userResponse,
         });
     } catch (error) {
         console.error('Login error:', error);
@@ -183,19 +203,15 @@ export const googleLogin = async (req: Request, res: Response): Promise<void> =>
                 return;
             }
 
-            const payload = await response.json();
-            email = payload?.email ? String(payload.email).trim().toLowerCase() : undefined;
-            given_name = payload?.given_name;
-            family_name = payload?.family_name;
-            googleId = payload?.sub;
+            const data = await response.json();
+            email = data.email ? String(data.email).trim().toLowerCase() : undefined;
+            given_name = data.given_name || undefined;
+            family_name = data.family_name || undefined;
+            googleId = data.sub || undefined;
         }
 
         if (!email) {
-            res.status(400).json({ message: 'Email not found in Google token' });
-            return;
-        }
-        if (!googleId) {
-            res.status(400).json({ message: 'Google user id not found in Google token' });
+            res.status(400).json({ message: 'Google account did not provide an email address' });
             return;
         }
 
@@ -228,28 +244,25 @@ export const googleLogin = async (req: Request, res: Response): Promise<void> =>
             { expiresIn: '1d' }
         );
 
+        const userResponse = await formatUserResponse(user);
+
         res.json({
             message: 'Google login successful',
             token: jwtToken,
-            user: {
-                id: user.id,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                email: user.email,
-            },
+            user: userResponse,
         });
     } catch (error) {
         console.error('Google login error:', error);
         res.status(500).json({ message: 'Server error' });
     }
 };
+
 export const getProfile = async (req: Request, res: Response): Promise<void> => {
     try {
         const userId = (req as any).user.id;
 
         const user = await userRepository.findOne({
             where: { id: userId },
-            select: ['id', 'email', 'firstName', 'lastName'],
         });
 
         if (!user) {
@@ -257,7 +270,8 @@ export const getProfile = async (req: Request, res: Response): Promise<void> => 
             return;
         }
 
-        res.json(user);
+        const userResponse = await formatUserResponse(user);
+        res.json(userResponse);
     } catch (error) {
         console.error('Get profile error:', error);
         res.status(500).json({ message: 'Server error' });

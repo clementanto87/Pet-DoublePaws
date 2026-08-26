@@ -2,12 +2,15 @@ import React, { createContext, useContext, useState, useEffect, type ReactNode }
 
 import api from '../lib/api';
 
-interface User {
+export interface User {
     id: string;
     firstName: string;
     lastName: string;
     email: string;
+    profileImage?: string;
     role?: 'user' | 'sitter' | 'admin';
+    isSitter?: boolean;
+    sitterProfileId?: string;
 }
 
 interface AuthContextType {
@@ -37,6 +40,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setUser(JSON.parse(storedUser));
             // Set default auth header
             api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+            // Refresh user details (including role & isSitter status from backend)
+            api.get('/auth/me')
+                .then((res) => {
+                    if (res.data) {
+                        setUser(res.data);
+                        localStorage.setItem('user', JSON.stringify(res.data));
+                    }
+                })
+                .catch(() => {});
         }
         setIsLoading(false);
     }, []);
