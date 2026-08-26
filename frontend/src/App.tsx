@@ -36,6 +36,7 @@ import ToastProvider from './components/ui/Toast';
 import GoogleOneTap from './components/auth/GoogleOneTap';
 import PrivacySettingsPage from './pages/PrivacySettingsPage';
 import CookieConsent from './components/privacy/CookieConsent';
+import { AboutPage, ContactPage, PricingPage, ServiceDetailPage, ServicesPage } from './pages/PublicInfoPages';
 
 // Create a client for React Query
 const queryClient = new QueryClient();
@@ -70,6 +71,11 @@ const AppShell: React.FC = () => {
       <main className="flex-1 w-full overflow-x-hidden">
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/services" element={<ServicesPage />} />
+          <Route path="/services/:slug" element={<ServiceDetailPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/contact" element={<ContactPage />} />
           <Route
             path="/dashboard"
             element={
