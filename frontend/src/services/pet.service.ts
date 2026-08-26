@@ -1,6 +1,7 @@
 import api from '../lib/api';
 
 export interface PetData {
+    id?: string;
     name: string;
     species: string;
     breed: string;

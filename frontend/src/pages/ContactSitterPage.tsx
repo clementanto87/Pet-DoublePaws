@@ -252,7 +252,7 @@ const ContactSitterPage: React.FC = () => {
     const prefilledEndDate = searchParams.get('endDate') || '';
 
     // Fetch user's pets
-    const { data: pets, isLoading: isLoadingPets } = useQuery<PetData[]>({
+    const { data: pets, isLoading: isLoadingPets, isError: isPetsError, refetch: refetchPets } = useQuery<PetData[]>({
         queryKey: ['myPets'],
         queryFn: petService.getPets
     });
@@ -280,12 +280,15 @@ const ContactSitterPage: React.FC = () => {
 
     // Toggle pet selection
     const togglePetSelection = (petId: string) => {
+        const normalizedPetId = String(petId);
         setSelectedPetIds(prev =>
-            prev.includes(petId)
-                ? prev.filter(id => id !== petId)
-                : [...prev, petId]
+            prev.includes(normalizedPetId)
+                ? prev.filter(id => id !== normalizedPetId)
+                : [...prev, normalizedPetId]
         );
     };
+
+    const hasPetSelection = selectedPetIds.length > 0 || petCounts.dogs > 0 || petCounts.cats > 0;
 
     // Auto advance step based on completion
     useEffect(() => {
@@ -525,7 +528,7 @@ const ContactSitterPage: React.FC = () => {
     const steps = [
         { number: 1, label: 'Service', completed: !!selectedService },
         { number: 2, label: 'Dates', completed: !!startDate && !!endDate },
-        { number: 3, label: 'Pets', completed: selectedPetIds.length > 0 },
+        { number: 3, label: 'Pets', completed: hasPetSelection },
         { number: 4, label: 'Message', completed: !!message.trim() },
     ];
 
@@ -803,7 +806,7 @@ const ContactSitterPage: React.FC = () => {
                                     <div className="flex items-center gap-3 mb-5">
                                         <div className={cn(
                                             "w-10 h-10 rounded-xl flex items-center justify-center font-bold shadow-lg",
-                                            (selectedPetIds.length > 0 || petCounts.dogs > 0 || petCounts.cats > 0)
+                                            hasPetSelection
                                                 ? "bg-gradient-to-br from-primary to-orange-500 text-white shadow-primary/20"
                                                 : "bg-gray-100 dark:bg-gray-800 text-gray-400"
                                         )}>
@@ -813,7 +816,7 @@ const ContactSitterPage: React.FC = () => {
                                             <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t('contactSitter.step3')}</h2>
                                             <p className="text-sm text-gray-500">{t('contactSitter.step3desc')}</p>
                                         </div>
-                                        {(selectedPetIds.length > 0 || petCounts.dogs > 0 || petCounts.cats > 0) && (
+                                        {hasPetSelection && (
                                             <CheckCircle className="w-5 h-5 text-green-500 ml-auto" />
                                         )}
                                     </div>
@@ -926,6 +929,11 @@ const ContactSitterPage: React.FC = () => {
                                         {/* Profile Pets */}
                                         {isLoadingPets ? (
                                             <div className="text-center py-8 text-gray-500">{t('contactSitter.loadingPets')}</div>
+                                        ) : isPetsError ? (
+                                            <div className="text-center py-8">
+                                                <p className="text-gray-500 mb-4">We could not load your saved pets.</p>
+                                                <Button onClick={() => refetchPets()} variant="outline">Try again</Button>
+                                            </div>
                                         ) : !pets || pets.length === 0 ? (
                                             <div className="text-center py-8">
                                                 <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -941,11 +949,12 @@ const ContactSitterPage: React.FC = () => {
                                         ) : (
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 {pets.map((pet: any) => {
-                                                    const isSelected = selectedPetIds.includes(pet.id);
+                                                    const petId = String(pet.id);
+                                                    const isSelected = selectedPetIds.includes(petId);
                                                     return (
                                                         <div
                                                             key={pet.id}
-                                                            onClick={() => togglePetSelection(pet.id)}
+                                                            onClick={() => togglePetSelection(petId)}
                                                             className={cn(
                                                                 "relative p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center gap-4",
                                                                 isSelected
@@ -983,7 +992,7 @@ const ContactSitterPage: React.FC = () => {
                                             </div>
                                         )}
 
-                                        {(selectedPetIds.length > 0 || petCounts.dogs > 0 || petCounts.cats > 0) && (
+                                        {hasPetSelection && (
                                             <div className="flex justify-end pt-4">
                                                 <Button
                                                     onClick={() => setActiveStep(4)}

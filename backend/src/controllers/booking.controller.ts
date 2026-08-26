@@ -29,7 +29,7 @@ export const createBooking = async (req: Request, res: Response) => {
             serviceType,
             startDate,
             endDate,
-            petIds,
+            petIds: Array.isArray(petIds) ? petIds.map((petId: unknown) => String(petId)) : [],
             message,
             totalPrice,
             status: BookingStatus.PENDING
