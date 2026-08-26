@@ -27,6 +27,8 @@ import {
     MessageSquare,
     ArrowRight,
     Search
+    ,Image as ImageIcon
+    ,Trash2
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
@@ -61,6 +63,28 @@ const serviceIcons: Record<string, React.ElementType> = {
     doggyDayCare: Users,
     dogWalking: PawPrint
 };
+
+const readImage = (file: File): Promise<string> => new Promise((resolve, reject) => {
+    if (!file.type.startsWith('image/')) return reject(new Error('Only image files are supported'));
+    if (file.size > 10 * 1024 * 1024) return reject(new Error('Images must be smaller than 10 MB'));
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        const maxDimension = 1600;
+        const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+        canvas.getContext('2d')?.drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.82));
+    };
+    image.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error('Unable to read image'));
+    };
+    image.src = objectUrl;
+});
 
 // Edit Modal Component
 interface EditModalProps {
@@ -224,6 +248,40 @@ const SitterDashboard: React.FC = () => {
         updateMutation.mutate(editFormData as any);
     };
 
+    const handleProfileImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        try {
+            const profileImage = await readImage(file);
+            updateMutation.mutate({ profileImage } as any);
+        } catch (error) {
+            showToast(error instanceof Error ? error.message : 'Unable to upload image', 'error');
+        }
+        event.target.value = '';
+    };
+
+    const handleGalleryImagesChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(event.target.files || []);
+        if (!files.length) return;
+        const current = profile?.galleryImages || [];
+        if (current.length + files.length > 10) {
+            showToast('You can upload up to 10 gallery images.', 'error');
+            return;
+        }
+        try {
+            const images = await Promise.all(files.map(readImage));
+            updateMutation.mutate({ galleryImages: [...current, ...images] } as any);
+        } catch (error) {
+            showToast(error instanceof Error ? error.message : 'Unable to upload images', 'error');
+        }
+        event.target.value = '';
+    };
+
+    const removeGalleryImage = (index: number) => {
+        const images = (profile?.galleryImages || []).filter((_, imageIndex) => imageIndex !== index);
+        updateMutation.mutate({ galleryImages: images } as any);
+    };
+
     // Handle availability toggle
     const handleToggleDate = (date: string) => {
         if (!profile) return;
@@ -323,6 +381,25 @@ const SitterDashboard: React.FC = () => {
                     <div className="min-w-0 flex-1"><h2 className={cn('font-semibold', profile.isVerified ? 'text-emerald-900 dark:text-emerald-200' : 'text-amber-900 dark:text-amber-200')}>{profile.isVerified ? t('sitterDashboard.verification.verified') : t('sitterDashboard.verification.pendingTitle')}</h2><p className={cn('mt-1 text-sm', profile.isVerified ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300')}>{profile.isVerified ? "You're all set! Pet parents can now book your services." : t('sitterDashboard.verification.pendingDesc')}</p></div>
                     {!profile.isVerified && <Button variant="outline" size="sm" className="hidden shrink-0 border-amber-300 text-amber-700 sm:block">{t('sitterDashboard.verification.learnMore')}</Button>}
                 </div>
+
+                <Card className="overflow-hidden rounded-2xl border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                    <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div><CardTitle className="flex items-center gap-2"><ImageIcon className="h-5 w-5 text-primary" />Profile photos</CardTitle><CardDescription>Set your profile picture and showcase up to 10 photos of your daycare space.</CardDescription></div>
+                        <label className="inline-flex h-10 cursor-pointer items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-white shadow-lg shadow-primary/20 hover:bg-primary/90"><input type="file" accept="image/*" className="hidden" onChange={handleGalleryImagesChange} disabled={updateMutation.isPending || (profile.galleryImages?.length || 0) >= 10} />Add gallery photos</label>
+                    </CardHeader>
+                    <CardContent className="grid gap-6 px-5 pb-5 lg:grid-cols-[180px_1fr]">
+                        <div className="space-y-3">
+                            <div className="relative aspect-square overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800">
+                                {profile.user?.profileImage ? <img src={profile.user.profileImage} alt="Profile" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-4xl font-bold text-primary">{user?.firstName?.[0]}{user?.lastName?.[0]}</div>}
+                            </div>
+                            <label className="inline-flex w-full cursor-pointer items-center justify-center rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"><input type="file" accept="image/*" className="hidden" onChange={handleProfileImageChange} disabled={updateMutation.isPending} />Change profile picture</label>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                            {(profile.galleryImages || []).map((image, index) => <div key={`${image.slice(0, 20)}-${index}`} className="group relative aspect-square overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800"><img src={image} alt={`Gallery ${index + 1}`} className="h-full w-full object-cover" /><button type="button" onClick={() => removeGalleryImage(index)} disabled={updateMutation.isPending} aria-label={`Delete gallery image ${index + 1}`} className="absolute right-2 top-2 rounded-lg bg-slate-950/70 p-2 text-white opacity-0 transition group-hover:opacity-100 disabled:opacity-50"><Trash2 className="h-4 w-4" /></button></div>)}
+                            {(profile.galleryImages?.length || 0) < 10 && <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 text-sm font-semibold text-slate-400 hover:border-primary hover:text-primary dark:border-slate-700"><input type="file" accept="image/*" multiple className="hidden" onChange={handleGalleryImagesChange} disabled={updateMutation.isPending} /><span className="text-2xl">+</span><span>Add photos</span></label>}
+                        </div>
+                    </CardContent>
+                </Card>
 
                 <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     {[

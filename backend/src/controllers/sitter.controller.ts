@@ -7,7 +7,7 @@ import { AuthRequest } from '../middleware/auth.middleware';
 export const createOrUpdateSitterProfile = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user.id;
-        const profileData = req.body;
+        const { profileImage, galleryImages, ...profileData } = req.body;
 
         const sitterRepository = AppDataSource.getRepository(SitterProfile);
         const userRepository = AppDataSource.getRepository(User);
@@ -29,6 +29,19 @@ export const createOrUpdateSitterProfile = async (req: AuthRequest, res: Respons
                 user,
                 userId
             });
+        }
+
+        if (profileImage !== undefined) {
+            user.profileImage = typeof profileImage === 'string' ? profileImage : undefined;
+            await userRepository.save(user);
+        }
+
+        if (galleryImages !== undefined) {
+            if (!Array.isArray(galleryImages) || galleryImages.length > 10 || galleryImages.some((image) => typeof image !== 'string')) {
+                res.status(400).json({ message: 'Gallery must contain up to 10 images' });
+                return;
+            }
+            profile.galleryImages = galleryImages;
         }
 
         if (!profile) {
@@ -243,7 +256,7 @@ export const getSitterProfile = async (req: AuthRequest, res: Response): Promise
         const userId = req.user.id;
         const sitterRepository = AppDataSource.getRepository(SitterProfile);
 
-        const profile = await sitterRepository.findOneBy({ userId });
+        const profile = await sitterRepository.findOne({ where: { userId }, relations: ['user'] });
 
         if (!profile) {
             res.status(404).json({ message: 'Profile not found' });

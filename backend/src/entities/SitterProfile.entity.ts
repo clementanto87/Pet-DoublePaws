@@ -85,6 +85,9 @@ export class SitterProfile {
     @Column('text', { nullable: true })
     bio?: string;
 
+    @Column('simple-json', { nullable: true })
+    galleryImages?: string[];
+
     // Availability (JSON)
     @Column('simple-json', { nullable: true })
     availability?: {

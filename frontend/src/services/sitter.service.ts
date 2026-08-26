@@ -4,6 +4,8 @@ import type { SitterRegistrationData } from '../context/SitterRegistrationContex
 export interface SitterProfile {
     id: string;
     userId: string;
+    user?: { id: string; firstName: string; lastName: string; email?: string; profileImage?: string };
+    galleryImages?: string[];
     dob?: string;
     address?: string;
     latitude?: number;

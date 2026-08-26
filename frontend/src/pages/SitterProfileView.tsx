@@ -218,6 +218,8 @@ const SitterProfileView: React.FC = () => {
 
     // Month navigation for calendar
     const [monthOffset, setMonthOffset] = useState(0);
+    const [galleryIndex, setGalleryIndex] = useState(0);
+    const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
     // Fetch reviews (hook must run before any early return to keep hook order stable)
     const { data: reviews, isLoading: reviewsLoading } = useQuery({
@@ -254,6 +256,8 @@ const SitterProfileView: React.FC = () => {
         ? Object.entries(sitter.services).filter(([_, service]: [string, any]) => service?.active)
         : [];
 
+    const galleryImages = sitter.galleryImages || [];
+
     // Get minimum rate
     const minRate = activeServices.length > 0
         ? Math.min(...activeServices.map(([_, service]: [string, any]) => service.rate))
@@ -282,8 +286,10 @@ const SitterProfileView: React.FC = () => {
                 {/* Profile Header */}
                 <div className="bg-white dark:bg-card rounded-3xl shadow-lg overflow-hidden mb-6">
                     {/* Cover gradient */}
-                    <div className="h-32 bg-gradient-to-r from-primary via-orange-500 to-amber-500 relative">
-                        <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '20px 20px' }} />
+                    <div className="relative h-32 overflow-hidden bg-gradient-to-r from-primary via-orange-500 to-amber-500">
+                        {galleryImages.length > 0 && <img src={galleryImages[galleryIndex]} alt="Sitter gallery" className="h-full w-full object-cover" />}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                        {galleryImages.length > 1 && <><button type="button" onClick={() => setGalleryIndex((galleryIndex - 1 + galleryImages.length) % galleryImages.length)} className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white" aria-label="Previous photo"><ChevronLeft className="h-5 w-5" /></button><button type="button" onClick={() => setGalleryIndex((galleryIndex + 1) % galleryImages.length)} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/40 p-2 text-white" aria-label="Next photo"><ChevronRight className="h-5 w-5" /></button><button type="button" onClick={() => setLightboxIndex(galleryIndex)} className="absolute bottom-3 right-3 rounded-full bg-black/50 px-3 py-1 text-xs font-semibold text-white">View all {galleryImages.length} photos</button></>}
                     </div>
 
                     <div className="px-6 pb-6">
@@ -363,6 +369,8 @@ const SitterProfileView: React.FC = () => {
                             </div>
                         </div>
                     </div>
+
+                    {galleryImages.length > 0 && <div className="mt-4 grid grid-cols-5 gap-2"><button type="button" onClick={() => setLightboxIndex(0)} className="relative aspect-square overflow-hidden rounded-lg ring-2 ring-primary"><img src={galleryImages[0]} alt="Gallery 1" className="h-full w-full object-cover" /></button>{galleryImages.slice(1, 5).map((image: string, index: number) => <button type="button" key={image.slice(0, 20) + index} onClick={() => setLightboxIndex(index + 1)} className="aspect-square overflow-hidden rounded-lg"><img src={image} alt={`Gallery ${index + 2}`} className="h-full w-full object-cover" /></button>)}</div>}
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
@@ -759,9 +767,10 @@ const SitterProfileView: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {lightboxIndex !== null && <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4" role="dialog" aria-label="Sitter photos" onClick={() => setLightboxIndex(null)}><button type="button" onClick={() => setLightboxIndex(null)} className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white" aria-label="Close photos">X</button><img src={galleryImages[lightboxIndex]} alt={`Gallery ${lightboxIndex + 1}`} className="max-h-[85vh] max-w-[92vw] rounded-xl object-contain" onClick={(event) => event.stopPropagation()} />{galleryImages.length > 1 && <><button type="button" onClick={(event) => { event.stopPropagation(); setLightboxIndex((lightboxIndex - 1 + galleryImages.length) % galleryImages.length); }} className="absolute left-4 rounded-full bg-white/10 p-3 text-white"><ChevronLeft /></button><button type="button" onClick={(event) => { event.stopPropagation(); setLightboxIndex((lightboxIndex + 1) % galleryImages.length); }} className="absolute right-4 rounded-full bg-white/10 p-3 text-white"><ChevronRight /></button></>}</div>}
         </div>
     );
 };
 
 export default SitterProfileView;
-
