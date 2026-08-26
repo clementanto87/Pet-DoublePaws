@@ -34,6 +34,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import ToastProvider from './components/ui/Toast';
 import GoogleOneTap from './components/auth/GoogleOneTap';
+import CookieConsent from './components/privacy/CookieConsent';
 
 // Create a client for React Query
 const queryClient = new QueryClient();
@@ -159,6 +160,7 @@ function App() {
             <Router>
               <ScrollToTop />
               <AppShell />
+              <CookieConsent />
             </Router>
           </ToastProvider>
         </AuthProvider>

@@ -577,6 +577,20 @@
     "subtitle": "Chatten Sie mit Ihren Kunden",
     "backToDashboard": "Zurück zum Dashboard"
   },
+  "cookieConsent": {
+    "title": "Ihre Privatsphäre ist uns wichtig",
+    "description": "Wir verwenden notwendige Cookies, damit Double Paws sicher und zuverlässig funktioniert. Mit Ihrer Zustimmung helfen optionale Cookies uns, die Nutzung zu verstehen und Ihr Erlebnis zu verbessern.",
+    "necessaryTitle": "Notwendige Cookies",
+    "necessaryDescription": "Erforderlich für Sicherheit, Anmeldung und grundlegende Funktionen.",
+    "analyticsTitle": "Analyse-Cookies",
+    "analyticsDescription": "Helfen uns zu verstehen, wie die Website genutzt wird.",
+    "marketingTitle": "Marketing-Cookies",
+    "marketingDescription": "Helfen uns, relevante Kampagnen zu messen und zu personalisieren.",
+    "preferences": "Cookie-Einstellungen",
+    "save": "Einstellungen speichern",
+    "reject": "Optionale ablehnen",
+    "acceptAll": "Alle akzeptieren"
+  },
   "footer": {
     "description": "Premium-Tierbetreuungsdienste, die Ihre pelzigen Freunde wie zu Hause fühlen lassen. Sichere, lustige und liebevolle Umgebung.",
     "quickLinks": {

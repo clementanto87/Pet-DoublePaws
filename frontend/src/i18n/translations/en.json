@@ -577,6 +577,20 @@
     "subtitle": "Chat with your customers",
     "backToDashboard": "Back to Dashboard"
   },
+  "cookieConsent": {
+    "title": "We value your privacy",
+    "description": "We use necessary cookies to keep Double Paws secure and working. With your permission, optional cookies help us understand usage and improve your experience.",
+    "necessaryTitle": "Necessary cookies",
+    "necessaryDescription": "Required for security, login, and core functionality.",
+    "analyticsTitle": "Analytics cookies",
+    "analyticsDescription": "Help us understand how the site is used.",
+    "marketingTitle": "Marketing cookies",
+    "marketingDescription": "Help us measure and personalize relevant campaigns.",
+    "preferences": "Cookie preferences",
+    "save": "Save preferences",
+    "reject": "Reject optional",
+    "acceptAll": "Accept all"
+  },
   "footer": {
     "description": "Premium pet care services designed to make your furry friends feel right at home. Safe, fun, and loving environment.",
     "quickLinks": {
