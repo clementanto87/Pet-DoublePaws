@@ -257,12 +257,50 @@ const Dashboard: React.FC = () => {
                             ) : (
                                 <div className="grid gap-3 sm:grid-cols-2">
                                     {pets.slice(0, 4).map((pet: Pet) => (
-                                        <div key={pet.id} className="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                                        <div
+                                            key={pet.id}
+                                            role="button"
+                                            tabIndex={0}
+                                            onClick={() => navigate('/pet-profile', { state: { pet } })}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                    e.preventDefault();
+                                                    navigate('/pet-profile', { state: { pet } });
+                                                }
+                                            }}
+                                            className="group flex cursor-pointer items-center gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition-all hover:border-primary/40 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
+                                        >
                                             <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-orange-50 dark:bg-orange-950/30">
-                                                {pet.imageUrl ? <img src={pet.imageUrl} alt={pet.name} className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center">{pet.species?.toLowerCase() === 'dog' ? <Dog className="h-8 w-8 text-orange-300" /> : <Cat className="h-8 w-8 text-purple-300" />}</div>}
+                                                {pet.imageUrl ? (
+                                                    <img
+                                                        src={pet.imageUrl}
+                                                        alt={pet.name}
+                                                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                    />
+                                                ) : (
+                                                    <div className="flex h-full w-full items-center justify-center">
+                                                        {pet.species?.toLowerCase() === 'dog' ? (
+                                                            <Dog className="h-8 w-8 text-orange-300" />
+                                                        ) : (
+                                                            <Cat className="h-8 w-8 text-purple-300" />
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className="min-w-0 flex-1"><h3 className="font-semibold text-slate-950 dark:text-white">{pet.name}</h3><p className="mt-1 text-sm capitalize text-slate-500">{pet.breed || pet.species} · {pet.age} {t('dashboard.petCard.yrs')}</p><button onClick={() => navigate('/pet-profile', { state: { pet } })} className="mt-2 text-xs font-semibold text-primary hover:underline">{t('dashboard.petCard.edit')}</button></div>
-                                            <button onClick={() => navigate('/booking')} className="rounded-lg p-2 text-slate-400 transition hover:bg-orange-50 hover:text-primary" aria-label={t('dashboard.petCard.book')}><ArrowRight className="h-4 w-4" /></button>
+                                            <div className="min-w-0 flex-1">
+                                                <h3 className="font-semibold text-slate-950 transition-colors group-hover:text-primary dark:text-white">
+                                                    {pet.name}
+                                                </h3>
+                                                <p className="mt-1 text-sm capitalize text-slate-500">
+                                                    {pet.breed || pet.species} · {pet.age} {t('dashboard.petCard.yrs')}
+                                                </p>
+                                                <span className="mt-2 inline-flex items-center text-xs font-semibold text-primary group-hover:underline">
+                                                    {t('dashboard.petCard.edit')}
+                                                </span>
+                                            </div>
+                                            <div className="rounded-lg p-2 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-primary">
+                                                <ArrowRight className="h-4 w-4" />
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
