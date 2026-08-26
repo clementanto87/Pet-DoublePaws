@@ -257,6 +257,153 @@ export const googleLogin = async (req: Request, res: Response): Promise<void> =>
     }
 };
 
+export const facebookLogin = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { accessToken } = req.body;
+        if (!accessToken || typeof accessToken !== 'string') {
+            res.status(400).json({ message: 'Missing Facebook access token' });
+            return;
+        }
+
+        // Verify token against Facebook Graph API
+        const response = await fetch(
+            `https://graph.facebook.com/me?fields=id,first_name,last_name,email,picture.type(large)&access_token=${encodeURIComponent(accessToken)}`
+        );
+
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            res.status(401).json({ message: 'Invalid Facebook token', details: errData });
+            return;
+        }
+
+        const data = await response.json();
+        const facebookId = data.id;
+        const email = data.email ? String(data.email).trim().toLowerCase() : `fb_${facebookId}@facebook.doublepaws24.com`;
+        const firstName = data.first_name || 'Facebook';
+        const lastName = data.last_name || 'User';
+        const profileImage = data.picture?.data?.url || undefined;
+
+        // Check if user exists by facebookId or email
+        let user = await userRepository.findOne({
+            where: [{ facebookId }, { email }],
+        });
+
+        if (user) {
+            let needsSave = false;
+            if (!user.facebookId) {
+                user.facebookId = facebookId;
+                needsSave = true;
+            }
+            if (!user.profileImage && profileImage) {
+                user.profileImage = profileImage;
+                needsSave = true;
+            }
+            if (needsSave) {
+                await userRepository.save(user);
+            }
+        } else {
+            user = userRepository.create({
+                email,
+                firstName,
+                lastName,
+                facebookId,
+                profileImage,
+                password: '',
+            });
+            await userRepository.save(user);
+            void emailService.sendWelcome(user);
+        }
+
+        const jwtToken = jwt.sign(
+            { id: user.id, email: user.email },
+            process.env.JWT_SECRET || 'your_jwt_secret',
+            { expiresIn: '1d' }
+        );
+
+        const userResponse = await formatUserResponse(user);
+
+        res.json({
+            message: 'Facebook login successful',
+            token: jwtToken,
+            user: userResponse,
+        });
+    } catch (error) {
+        console.error('Facebook login error:', error);
+        res.status(500).json({ message: 'Server error during Facebook login' });
+    }
+};
+
+export const appleLogin = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { id_token, user: userPayload } = req.body;
+        if (!id_token || typeof id_token !== 'string') {
+            res.status(400).json({ message: 'Missing Apple ID token' });
+            return;
+        }
+
+        // Decode Apple JWT to extract claims (sub, email)
+        const decoded = jwt.decode(id_token) as any;
+        if (!decoded || !decoded.sub) {
+            res.status(401).json({ message: 'Invalid Apple ID token payload' });
+            return;
+        }
+
+        const appleId = decoded.sub;
+        const email = decoded.email
+            ? String(decoded.email).trim().toLowerCase()
+            : userPayload?.email
+            ? String(userPayload.email).trim().toLowerCase()
+            : `apple_${appleId}@apple.doublepaws24.com`;
+
+        let firstName = 'Apple';
+        let lastName = 'User';
+
+        if (userPayload?.name?.firstName) {
+            firstName = userPayload.name.firstName;
+            lastName = userPayload.name.lastName || '';
+        }
+
+        // Check if user exists by appleId or email
+        let user = await userRepository.findOne({
+            where: [{ appleId }, { email }],
+        });
+
+        if (user) {
+            if (!user.appleId) {
+                user.appleId = appleId;
+                await userRepository.save(user);
+            }
+        } else {
+            user = userRepository.create({
+                email,
+                firstName,
+                lastName,
+                appleId,
+                password: '',
+            });
+            await userRepository.save(user);
+            void emailService.sendWelcome(user);
+        }
+
+        const jwtToken = jwt.sign(
+            { id: user.id, email: user.email },
+            process.env.JWT_SECRET || 'your_jwt_secret',
+            { expiresIn: '1d' }
+        );
+
+        const userResponse = await formatUserResponse(user);
+
+        res.json({
+            message: 'Apple login successful',
+            token: jwtToken,
+            user: userResponse,
+        });
+    } catch (error) {
+        console.error('Apple login error:', error);
+        res.status(500).json({ message: 'Server error during Apple login' });
+    }
+};
+
 export const getProfile = async (req: Request, res: Response): Promise<void> => {
     try {
         const userId = (req as any).user.id;

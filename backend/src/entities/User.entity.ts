@@ -27,6 +27,12 @@ export class User {
     @Column({ nullable: true, unique: true })
     googleId?: string;
 
+    @Column({ nullable: true, unique: true })
+    facebookId?: string;
+
+    @Column({ nullable: true, unique: true })
+    appleId?: string;
+
     @CreateDateColumn()
     createdAt!: Date;
     @UpdateDateColumn()

@@ -19,6 +19,8 @@ interface AuthContextType {
     login: (email: string, password: string) => Promise<void>;
     signup: (firstName: string, lastName: string, email: string, password: string) => Promise<void>;
     googleLogin: (token: string) => Promise<void>;
+    facebookLogin: (accessToken: string) => Promise<void>;
+    appleLogin: (idToken: string, userPayload?: { name?: { firstName?: string; lastName?: string }; email?: string }) => Promise<void>;
     logout: () => void;
     isLoading: boolean;
     error: string | null;
@@ -114,6 +116,46 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
+    const facebookLogin = async (accessToken: string) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const response = await api.post('/auth/facebook', { accessToken });
+            const { user, token: jwtToken } = response.data;
+
+            localStorage.setItem('user', JSON.stringify(user));
+            localStorage.setItem('token', jwtToken);
+            api.defaults.headers.common['Authorization'] = `Bearer ${jwtToken}`;
+
+            setUser(user);
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Facebook login failed');
+            throw err;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const appleLogin = async (idToken: string, userPayload?: { name?: { firstName?: string; lastName?: string }; email?: string }) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const response = await api.post('/auth/apple', { id_token: idToken, user: userPayload });
+            const { user, token: jwtToken } = response.data;
+
+            localStorage.setItem('user', JSON.stringify(user));
+            localStorage.setItem('token', jwtToken);
+            api.defaults.headers.common['Authorization'] = `Bearer ${jwtToken}`;
+
+            setUser(user);
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Apple login failed');
+            throw err;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const logout = () => {
         setUser(null);
         localStorage.removeItem('user');
@@ -122,7 +164,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, signup, googleLogin, logout, isLoading, error }}>
+        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, signup, googleLogin, facebookLogin, appleLogin, logout, isLoading, error }}>
             {children}
         </AuthContext.Provider>
     );
