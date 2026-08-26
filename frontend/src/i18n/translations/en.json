@@ -607,9 +607,18 @@
   },
   "becomeSitter": {
     "hero": {
+      "badge": "Join 10,000+ Pet Sitters",
       "title": "Turn Your Love for Pets",
       "titleHighlight": "Into Income",
       "subtitle": "Join thousands of pet sitters earning $1,500+ per month doing what they love",
+      "startEarning": "Start Earning Today",
+      "calculate": "Calculate Earnings",
+      "freeToJoin": "Free to Join",
+      "insuranceIncluded": "Insurance Included",
+      "quickApproval": "Quick Approval",
+      "monthlyPotential": "Monthly Potential",
+      "trustedBy": "Trusted by 10K+ Parents",
+      "bookingsToday": "5 Bookings Today",
       "getStarted": "Get Started",
       "learnMore": "Learn More"
     },

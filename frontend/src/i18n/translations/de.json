@@ -607,9 +607,18 @@
   },
   "becomeSitter": {
     "hero": {
+      "badge": "Werden Sie Teil von 10.000+ Tiersittern",
       "title": "Verwandeln Sie Ihre Liebe zu Tieren",
       "titleHighlight": "In Einkommen",
       "subtitle": "Schließen Sie sich Tausenden von Tiersittern an, die mehr als 1.500 € pro Monat verdienen, indem sie das tun, was sie lieben",
+      "startEarning": "Heute Geld verdienen",
+      "calculate": "Verdienst berechnen",
+      "freeToJoin": "Kostenlos beitreten",
+      "insuranceIncluded": "Versicherung inklusive",
+      "quickApproval": "Schnelle Genehmigung",
+      "monthlyPotential": "Monatliches Potenzial",
+      "trustedBy": "Das Vertrauen von über 10.000 Tierhaltern",
+      "bookingsToday": "5 Buchungen heute",
       "getStarted": "Loslegen",
       "learnMore": "Mehr erfahren"
     },
