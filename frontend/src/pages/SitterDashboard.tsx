@@ -340,31 +340,31 @@ const SitterDashboard: React.FC = () => {
     const maxRate = activeRates.length > 0 ? Math.max(...activeRates) : 0;
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] dark:bg-slate-950 py-5 sm:py-8 px-3.5 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-7xl space-y-5 sm:space-y-7">
+        <div className="min-h-screen bg-[#f8fafc] dark:bg-slate-950 py-4 sm:py-8 px-3 sm:px-6 lg:px-8 overflow-x-hidden">
+            <div className="mx-auto max-w-7xl space-y-4 sm:space-y-6 min-w-0">
 
                 {/* Top Hero & Header Card */}
-                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-500/10 via-amber-500/5 to-transparent dark:from-orange-950/40 dark:via-amber-950/20 dark:to-slate-900/40 border border-orange-200/60 dark:border-orange-900/30 p-5 sm:p-7 shadow-xs">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 sm:gap-6 relative z-10">
-                        <div className="space-y-1">
+                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-500/10 via-amber-500/5 to-transparent dark:from-orange-950/40 dark:via-amber-950/20 dark:to-slate-900/40 border border-orange-200/60 dark:border-orange-900/30 p-4 sm:p-7 shadow-xs">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 relative z-10">
+                        <div className="space-y-1 min-w-0">
                             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-slate-200/70 dark:border-slate-800 text-[11px] font-semibold text-slate-600 dark:text-slate-400">
                                 <Calendar className="w-3.5 h-3.5 text-primary" />
                                 <span>{format(new Date(), 'EEEE, MMMM d', dfOpts())}</span>
                             </div>
-                            <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-extrabold text-slate-900 dark:text-white tracking-tight">
-                                Sitter Dashboard · {formattedName}
+                            <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-extrabold text-slate-900 dark:text-white tracking-tight truncate">
+                                Sitter Hub · {formattedName}
                             </h1>
-                            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium">
+                            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium truncate">
                                 Manage your incoming bookings, services, calendar, and profile.
                             </p>
                         </div>
 
                         {/* Top Action CTAs */}
-                        <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+                        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                             <Button
                                 variant="outline"
                                 onClick={() => navigate('/dashboard')}
-                                className="h-11 px-4 rounded-2xl font-semibold text-xs border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 hover:bg-white dark:hover:bg-slate-800 flex items-center justify-center gap-1.5"
+                                className="h-10 sm:h-11 px-3 sm:px-4 rounded-2xl font-semibold text-xs border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 hover:bg-white dark:hover:bg-slate-800 flex items-center justify-center gap-1.5"
                             >
                                 <PawPrint className="w-4 h-4 text-primary" />
                                 <span>{t('sitterDashboard.petOwnerView', 'Pet Parent View')}</span>
@@ -372,14 +372,14 @@ const SitterDashboard: React.FC = () => {
 
                             <Button
                                 onClick={() => openEditModal('profile')}
-                                className="h-11 px-5 rounded-2xl shadow-glow font-bold text-xs bg-primary hover:bg-primary/90 text-white flex items-center justify-center gap-1.5"
+                                className="h-10 sm:h-11 px-4 sm:px-5 rounded-2xl shadow-glow font-bold text-xs bg-primary hover:bg-primary/90 text-white flex items-center justify-center gap-1.5"
                             >
                                 <Edit3 className="w-4 h-4" />
                                 <span>Edit Profile</span>
                             </Button>
 
                             <Link to="/sitter-messages" className="relative">
-                                <Button variant="outline" size="icon" className="h-11 w-11 rounded-2xl border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 hover:bg-white dark:hover:bg-slate-800">
+                                <Button variant="outline" size="icon" className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 hover:bg-white dark:hover:bg-slate-800">
                                     <MessageSquare className="w-4 h-4 text-slate-700 dark:text-slate-300" />
                                 </Button>
                                 {totalUnreadCount > 0 && (
@@ -394,25 +394,25 @@ const SitterDashboard: React.FC = () => {
 
                 {/* Verification Status Banner */}
                 <div className={cn(
-                    'flex items-center justify-between gap-3.5 rounded-2xl sm:rounded-3xl border p-4 sm:p-5 transition-all shadow-xs',
+                    'flex items-center justify-between gap-3.5 rounded-2xl sm:rounded-3xl border p-3.5 sm:p-5 transition-all shadow-xs min-w-0',
                     profile.isVerified
                         ? 'border-emerald-200/80 bg-emerald-50/70 dark:border-emerald-900/40 dark:bg-emerald-950/30'
                         : 'border-amber-200/80 bg-amber-50/70 dark:border-amber-900/40 dark:bg-amber-950/30'
                 )}>
-                    <div className="flex items-center gap-3.5">
+                    <div className="flex items-center gap-3 min-w-0">
                         <span className={cn(
-                            'flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-2xl shadow-2xs',
+                            'flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-2xl shadow-2xs',
                             profile.isVerified
                                 ? 'bg-emerald-600 text-white dark:bg-emerald-500'
                                 : 'bg-amber-500 text-white dark:bg-amber-600'
                         )}>
                             {profile.isVerified ? <ShieldCheck className="h-5 w-5 sm:h-6 sm:w-6" /> : <Clock className="h-5 w-5 sm:h-6 sm:w-6" />}
                         </span>
-                        <div>
-                            <h2 className={cn('font-bold text-sm sm:text-base', profile.isVerified ? 'text-emerald-950 dark:text-emerald-200' : 'text-amber-950 dark:text-amber-200')}>
+                        <div className="min-w-0">
+                            <h2 className={cn('font-bold text-xs sm:text-base truncate', profile.isVerified ? 'text-emerald-950 dark:text-emerald-200' : 'text-amber-950 dark:text-amber-200')}>
                                 {profile.isVerified ? 'Verified Sitter' : 'Verification Under Review'}
                             </h2>
-                            <p className={cn('text-xs sm:text-sm mt-0.5', profile.isVerified ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300')}>
+                            <p className={cn('text-[11px] sm:text-sm mt-0.5 line-clamp-2', profile.isVerified ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300')}>
                                 {profile.isVerified
                                     ? "Your listing is active and verified. Pet owners can find and book your care services directly."
                                     : "Our trust & safety team is reviewing your profile. You'll be ready to accept bookings shortly."}
@@ -421,32 +421,32 @@ const SitterDashboard: React.FC = () => {
                     </div>
 
                     {!profile.isVerified && (
-                        <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300">
+                        <span className="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 shrink-0">
                             Pending Approval
                         </span>
                     )}
                 </div>
 
                 {/* 4-Column Stat Metrics Bar */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4 min-w-0">
                     {/* Stat 1: Active Services */}
                     <div
                         onClick={() => openEditModal('services')}
-                        className="cursor-pointer flex flex-col justify-between p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-orange-300 dark:hover:border-orange-800 transition-all text-left group"
+                        className="cursor-pointer flex flex-col justify-between p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-orange-300 dark:hover:border-orange-800 transition-all text-left group min-w-0"
                     >
                         <div className="flex items-center justify-between">
-                            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
                                 {t('sitterDashboard.stats.activeServices', 'Services')}
                             </span>
-                            <span className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-orange-50 dark:bg-orange-950/50 text-orange-600 dark:text-orange-400 group-hover:scale-110 transition-transform">
-                                <Briefcase className="h-4 w-4 sm:h-5 sm:w-5" />
+                            <span className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-orange-50 dark:bg-orange-950/50 text-orange-600 dark:text-orange-400 group-hover:scale-110 transition-transform shrink-0">
+                                <Briefcase className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
                             </span>
                         </div>
-                        <div className="mt-2 sm:mt-3">
-                            <p className="text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                                {activeServicesCount} <span className="text-xs font-semibold text-slate-400">active</span>
+                        <div className="mt-2 sm:mt-3 min-w-0">
+                            <p className="text-lg sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight truncate">
+                                {activeServicesCount} <span className="text-[10px] sm:text-xs font-semibold text-slate-400">active</span>
                             </p>
-                            <p className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 font-medium truncate mt-0.5">
+                            <p className="text-[9px] sm:text-xs text-slate-400 dark:text-slate-500 font-medium truncate mt-0.5">
                                 Click to edit rates
                             </p>
                         </div>
@@ -455,21 +455,21 @@ const SitterDashboard: React.FC = () => {
                     {/* Stat 2: Rate Range */}
                     <div
                         onClick={() => openEditModal('services')}
-                        className="cursor-pointer flex flex-col justify-between p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-800 transition-all text-left group"
+                        className="cursor-pointer flex flex-col justify-between p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-800 transition-all text-left group min-w-0"
                     >
                         <div className="flex items-center justify-between">
-                            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
                                 {t('sitterDashboard.stats.rateRange', 'Rates')}
                             </span>
-                            <span className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
-                                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />
+                            <span className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform shrink-0">
+                                <DollarSign className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
                             </span>
                         </div>
-                        <div className="mt-2 sm:mt-3">
-                            <p className="text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                        <div className="mt-2 sm:mt-3 min-w-0">
+                            <p className="text-lg sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight truncate">
                                 €{minRate} - €{maxRate}
                             </p>
-                            <p className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 font-medium truncate mt-0.5">
+                            <p className="text-[9px] sm:text-xs text-slate-400 dark:text-slate-500 font-medium truncate mt-0.5">
                                 per service / night
                             </p>
                         </div>
@@ -478,21 +478,21 @@ const SitterDashboard: React.FC = () => {
                     {/* Stat 3: Service Radius */}
                     <div
                         onClick={() => openEditModal('services')}
-                        className="cursor-pointer flex flex-col justify-between p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-blue-300 dark:hover:border-blue-800 transition-all text-left group"
+                        className="cursor-pointer flex flex-col justify-between p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-blue-300 dark:hover:border-blue-800 transition-all text-left group min-w-0"
                     >
                         <div className="flex items-center justify-between">
-                            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
                                 {t('sitterDashboard.stats.serviceRadius', 'Coverage')}
                             </span>
-                            <span className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
-                                <MapPin className="h-4 w-4 sm:h-5 sm:w-5" />
+                            <span className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform shrink-0">
+                                <MapPin className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
                             </span>
                         </div>
-                        <div className="mt-2 sm:mt-3">
-                            <p className="text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                        <div className="mt-2 sm:mt-3 min-w-0">
+                            <p className="text-lg sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight truncate">
                                 {Math.round((profile.serviceRadius || 5) * 1.60934)} km
                             </p>
-                            <p className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 font-medium truncate mt-0.5">
+                            <p className="text-[9px] sm:text-xs text-slate-400 dark:text-slate-500 font-medium truncate mt-0.5">
                                 search radius
                             </p>
                         </div>
@@ -501,21 +501,21 @@ const SitterDashboard: React.FC = () => {
                     {/* Stat 4: Experience */}
                     <div
                         onClick={() => openEditModal('experience')}
-                        className="cursor-pointer flex flex-col justify-between p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-violet-300 dark:hover:border-violet-800 transition-all text-left group"
+                        className="cursor-pointer flex flex-col justify-between p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-violet-300 dark:hover:border-violet-800 transition-all text-left group min-w-0"
                     >
                         <div className="flex items-center justify-between">
-                            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
                                 {t('sitterDashboard.stats.experience', 'Experience')}
                             </span>
-                            <span className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400 group-hover:scale-110 transition-transform">
-                                <Award className="h-4 w-4 sm:h-5 sm:w-5" />
+                            <span className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-violet-50 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400 group-hover:scale-110 transition-transform shrink-0">
+                                <Award className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
                             </span>
                         </div>
-                        <div className="mt-2 sm:mt-3">
-                            <p className="text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                                {profile.yearsExperience || 0} <span className="text-xs font-semibold text-slate-400">years</span>
+                        <div className="mt-2 sm:mt-3 min-w-0">
+                            <p className="text-lg sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight truncate">
+                                {profile.yearsExperience || 0} <span className="text-[10px] sm:text-xs font-semibold text-slate-400">years</span>
                             </p>
-                            <p className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 font-medium truncate mt-0.5">
+                            <p className="text-[9px] sm:text-xs text-slate-400 dark:text-slate-500 font-medium truncate mt-0.5">
                                 verified experience
                             </p>
                         </div>
@@ -523,20 +523,20 @@ const SitterDashboard: React.FC = () => {
                 </div>
 
                 {/* Main Content Layout */}
-                <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-                    <div className="space-y-6">
+                <div className="grid items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_340px] min-w-0">
+                    <div className="space-y-4 sm:space-y-6 min-w-0">
 
                         {/* Section: Incoming & Historical Bookings */}
-                        <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                        <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0">
                             {/* Header & Tabs */}
-                            <div className="border-b border-slate-100 p-5 dark:border-slate-800 sm:p-6">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="border-b border-slate-100 p-4 sm:p-6 dark:border-slate-800">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                                     <div>
-                                        <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                        <h2 className="text-base sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                             <Calendar className="w-5 h-5 text-primary" />
                                             <span>{t('sitterDashboard.bookings.title', 'Booking Requests')}</span>
                                         </h2>
-                                        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                                        <p className="text-xs text-slate-500 mt-0.5">
                                             {activeTab === 'upcoming' ? 'Review and manage incoming booking requests' : 'Past completed stays and walks'}
                                         </p>
                                     </div>
@@ -546,7 +546,7 @@ const SitterDashboard: React.FC = () => {
                                         <button
                                             onClick={() => { setActiveTab('upcoming'); setBookingPage(1); }}
                                             className={cn(
-                                                'rounded-xl px-4 py-2 text-xs font-bold transition-all',
+                                                'rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-bold transition-all',
                                                 activeTab === 'upcoming'
                                                     ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
                                                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -557,7 +557,7 @@ const SitterDashboard: React.FC = () => {
                                         <button
                                             onClick={() => { setActiveTab('history'); setBookingPage(1); }}
                                             className={cn(
-                                                'rounded-xl px-4 py-2 text-xs font-bold transition-all',
+                                                'rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-bold transition-all',
                                                 activeTab === 'history'
                                                     ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
                                                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -569,21 +569,21 @@ const SitterDashboard: React.FC = () => {
                                 </div>
 
                                 {/* Search and Status Filter Row */}
-                                <div className="mt-4 flex flex-col gap-2.5 sm:flex-row">
+                                <div className="mt-3.5 flex flex-col gap-2 sm:flex-row">
                                     <div className="relative min-w-0 flex-1">
-                                        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                                         <input
                                             value={bookingSearch}
                                             onChange={(e) => { setBookingSearch(e.target.value); setBookingPage(1); }}
                                             placeholder="Search by pet owner, service, or date..."
-                                            className="h-11 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 pl-10 pr-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15"
+                                            className="h-10 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 pl-9 pr-3 text-xs sm:text-sm outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/15"
                                         />
                                     </div>
 
                                     <select
                                         value={bookingStatusFilter}
                                         onChange={(e) => { setBookingStatusFilter(e.target.value as 'ALL' | BookingStatus); setBookingPage(1); }}
-                                        className="h-11 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3.5 text-xs font-semibold text-slate-700 dark:text-slate-300 outline-none focus:border-primary"
+                                        className="h-10 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 text-xs font-semibold text-slate-700 dark:text-slate-300 outline-none focus:border-primary shrink-0"
                                     >
                                         <option value="ALL">All Statuses</option>
                                         {activeTab === 'upcoming' ? (
@@ -603,15 +603,15 @@ const SitterDashboard: React.FC = () => {
                             </div>
 
                             {/* Bookings List Content */}
-                            <div className="p-0">
+                            <div className="p-0 min-w-0">
                                 {bookingsLoading ? (
                                     <div className="px-6 py-14 text-center text-sm text-slate-500">
                                         Loading booking requests...
                                     </div>
                                 ) : bookings.length === 0 ? (
                                     <div className="px-6 py-14 text-center">
-                                        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-slate-100 text-slate-400 dark:bg-slate-800 mb-3">
-                                            <Calendar className="h-7 w-7" />
+                                        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 dark:bg-slate-800 mb-3">
+                                            <Calendar className="h-6 w-6" />
                                         </span>
                                         <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                                             {activeTab === 'upcoming' ? 'No incoming booking requests' : 'No booking history found'}
@@ -631,7 +631,7 @@ const SitterDashboard: React.FC = () => {
                                         )}
                                     </div>
                                 ) : (
-                                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                                    <div className="divide-y divide-slate-100 dark:divide-slate-800 min-w-0">
                                         {bookings.map((booking: Booking) => {
                                             const isPending = booking.status === BookingStatus.PENDING;
                                             const isAccepted = booking.status === BookingStatus.ACCEPTED;
@@ -652,38 +652,38 @@ const SitterDashboard: React.FC = () => {
                                             return (
                                                 <div
                                                     key={booking.id}
-                                                    className="p-5 sm:p-6 transition hover:bg-slate-50/70 dark:hover:bg-slate-800/40 space-y-3.5"
+                                                    className="p-4 sm:p-6 transition hover:bg-slate-50/70 dark:hover:bg-slate-800/40 space-y-3 min-w-0 overflow-hidden"
                                                 >
-                                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                                        <div className="flex items-start gap-4 min-w-0">
+                                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
+                                                        <div className="flex items-start gap-3 min-w-0 flex-1">
                                                             <div className={cn(
-                                                                'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border shadow-2xs font-bold text-sm',
+                                                                'flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl border shadow-2xs font-bold text-xs sm:text-sm',
                                                                 isAccepted
                                                                     ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/50 dark:border-emerald-800'
                                                                     : isPending
                                                                     ? 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/50 dark:border-amber-800'
                                                                     : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
                                                             )}>
-                                                                <Calendar className="h-5 w-5" />
+                                                                <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
                                                             </div>
 
                                                             <div className="min-w-0 flex-1">
-                                                                <div className="flex flex-wrap items-center gap-2">
+                                                                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                                                                     <h3 className="font-bold text-slate-900 dark:text-white capitalize truncate text-sm sm:text-base">
                                                                         {booking.serviceType.replace(/([A-Z])/g, ' $1').trim()}
                                                                     </h3>
-                                                                    <span className={cn('rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide border', statusBadgeClass)}>
+                                                                    <span className={cn('rounded-full px-2 py-0.5 text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wide border', statusBadgeClass)}>
                                                                         {booking.status}
                                                                     </span>
                                                                 </div>
 
-                                                                <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-                                                                    <span className="inline-flex items-center gap-1 font-medium text-slate-700 dark:text-slate-300">
-                                                                        <User className="h-3.5 w-3.5 text-slate-400" />
-                                                                        {ownerName}
+                                                                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400 min-w-0">
+                                                                    <span className="inline-flex items-center gap-1 font-medium text-slate-700 dark:text-slate-300 truncate">
+                                                                        <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                                                                        <span className="truncate">{ownerName}</span>
                                                                     </span>
-                                                                    <span className="inline-flex items-center gap-1 font-medium">
-                                                                        <Clock className="h-3.5 w-3.5 text-slate-400" />
+                                                                    <span className="inline-flex items-center gap-1 font-medium whitespace-nowrap">
+                                                                        <Clock className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                                                                         {format(new Date(booking.startDate), 'MMM d', dfOpts())} - {format(new Date(booking.endDate), 'MMM d, yyyy', dfOpts())}
                                                                     </span>
                                                                     <span className="inline-flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400">
@@ -694,14 +694,14 @@ const SitterDashboard: React.FC = () => {
                                                         </div>
 
                                                         {/* Sitter Actions */}
-                                                        <div className="flex items-center gap-2 self-end sm:self-auto flex-wrap">
+                                                        <div className="flex items-center gap-1.5 sm:gap-2 self-start sm:self-auto flex-wrap shrink-0">
                                                             {isPending && (
                                                                 <>
                                                                     <Button
                                                                         size="sm"
                                                                         onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: BookingStatus.ACCEPTED })}
                                                                         disabled={updateBookingStatusMutation.isPending}
-                                                                        className="h-9 px-3.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+                                                                        className="h-8 sm:h-9 px-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
                                                                     >
                                                                         <Check className="w-3.5 h-3.5 mr-1" />
                                                                         Accept
@@ -711,7 +711,7 @@ const SitterDashboard: React.FC = () => {
                                                                         variant="outline"
                                                                         onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: BookingStatus.REJECTED })}
                                                                         disabled={updateBookingStatusMutation.isPending}
-                                                                        className="h-9 px-3 rounded-xl text-xs font-bold border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/50 dark:hover:bg-red-950/40"
+                                                                        className="h-8 sm:h-9 px-3 rounded-xl text-xs font-bold border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/50 dark:hover:bg-red-950/40"
                                                                     >
                                                                         Decline
                                                                     </Button>
@@ -723,10 +723,10 @@ const SitterDashboard: React.FC = () => {
                                                                     size="sm"
                                                                     onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: BookingStatus.COMPLETED })}
                                                                     disabled={updateBookingStatusMutation.isPending}
-                                                                    className="h-9 px-3.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+                                                                    className="h-8 sm:h-9 px-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
                                                                 >
                                                                     <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
-                                                                    Complete Service
+                                                                    Complete
                                                                 </Button>
                                                             )}
 
@@ -735,15 +735,15 @@ const SitterDashboard: React.FC = () => {
                                                                 variant="outline"
                                                                 aria-label="Message owner"
                                                                 onClick={() => navigate('/sitter-messages', { state: { userId: booking.ownerId } })}
-                                                                className="h-9 w-9 rounded-xl border-slate-200 dark:border-slate-700"
+                                                                className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl border-slate-200 dark:border-slate-700"
                                                             >
-                                                                <MessageSquare className="h-4 w-4 text-slate-600 dark:text-slate-300" />
+                                                                <MessageSquare className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
                                                             </Button>
                                                         </div>
                                                     </div>
 
                                                     {booking.message && (
-                                                        <div className="rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 p-3.5 text-xs italic text-slate-600 dark:text-slate-300">
+                                                        <div className="rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 p-3 text-xs italic text-slate-600 dark:text-slate-300 break-words max-w-full">
                                                             “{booking.message}”
                                                         </div>
                                                     )}
@@ -755,8 +755,8 @@ const SitterDashboard: React.FC = () => {
 
                                 {/* Pagination */}
                                 {bookingPageData && bookingPageData.totalPages > 1 && (
-                                    <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 px-5 py-4 text-xs font-medium text-slate-500 sm:px-6">
-                                        <span>Page {bookingPageData.page} of {bookingPageData.totalPages} · {bookingPageData.total} bookings</span>
+                                    <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 px-4 py-3 text-xs font-medium text-slate-500 sm:px-6">
+                                        <span>Page {bookingPageData.page} of {bookingPageData.totalPages}</span>
                                         <div className="flex gap-2">
                                             <Button
                                                 variant="outline"
@@ -765,7 +765,7 @@ const SitterDashboard: React.FC = () => {
                                                 disabled={bookingPage <= 1}
                                                 onClick={() => setBookingPage((p) => p - 1)}
                                             >
-                                                Previous
+                                                Prev
                                             </Button>
                                             <Button
                                                 variant="outline"
@@ -783,19 +783,19 @@ const SitterDashboard: React.FC = () => {
                         </div>
 
                         {/* Section: Profile Photos & Space Showcase */}
-                        <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-                                <div>
-                                    <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <div className="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 min-w-0 overflow-hidden">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-5">
+                                <div className="min-w-0">
+                                    <h2 className="text-base sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                         <ImageIcon className="w-5 h-5 text-primary" />
                                         <span>Profile & Daycare Space Photos</span>
                                     </h2>
-                                    <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                                    <p className="text-xs text-slate-500 mt-0.5">
                                         Showcase your home, yard, and play areas (up to 10 photos).
                                     </p>
                                 </div>
 
-                                <label className="inline-flex h-10 cursor-pointer items-center justify-center rounded-2xl bg-primary px-4 text-xs font-bold text-white shadow-glow hover:bg-primary/90 transition-all self-start sm:self-auto">
+                                <label className="inline-flex h-9 sm:h-10 cursor-pointer items-center justify-center rounded-2xl bg-primary px-3.5 sm:px-4 text-xs font-bold text-white shadow-glow hover:bg-primary/90 transition-all self-start sm:self-auto shrink-0">
                                     <input
                                         type="file"
                                         accept="image/*"
@@ -808,9 +808,9 @@ const SitterDashboard: React.FC = () => {
                                 </label>
                             </div>
 
-                            <div className="grid gap-4 sm:gap-6 lg:grid-cols-[160px_1fr]">
+                            <div className="grid gap-4 sm:gap-6 lg:grid-cols-[140px_1fr] min-w-0">
                                 {/* Main Profile Avatar Preview */}
-                                <div className="space-y-2.5">
+                                <div className="space-y-2 max-w-[140px]">
                                     <div className="relative aspect-square overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-2xs">
                                         {profile.user?.profileImage ? (
                                             <img src={profile.user.profileImage} alt="Profile" className="h-full w-full object-cover" />
@@ -820,14 +820,14 @@ const SitterDashboard: React.FC = () => {
                                             </div>
                                         )}
                                     </div>
-                                    <label className="inline-flex w-full cursor-pointer items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                                    <label className="inline-flex w-full cursor-pointer items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 px-2 py-1.5 text-[11px] font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                                         <input type="file" accept="image/*" className="hidden" onChange={handleProfileImageChange} disabled={updateMutation.isPending} />
                                         <span>Change Avatar</span>
                                     </label>
                                 </div>
 
                                 {/* Gallery Grid */}
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-3 min-w-0">
                                     {(profile.galleryImages || []).map((image, index) => (
                                         <div key={`${image.slice(0, 20)}-${index}`} className="group relative aspect-square overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-2xs">
                                             <img src={image} alt={`Gallery ${index + 1}`} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
@@ -836,7 +836,7 @@ const SitterDashboard: React.FC = () => {
                                                 onClick={() => removeGalleryImage(index)}
                                                 disabled={updateMutation.isPending}
                                                 aria-label={`Delete gallery image ${index + 1}`}
-                                                className="absolute right-2 top-2 rounded-xl bg-slate-950/70 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-600 disabled:opacity-50"
+                                                className="absolute right-1.5 top-1.5 rounded-xl bg-slate-950/70 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-600 disabled:opacity-50"
                                             >
                                                 <Trash2 className="h-3.5 w-3.5" />
                                             </button>
@@ -844,10 +844,10 @@ const SitterDashboard: React.FC = () => {
                                     ))}
 
                                     {(profile.galleryImages?.length || 0) < 10 && (
-                                        <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-primary hover:bg-orange-50/20 text-slate-400 hover:text-primary transition-all p-3 text-center">
+                                        <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-primary hover:bg-orange-50/20 text-slate-400 hover:text-primary transition-all p-2 text-center">
                                             <input type="file" accept="image/*" multiple className="hidden" onChange={handleGalleryImagesChange} disabled={updateMutation.isPending} />
-                                            <span className="text-2xl font-light leading-none mb-1">+</span>
-                                            <span className="text-[11px] font-bold">Add Photo</span>
+                                            <span className="text-xl font-light leading-none mb-0.5">+</span>
+                                            <span className="text-[10px] sm:text-[11px] font-bold">Add Photo</span>
                                         </label>
                                     )}
                                 </div>
@@ -855,19 +855,19 @@ const SitterDashboard: React.FC = () => {
                         </div>
 
                         {/* Section: Services & Rates & Availability Cards Grid */}
-                        <div className="grid gap-6 lg:grid-cols-2">
+                        <div className="grid gap-4 sm:gap-6 lg:grid-cols-2 min-w-0">
                             {/* Services & Rates */}
-                            <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between">
+                            <div className="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between min-w-0">
                                 <div>
-                                    <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center justify-between mb-3.5">
                                         <div>
-                                            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                                <Briefcase className="h-5 w-5 text-primary" />
+                                            <h3 className="text-sm sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                                <Briefcase className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                                                 <span>Services & Rates</span>
                                             </h3>
                                             <p className="text-xs text-slate-500 mt-0.5">Toggle active services and configure pricing.</p>
                                         </div>
-                                        <Button variant="ghost" size="icon" onClick={() => openEditModal('services')} className="rounded-xl">
+                                        <Button variant="ghost" size="icon" onClick={() => openEditModal('services')} className="rounded-xl h-8 w-8">
                                             <Edit3 className="h-4 w-4" />
                                         </Button>
                                     </div>
@@ -880,17 +880,17 @@ const SitterDashboard: React.FC = () => {
                                                 <div
                                                     key={key}
                                                     className={cn(
-                                                        'flex items-center justify-between rounded-2xl border p-3.5 transition-all',
+                                                        'flex items-center justify-between rounded-2xl border p-3 transition-all min-w-0',
                                                         service.active
                                                             ? 'border-emerald-200 bg-emerald-50/50 dark:border-emerald-900/40 dark:bg-emerald-950/20'
                                                             : 'border-slate-200 bg-slate-50 opacity-60 dark:border-slate-800 dark:bg-slate-800/40'
                                                     )}
                                                 >
-                                                    <span className="flex min-w-0 items-center gap-2.5">
-                                                        <Icon className={cn('h-4 w-4 shrink-0', service.active ? 'text-emerald-600' : 'text-slate-400')} />
+                                                    <span className="flex min-w-0 items-center gap-2">
+                                                        <Icon className={cn('h-3.5 w-3.5 shrink-0', service.active ? 'text-emerald-600' : 'text-slate-400')} />
                                                         <span className="truncate text-xs font-bold text-slate-900 dark:text-white">{serviceNames[key]}</span>
                                                     </span>
-                                                    <span className="text-xs font-extrabold text-slate-900 dark:text-white">€{service.rate}</span>
+                                                    <span className="text-xs font-extrabold text-slate-900 dark:text-white shrink-0 ml-2">€{service.rate}</span>
                                                 </div>
                                             );
                                         })}
@@ -899,30 +899,30 @@ const SitterDashboard: React.FC = () => {
                             </div>
 
                             {/* Calendar & Notice Period */}
-                            <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between">
-                                <div>
-                                    <div className="flex items-center justify-between mb-4">
+                            <div className="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between min-w-0">
+                                <div className="min-w-0">
+                                    <div className="flex items-center justify-between mb-3.5">
                                         <div>
-                                            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                                <Calendar className="h-5 w-5 text-blue-600" />
-                                                <span>Calendar & Availability</span>
+                                            <h3 className="text-sm sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                                <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+                                                <span>Calendar & Schedule</span>
                                             </h3>
-                                            <p className="text-xs text-slate-500 mt-0.5">Click any date to block or unblock your schedule.</p>
+                                            <p className="text-xs text-slate-500 mt-0.5">Click any date to block or unblock.</p>
                                         </div>
-                                        <Button variant="ghost" size="icon" onClick={() => openEditModal('availability')} className="rounded-xl">
+                                        <Button variant="ghost" size="icon" onClick={() => openEditModal('availability')} className="rounded-xl h-8 w-8">
                                             <Edit3 className="h-4 w-4" />
                                         </Button>
                                     </div>
 
-                                    <div className="flex flex-wrap gap-1.5 mb-4">
+                                    <div className="flex flex-wrap gap-1.5 mb-3">
                                         {profile.availability?.general?.map((day) => (
-                                            <span key={day} className="rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300">
+                                            <span key={day} className="rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
                                                 {t(`sitterDashboard.days.${day}`, day)}
                                             </span>
                                         )) || <span className="text-xs text-slate-500">Not specified</span>}
                                     </div>
 
-                                    <div className="border-t border-slate-100 dark:border-slate-800 pt-3 mb-3 flex items-center justify-between text-xs">
+                                    <div className="border-t border-slate-100 dark:border-slate-800 pt-2.5 mb-3 flex items-center justify-between text-xs">
                                         <span className="text-slate-500">Notice Period:</span>
                                         <span className="font-bold text-slate-900 dark:text-white">{profile.noticePeriod || 'Same Day'}</span>
                                     </div>
@@ -939,29 +939,29 @@ const SitterDashboard: React.FC = () => {
                     </div>
 
                     {/* Sidebar Area */}
-                    <aside className="space-y-5">
+                    <aside className="space-y-4 sm:space-y-5 min-w-0">
                         {/* Sitter Profile Snapshot Card */}
-                        <div className="relative overflow-hidden rounded-3xl bg-slate-900 text-white p-6 shadow-xl border border-slate-800">
+                        <div className="relative overflow-hidden rounded-3xl bg-slate-900 text-white p-5 sm:p-6 shadow-xl border border-slate-800 min-w-0">
                             <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-primary/25 blur-2xl pointer-events-none" />
-                            <div className="relative z-10">
-                                <div className="flex items-center gap-3.5">
-                                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-orange-400 text-lg font-bold text-white shadow-md">
+                            <div className="relative z-10 min-w-0">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <span className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-orange-400 text-base sm:text-lg font-bold text-white shadow-md">
                                         {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
                                     </span>
-                                    <div className="min-w-0">
-                                        <h3 className="truncate text-base font-bold">{user?.firstName} {user?.lastName}</h3>
+                                    <div className="min-w-0 flex-1">
+                                        <h3 className="truncate text-sm sm:text-base font-bold">{user?.firstName} {user?.lastName}</h3>
                                         <p className="truncate text-xs text-slate-400">{user?.email}</p>
                                     </div>
                                 </div>
 
-                                <div className="mt-5 space-y-2.5 border-t border-white/10 pt-4 text-xs text-slate-300">
-                                    <p className="flex items-center gap-2">
+                                <div className="mt-4 sm:mt-5 space-y-2 border-t border-white/10 pt-3.5 text-xs text-slate-300 min-w-0">
+                                    <p className="flex items-center gap-2 min-w-0">
                                         <MapPin className="h-4 w-4 shrink-0 text-orange-300" />
                                         <span className="truncate">{profile.address || 'No address set'}</span>
                                     </p>
                                     <p className="flex items-center gap-2">
                                         <Phone className="h-4 w-4 shrink-0 text-orange-300" />
-                                        <span>{profile.phone || 'No phone set'}</span>
+                                        <span className="truncate">{profile.phone || 'No phone set'}</span>
                                     </p>
                                     <p className="flex items-center gap-2">
                                         <Calendar className="h-4 w-4 shrink-0 text-orange-300" />
@@ -970,7 +970,7 @@ const SitterDashboard: React.FC = () => {
                                 </div>
 
                                 <Button
-                                    className="mt-5 w-full rounded-2xl bg-white text-slate-950 hover:bg-slate-100 font-bold text-xs shadow-sm"
+                                    className="mt-4 sm:mt-5 w-full rounded-2xl bg-white text-slate-950 hover:bg-slate-100 font-bold text-xs shadow-sm"
                                     onClick={() => openEditModal('profile')}
                                 >
                                     <Edit3 className="mr-1.5 h-3.5 w-3.5" />
@@ -980,53 +980,53 @@ const SitterDashboard: React.FC = () => {
                         </div>
 
                         {/* Quick Configuration Links */}
-                        <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-2">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
+                        <div className="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-2 min-w-0">
+                            <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
                                 Profile Preferences
                             </h4>
 
                             <button
                                 onClick={() => openEditModal('preferences')}
-                                className="flex w-full items-center justify-between rounded-2xl border border-slate-100 dark:border-slate-800 p-3 text-left text-xs font-semibold transition hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                                className="flex w-full items-center justify-between rounded-2xl border border-slate-100 dark:border-slate-800 p-2.5 sm:p-3 text-left text-xs font-semibold transition hover:bg-slate-50 dark:hover:bg-slate-800/60"
                             >
-                                <span className="flex items-center gap-2.5">
-                                    <Heart className="h-4 w-4 text-primary" />
-                                    <span>Pet Preferences & Sizes</span>
+                                <span className="flex items-center gap-2.5 truncate">
+                                    <Heart className="h-4 w-4 text-primary shrink-0" />
+                                    <span className="truncate">Pet Preferences & Sizes</span>
                                 </span>
-                                <ChevronRight className="h-4 w-4 text-slate-400" />
+                                <ChevronRight className="h-4 w-4 text-slate-400 shrink-0" />
                             </button>
 
                             <button
                                 onClick={() => openEditModal('housing')}
-                                className="flex w-full items-center justify-between rounded-2xl border border-slate-100 dark:border-slate-800 p-3 text-left text-xs font-semibold transition hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                                className="flex w-full items-center justify-between rounded-2xl border border-slate-100 dark:border-slate-800 p-2.5 sm:p-3 text-left text-xs font-semibold transition hover:bg-slate-50 dark:hover:bg-slate-800/60"
                             >
-                                <span className="flex items-center gap-2.5">
-                                    <Home className="h-4 w-4 text-primary" />
-                                    <span>Housing & Yard Details</span>
+                                <span className="flex items-center gap-2.5 truncate">
+                                    <Home className="h-4 w-4 text-primary shrink-0" />
+                                    <span className="truncate">Housing & Yard Details</span>
                                 </span>
-                                <ChevronRight className="h-4 w-4 text-slate-400" />
+                                <ChevronRight className="h-4 w-4 text-slate-400 shrink-0" />
                             </button>
 
                             <button
                                 onClick={() => openEditModal('experience')}
-                                className="flex w-full items-center justify-between rounded-2xl border border-slate-100 dark:border-slate-800 p-3 text-left text-xs font-semibold transition hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                                className="flex w-full items-center justify-between rounded-2xl border border-slate-100 dark:border-slate-800 p-2.5 sm:p-3 text-left text-xs font-semibold transition hover:bg-slate-50 dark:hover:bg-slate-800/60"
                             >
-                                <span className="flex items-center gap-2.5">
-                                    <Award className="h-4 w-4 text-primary" />
-                                    <span>Skills & Certifications</span>
+                                <span className="flex items-center gap-2.5 truncate">
+                                    <Award className="h-4 w-4 text-primary shrink-0" />
+                                    <span className="truncate">Skills & Certifications</span>
                                 </span>
-                                <ChevronRight className="h-4 w-4 text-slate-400" />
+                                <ChevronRight className="h-4 w-4 text-slate-400 shrink-0" />
                             </button>
 
                             <button
                                 onClick={() => navigate('/become-a-sitter/register')}
-                                className="flex w-full items-center justify-between rounded-2xl border border-primary/20 bg-orange-50/40 dark:bg-orange-950/20 p-3 text-left text-xs font-bold text-primary transition hover:bg-orange-50 dark:hover:bg-orange-950/40 mt-3"
+                                className="flex w-full items-center justify-between rounded-2xl border border-primary/20 bg-orange-50/40 dark:bg-orange-950/20 p-2.5 sm:p-3 text-left text-xs font-bold text-primary transition hover:bg-orange-50 dark:hover:bg-orange-950/40 mt-2"
                             >
                                 <span className="flex items-center gap-2.5">
-                                    <Edit3 className="h-4 w-4" />
+                                    <Edit3 className="h-4 w-4 shrink-0" />
                                     <span>Full Sitter Wizard</span>
                                 </span>
-                                <ArrowRight className="h-4 w-4" />
+                                <ArrowRight className="h-4 w-4 shrink-0" />
                             </button>
                         </div>
 
