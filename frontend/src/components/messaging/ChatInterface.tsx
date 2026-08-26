@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { messageService } from '../../services/message.service';
 import { createUserSocket } from '../../services/socket.service';
 import { useAuth } from '../../context/AuthContext';
-import { Send, User, Search, MessageSquare, Circle, ArrowLeft, Image as ImageIcon, X } from 'lucide-react';
+import { Send, User, Search, MessageSquare, ArrowLeft, Image as ImageIcon, X } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { cn } from '../../lib/utils';
 import { format } from 'date-fns';
@@ -245,10 +245,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ defaultSelectedUse
                                     <h3 className="font-semibold text-base md:text-lg text-gray-900 dark:text-white truncate">
                                         {selectedConversation?.user.firstName} {selectedConversation?.user.lastName}
                                     </h3>
-                                    <div className="flex items-center gap-2 mt-0.5 md:mt-1">
-                                        <Circle className="w-2 h-2 md:w-2.5 md:h-2.5 fill-emerald-500 text-emerald-500 flex-shrink-0" />
-                                        <span className="text-xs md:text-sm text-gray-500">{t('messages.online')}</span>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -276,8 +272,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ defaultSelectedUse
                                                 <div className={cn(
                                                     "px-4 md:px-5 py-2.5 md:py-3 rounded-2xl text-sm leading-relaxed",
                                                     isMe
-                                                        ? "bg-primary text-white rounded-br-md shadow-sm"
-                                                        : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-bl-md border border-gray-200 dark:border-gray-700 shadow-sm"
+                                                        ? "bg-[#159fe3] text-white rounded-br-md shadow-sm"
+                                                        : "bg-[#ff7418] text-white rounded-bl-md shadow-sm"
                                                 )}>
                                                     {msg.imageUrl && (
                                                         <div className="mb-2 rounded-lg overflow-hidden max-w-[200px] md:max-w-[300px]">
