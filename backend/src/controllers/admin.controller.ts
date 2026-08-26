@@ -12,6 +12,20 @@ import { bookingReference } from '../utils/bookingReference';
 
 const dayStart = (date: Date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
+const pagination = (req: Request) => {
+    const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(String(req.query.limit ?? '20'), 10) || 20));
+    return { page, limit, skip: (page - 1) * limit };
+};
+
+const paginated = <T>(items: T[], total: number, page: number, limit: number) => ({
+    items,
+    total,
+    page,
+    limit,
+    totalPages: Math.max(1, Math.ceil(total / limit)),
+});
+
 export const getAdminOverview = async (_req: Request, res: Response): Promise<void> => {
     try {
         const userRepository = AppDataSource.getRepository(User);
@@ -155,14 +169,17 @@ const repositories = () => ({
     messages: AppDataSource.getRepository(Message),
 });
 
-export const getAdminVerification = async (_req: Request, res: Response): Promise<void> => {
+export const getAdminVerification = async (req: Request, res: Response): Promise<void> => {
     try {
-        const items = await repositories().sitters.find({
+        const { page, limit, skip } = pagination(req);
+        const search = String(req.query.search || '').trim().toLowerCase();
+        const all = await repositories().sitters.find({
             where: { isVerified: false },
             relations: ['user'],
             order: { createdAt: 'ASC' },
         });
-        res.json(items);
+        const filtered = search ? all.filter((item) => `${item.user?.firstName || ''} ${item.user?.lastName || ''} ${item.user?.email || ''} ${item.headline || ''}`.toLowerCase().includes(search)) : all;
+        res.json(paginated(filtered.slice(skip, skip + limit), filtered.length, page, limit));
     } catch (error) {
         console.error('Error fetching verification queue:', error);
         res.status(500).json({ message: 'Unable to load verification queue' });
@@ -192,12 +209,14 @@ export const updateVerification = async (req: Request, res: Response): Promise<v
 
 export const getAdminUsers = async (req: Request, res: Response): Promise<void> => {
     try {
+        const { page, limit, skip } = pagination(req);
         const search = String(req.query.search || '').trim().toLowerCase();
-        const users = await repositories().users.find({ order: { createdAt: 'DESC' }, take: 200 });
+        const users = await repositories().users.find({ order: { createdAt: 'DESC' } });
         const filtered = search
             ? users.filter((user) => `${user.firstName} ${user.lastName} ${user.email}`.toLowerCase().includes(search))
             : users;
-        res.json(filtered.map((user) => ({ id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, createdAt: user.createdAt })));
+        const items = filtered.slice(skip, skip + limit).map((user) => ({ id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, createdAt: user.createdAt }));
+        res.json(paginated(items, filtered.length, page, limit));
     } catch (error) {
         console.error('Error fetching admin users:', error);
         res.status(500).json({ message: 'Unable to load users' });
@@ -261,14 +280,16 @@ export const getAdminBookings = async (req: Request, res: Response): Promise<voi
     }
 };
 
-export const getAdminPayments = async (_req: Request, res: Response): Promise<void> => {
+export const getAdminPayments = async (req: Request, res: Response): Promise<void> => {
     try {
+        const { page, limit, skip } = pagination(req);
+        const search = String(req.query.search || '').trim().toLowerCase();
         const payments = await repositories().payments.find({
             relations: ['owner', 'booking'],
             order: { createdAt: 'DESC' },
-            take: 200,
         });
-        res.json(payments);
+        const filtered = search ? payments.filter((payment) => `${payment.id} ${payment.owner?.firstName || ''} ${payment.owner?.lastName || ''} ${payment.owner?.email || ''} ${payment.booking?.id || ''}`.toLowerCase().includes(search)) : payments;
+        res.json(paginated(filtered.slice(skip, skip + limit), filtered.length, page, limit));
     } catch (error) {
         console.error('Error fetching admin payments:', error);
         res.status(500).json({ message: 'Unable to load payments' });
@@ -297,7 +318,7 @@ export const getAdminSettings = async (_req: Request, res: Response): Promise<vo
     });
 };
 
-export const getAdminAudit = async (_req: Request, res: Response): Promise<void> => {
+export const getAdminAudit = async (req: Request, res: Response): Promise<void> => {
     try {
         const { bookings, sitters, reviews, messages, users } = repositories();
         const [recentBookings, recentSitters, recentReviews, recentMessages, recentUsers] = await Promise.all([
@@ -307,14 +328,17 @@ export const getAdminAudit = async (_req: Request, res: Response): Promise<void>
             messages.find({ order: { createdAt: 'DESC' }, take: 20 }),
             users.find({ order: { createdAt: 'DESC' }, take: 20 }),
         ]);
-        const events = [
+        const allEvents = [
             ...recentBookings.map((item) => ({ type: 'booking', label: `Booking ${item.id.slice(0, 8)} created`, createdAt: item.createdAt })),
             ...recentSitters.map((item) => ({ type: 'verification', label: `Sitter profile ${item.isVerified ? 'verified' : 'submitted'}`, createdAt: item.createdAt })),
             ...recentReviews.map((item) => ({ type: 'review', label: `${item.rating}-star review received`, createdAt: item.createdAt })),
             ...recentMessages.map((item) => ({ type: 'message', label: 'Message sent', createdAt: item.createdAt })),
             ...recentUsers.map((item) => ({ type: 'user', label: `${item.email} joined`, createdAt: item.createdAt })),
-        ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 100);
-        res.json(events);
+        ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        const { page, limit, skip } = pagination(req);
+        const search = String(req.query.search || '').trim().toLowerCase();
+        const events = search ? allEvents.filter((event) => `${event.type} ${event.label}`.toLowerCase().includes(search)) : allEvents;
+        res.json(paginated(events.slice(skip, skip + limit), events.length, page, limit));
     } catch (error) {
         console.error('Error fetching admin audit:', error);
         res.status(500).json({ message: 'Unable to load audit log' });

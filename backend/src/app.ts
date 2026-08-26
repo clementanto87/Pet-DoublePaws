@@ -17,6 +17,7 @@ import messageRoutes from './routes/message.routes';
 import adminRoutes from './routes/admin.routes';
 import supportRoutes from './routes/support.routes';
 import paymentRoutes from './routes/payment.routes';
+import privacyRoutes from './routes/privacy.routes';
 import { handleStripeWebhook } from './controllers/payment.controller';
 
 // Middleware
@@ -54,6 +55,7 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/support-requests', supportRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/privacy', privacyRoutes);
 
 // Basic route
 app.get('/', (req, res) => {

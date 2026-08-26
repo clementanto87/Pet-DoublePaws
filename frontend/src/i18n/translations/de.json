@@ -40,6 +40,7 @@
     "becomeSitter": "Sitter werden",
     "login": "Anmelden",
     "logout": "Abmelden",
+    "privacySettings": "Datenschutzeinstellungen",
     "signup": "Registrieren",
     "profile": "Profil",
     "messages": "Nachrichten",
@@ -576,6 +577,20 @@
     "title": "Nachrichten",
     "subtitle": "Chatten Sie mit Ihren Kunden",
     "backToDashboard": "Zurück zum Dashboard"
+  },
+  "privacySettings": {
+    "eyebrow": "Datenschutz",
+    "title": "Ihre Privatsphäre und Daten",
+    "subtitle": "Verwalten Sie Ihre personenbezogenen Daten und Kontoeinstellungen.",
+    "dataTitle": "Auf Ihre Daten zugreifen",
+    "dataDescription": "Laden Sie eine Kopie der mit Ihrem Double-Paws-Konto verbundenen personenbezogenen Daten herunter.",
+    "export": "Meine Daten herunterladen",
+    "exportError": "Ihre Daten konnten nicht exportiert werden.",
+    "deleteTitle": "Konto löschen",
+    "deleteDescription": "Sie werden dauerhaft abgemeldet und Ihre personenbezogenen Daten werden anonymisiert. Betriebsunterlagen können, sofern erforderlich, in anonymisierter Form aufbewahrt werden.",
+    "delete": "Konto löschen",
+    "deleteConfirm": "Ihr Double-Paws-Konto löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "deleteError": "Ihr Konto konnte nicht gelöscht werden. Bitte kontaktieren Sie den Support."
   },
   "cookieConsent": {
     "title": "Ihre Privatsphäre ist uns wichtig",

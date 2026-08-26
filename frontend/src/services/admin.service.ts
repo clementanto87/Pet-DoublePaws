@@ -16,15 +16,17 @@ export interface AdminBookingsParams { page?: number; limit?: number; status?: s
 export interface AdminPayment { id: string; status: string; amount: number; currency: string; createdAt: string; owner?: { firstName: string; lastName: string; email: string }; booking?: { id: string }; }
 export interface AdminSettings { environment: string; emailFrom: string | null; emailAppUrl: string | null; paymentsEnabled: boolean; googleLoginEnabled: boolean; }
 export interface AdminAuditEvent { type: string; label: string; createdAt: string; }
+export interface AdminPageParams { page?: number; limit?: number; search?: string; }
+export interface AdminPage<T> { items: T[]; total: number; page: number; limit: number; totalPages: number; }
 
 export const adminService = {
     getOverview: async (): Promise<AdminOverview> => (await api.get('/admin/overview')).data,
-    getVerification: async (): Promise<AdminSitter[]> => (await api.get('/admin/verification')).data,
+    getVerification: async (params: AdminPageParams = {}): Promise<AdminPage<AdminSitter>> => (await api.get('/admin/verification', { params })).data,
     updateVerification: async (id: string, isVerified: boolean): Promise<void> => { await api.patch(`/admin/verification/${id}`, { isVerified }); },
-    getUsers: async (search?: string): Promise<AdminUser[]> => (await api.get('/admin/users', { params: { search } })).data,
+    getUsers: async (params: AdminPageParams = {}): Promise<AdminPage<AdminUser>> => (await api.get('/admin/users', { params })).data,
     getBookings: async (params: AdminBookingsParams = {}): Promise<AdminBookingsResponse> => (await api.get('/admin/bookings', { params })).data,
-    getPayments: async (): Promise<AdminPayment[]> => (await api.get('/admin/payments')).data,
+    getPayments: async (params: AdminPageParams = {}): Promise<AdminPage<AdminPayment>> => (await api.get('/admin/payments', { params })).data,
     getReports: async (): Promise<AdminOverview & { generatedAt: string }> => (await api.get('/admin/reports')).data,
     getSettings: async (): Promise<AdminSettings> => (await api.get('/admin/settings')).data,
-    getAudit: async (): Promise<AdminAuditEvent[]> => (await api.get('/admin/audit')).data,
+    getAudit: async (params: AdminPageParams = {}): Promise<AdminPage<AdminAuditEvent>> => (await api.get('/admin/audit', { params })).data,
 };

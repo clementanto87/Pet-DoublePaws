@@ -40,6 +40,7 @@
     "becomeSitter": "Become a Sitter",
     "login": "Log in",
     "logout": "Log out",
+    "privacySettings": "Privacy settings",
     "signup": "Sign up",
     "profile": "Profile",
     "messages": "Messages",
@@ -576,6 +577,20 @@
     "title": "Messages",
     "subtitle": "Chat with your customers",
     "backToDashboard": "Back to Dashboard"
+  },
+  "privacySettings": {
+    "eyebrow": "Privacy",
+    "title": "Your privacy and data",
+    "subtitle": "Manage your personal data and account choices.",
+    "dataTitle": "Access your data",
+    "dataDescription": "Download a copy of the personal data associated with your Double Paws account.",
+    "export": "Download my data",
+    "exportError": "We could not prepare your data export.",
+    "deleteTitle": "Delete your account",
+    "deleteDescription": "This permanently signs you out and anonymizes your personal data. Operational records may be retained in anonymized form where required.",
+    "delete": "Delete account",
+    "deleteConfirm": "Delete your Double Paws account? This action cannot be undone.",
+    "deleteError": "We could not delete your account. Please contact support."
   },
   "cookieConsent": {
     "title": "We value your privacy",

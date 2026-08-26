@@ -34,6 +34,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import ToastProvider from './components/ui/Toast';
 import GoogleOneTap from './components/auth/GoogleOneTap';
+import PrivacySettingsPage from './pages/PrivacySettingsPage';
 import CookieConsent from './components/privacy/CookieConsent';
 
 // Create a client for React Query
@@ -77,6 +78,7 @@ const AppShell: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route path="/settings/privacy" element={<ProtectedRoute><PrivacySettingsPage /></ProtectedRoute>} />
           <Route
             path="/messages"
             element={
