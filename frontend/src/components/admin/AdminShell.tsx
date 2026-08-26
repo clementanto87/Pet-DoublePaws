@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BarChart3, CalendarDays, ClipboardCheck, DollarSign, FileCheck2, LayoutDashboard, Menu, Settings, Users, X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Logo } from '../ui/Logo';
+import { Wordmark } from '../ui/Wordmark';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../context/AuthContext';
 
@@ -27,7 +28,7 @@ export const AdminShell: React.FC<{ children: React.ReactNode }> = ({ children }
                 <div className="flex items-center justify-between px-2">
                     <Link to="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
                         <Logo className="h-9 w-12" />
-                        <span className="font-display text-lg font-bold text-gradient">Double Paws</span>
+                        <Wordmark className="text-lg" />
                     </Link>
                     <button onClick={() => setOpen(false)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 lg:hidden" aria-label="Close navigation"><X className="h-5 w-5" /></button>
                 </div>
