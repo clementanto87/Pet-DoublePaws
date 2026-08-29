@@ -1,25 +1,26 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
 import {
-    ArrowLeft,
-    CalendarDays,
     ChevronLeft,
     ChevronRight,
+    Download,
+    Eye,
     Search,
+    X
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { cn } from '../lib/utils';
-import { adminService } from '../services/admin.service';
+import { adminService, type AdminBooking } from '../services/admin.service';
 import { bookingReference } from '../utils/bookingReference';
+import { AdminCard, AdminPageFrame, AdminShell, AdminState, AdminTable } from '../components/admin/AdminShell';
 
 type Status = 'Pending' | 'Confirmed' | 'Completed' | 'Needs review';
 
 const statusStyles: Record<Status, string> = {
-    Pending: 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-300',
-    Confirmed: 'bg-sky-50 text-sky-700 ring-sky-600/20 dark:bg-sky-500/10 dark:text-sky-300',
-    Completed: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-300',
-    'Needs review': 'bg-rose-50 text-rose-700 ring-rose-600/20 dark:bg-rose-500/10 dark:text-rose-300',
+    Pending: 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-950/40 dark:text-amber-300',
+    Confirmed: 'bg-sky-50 text-sky-700 ring-sky-600/20 dark:bg-sky-950/40 dark:text-sky-300',
+    Completed: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300',
+    'Needs review': 'bg-rose-50 text-rose-700 ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300',
 };
 
 const statusLabel = (status: string): Status => ({
@@ -53,22 +54,23 @@ const serviceOptions: Array<{ value: string; label: string }> = [
     { value: 'walking', label: 'Dog Walking' },
 ];
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 15;
 
 const AdminBookingsPage: React.FC = () => {
+    const queryClient = useQueryClient();
     const [searchInput, setSearchInput] = useState('');
     const [search, setSearch] = useState('');
     const [status, setStatus] = useState<'All' | Status>('All');
     const [service, setService] = useState('All');
     const [page, setPage] = useState(1);
+    const [selectedBooking, setSelectedBooking] = useState<AdminBooking | null>(null);
 
-    // Debounce the free-text search so we don't fire a request on every keystroke.
+    // Debounce search
     useEffect(() => {
-        const timer = setTimeout(() => setSearch(searchInput.trim()), 350);
+        const timer = setTimeout(() => setSearch(searchInput.trim()), 300);
         return () => clearTimeout(timer);
     }, [searchInput]);
 
-    // Any filter change should send us back to the first page of results.
     useEffect(() => {
         setPage(1);
     }, [search, status, service]);
@@ -86,237 +88,325 @@ const AdminBookingsPage: React.FC = () => {
         placeholderData: keepPreviousData,
     });
 
+    const statusMutation = useMutation({
+        mutationFn: ({ id, newStatus }: { id: string; newStatus: string }) =>
+            adminService.updateBookingStatus(id, newStatus),
+        onSuccess: (updated) => {
+            queryClient.invalidateQueries({ queryKey: ['adminBookings'] });
+            queryClient.invalidateQueries({ queryKey: ['adminOverview'] });
+            setSelectedBooking(updated);
+        },
+    });
+
     const bookings = data?.bookings ?? [];
     const total = data?.total ?? 0;
     const totalPages = data?.totalPages ?? 1;
 
-    const rangeLabel = useMemo(() => {
-        if (total === 0) return '0 bookings';
-        const start = (page - 1) * PAGE_SIZE + 1;
-        const end = Math.min(page * PAGE_SIZE, total);
-        return `${start}–${end} of ${total} bookings`;
-    }, [page, total]);
+    // Export CSV
+    const handleExportCSV = () => {
+        if (!bookings.length) return;
+        const rows = [
+            ['Booking ID', 'Service', 'Status', 'Owner Name', 'Owner Email', 'Sitter Name', 'Sitter Email', 'Start Date', 'End Date', 'Total Price (€)'],
+            ...bookings.map((b) => [
+                bookingReference(b.id),
+                serviceLabel(b.serviceType),
+                b.status,
+                `${b.owner?.firstName || ''} ${b.owner?.lastName || ''}`,
+                b.owner?.email || '',
+                `${b.sitter?.user?.firstName || ''} ${b.sitter?.user?.lastName || ''}`,
+                b.sitter?.user?.email || '',
+                format(new Date(b.startDate), 'yyyy-MM-dd'),
+                format(new Date(b.endDate), 'yyyy-MM-dd'),
+                b.totalPrice,
+            ]),
+        ];
+        const csvContent = 'data:text/csv;charset=utf-8,' + rows.map((e) => e.join(',')).join('\n');
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', `doublepaws-bookings-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     return (
-        <div className="min-h-screen bg-slate-50 py-6 dark:bg-slate-950 sm:py-10">
-            <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="mb-6">
-                    <Link
-                        to="/admin"
-                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 transition hover:text-orange-600 dark:text-slate-400"
+        <AdminShell>
+            <AdminPageFrame
+                title="Bookings Management"
+                description="Review, filter, and manage every booking across the Double Paws marketplace."
+                action={
+                    <button
+                        onClick={handleExportCSV}
+                        className="inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-slate-800 dark:bg-white dark:text-slate-900"
                     >
-                        <ArrowLeft className="h-4 w-4" />
-                        Back to dashboard
-                    </Link>
-                    <div className="mt-4 flex flex-col gap-1">
-                        <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">
-                            All bookings
-                        </h1>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">
-                            Monitor every booking across the marketplace
-                        </p>
-                    </div>
-                </div>
-
-                {/* Filters */}
-                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <Download className="h-3.5 w-3.5" />
+                        <span>Export CSV</span>
+                    </button>
+                }
+            >
+                {/* Search and Filters Bar */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                     <div className="relative flex-1">
-                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                         <input
                             value={searchInput}
                             onChange={(e) => setSearchInput(e.target.value)}
-                            placeholder="Search by participant or booking ID..."
-                            className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:focus:ring-orange-500/10"
+                            placeholder="Search by participant name, email, or booking reference..."
+                            className="h-11 w-full rounded-2xl border border-slate-200 bg-white pl-10 pr-3 text-xs sm:text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                         />
                     </div>
-                    <select
-                        value={status}
-                        onChange={(e) => setStatus(e.target.value as 'All' | Status)}
-                        className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-orange-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
-                    >
-                        {statusOptions.map((option) => (
-                            <option key={option} value={option}>
-                                {option === 'All' ? 'All statuses' : option}
-                            </option>
-                        ))}
-                    </select>
-                    <select
-                        value={service}
-                        onChange={(e) => setService(e.target.value)}
-                        className="h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-orange-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
-                    >
-                        {serviceOptions.map((option) => (
-                            <option key={option.value} value={option.value}>
-                                {option.label}
-                            </option>
-                        ))}
-                    </select>
+
+                    <div className="flex items-center gap-2">
+                        <select
+                            value={status}
+                            onChange={(e) => setStatus(e.target.value as 'All' | Status)}
+                            className="h-11 rounded-2xl border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-700 outline-none transition focus:border-primary dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+                        >
+                            {statusOptions.map((opt) => (
+                                <option key={opt} value={opt}>
+                                    {opt === 'All' ? 'All Statuses' : opt}
+                                </option>
+                            ))}
+                        </select>
+
+                        <select
+                            value={service}
+                            onChange={(e) => setService(e.target.value)}
+                            className="h-11 rounded-2xl border border-slate-200 bg-white px-3.5 text-xs font-bold text-slate-700 outline-none transition focus:border-primary dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+                        >
+                            {serviceOptions.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
-                {/* Results */}
-                <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                    {isError ? (
-                        <div className="p-12 text-center text-sm text-rose-500">
-                            Unable to load bookings. Please try again.
-                        </div>
-                    ) : isLoading ? (
-                        <div className="p-12 text-center text-sm text-slate-400">Loading bookings…</div>
-                    ) : bookings.length === 0 ? (
-                        <div className="flex flex-col items-center gap-3 p-12 text-center">
-                            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-                                <CalendarDays className="h-6 w-6 text-slate-400" />
-                            </span>
-                            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">No bookings found</p>
-                            <p className="text-xs text-slate-400">Try adjusting your search or filters.</p>
-                        </div>
-                    ) : (
-                        <>
-                            {/* Desktop table */}
-                            <div className="hidden overflow-x-auto md:block">
-                                <table className="w-full min-w-[760px] text-left">
-                                    <thead className="bg-slate-50/70 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:bg-slate-800/50">
-                                        <tr>
-                                            <th className="px-6 py-3">Booking</th>
-                                            <th className="px-4 py-3">Participants</th>
-                                            <th className="px-4 py-3">Service</th>
-                                            <th className="px-4 py-3">Dates</th>
-                                            <th className="px-4 py-3">Value</th>
-                                            <th className="px-4 py-3">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                        {bookings.map((booking) => {
-                                            const label = statusLabel(booking.status);
-                                            return (
-                                                <tr
-                                                    key={booking.id}
-                                                    className="text-sm transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/30"
-                                                >
-                                                    <td className="px-6 py-4">
-                                                        <p className="font-bold text-slate-900 dark:text-white">
-                                                            {bookingReference(booking.id, booking.referenceNumber)}
-                                                        </p>
-                                                        <p className="mt-1 text-xs text-slate-400">
-                                                            {format(new Date(booking.createdAt), 'MMM d, h:mm a')}
-                                                        </p>
-                                                    </td>
-                                                    <td className="px-4 py-4">
-                                                        <p className="font-semibold text-slate-700 dark:text-slate-200">
-                                                            {booking.owner?.firstName} {booking.owner?.lastName}
-                                                        </p>
-                                                        <p className="mt-1 text-xs text-slate-400">
-                                                            with {booking.sitter?.user?.firstName} {booking.sitter?.user?.lastName}
-                                                        </p>
-                                                    </td>
-                                                    <td className="px-4 py-4 text-slate-500 dark:text-slate-400">
-                                                        {serviceLabel(booking.serviceType)}
-                                                    </td>
-                                                    <td className="px-4 py-4 text-xs text-slate-500 dark:text-slate-400">
-                                                        {format(new Date(booking.startDate), 'MMM d')} – {format(new Date(booking.endDate), 'MMM d')}
-                                                    </td>
-                                                    <td className="px-4 py-4 font-bold text-slate-900 dark:text-white">
-                                                        ${Number(booking.totalPrice || 0).toFixed(2)}
-                                                    </td>
-                                                    <td className="px-4 py-4">
-                                                        <span
-                                                            className={cn(
-                                                                'inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ring-inset',
-                                                                statusStyles[label]
-                                                            )}
-                                                        >
-                                                            {label}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            {/* Mobile cards */}
-                            <div className="divide-y divide-slate-100 md:hidden dark:divide-slate-800">
-                                {bookings.map((booking) => {
-                                    const label = statusLabel(booking.status);
-                                    return (
-                                        <div key={booking.id} className="p-4">
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div className="min-w-0">
-                                                    <p className="font-bold text-slate-900 dark:text-white">
-                                                    {bookingReference(booking.id, booking.referenceNumber)}
-                                                    </p>
-                                                    <p className="mt-0.5 text-xs text-slate-400">
-                                                        {format(new Date(booking.createdAt), 'MMM d, h:mm a')}
-                                                    </p>
+                {/* Main Bookings Card */}
+                <AdminState loading={isLoading} error={isError}>
+                    <AdminCard className="p-0 sm:p-0 overflow-hidden">
+                        <AdminTable>
+                            <thead>
+                                <tr className="border-b border-slate-100 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900/50 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                                    <th className="py-4 pl-6">Reference</th>
+                                    <th className="py-4 px-4">Owner</th>
+                                    <th className="py-4 px-4">Sitter</th>
+                                    <th className="py-4 px-4">Service & Dates</th>
+                                    <th className="py-4 px-4">Total</th>
+                                    <th className="py-4 px-4">Status</th>
+                                    <th className="py-4 pr-6 text-right">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                {bookings.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={7} className="py-12 text-center text-xs text-slate-400">
+                                            No bookings found matching the current search & filters.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    bookings.map((b) => (
+                                        <tr key={b.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                                            <td className="py-4 pl-6 font-mono font-bold text-slate-900 dark:text-white">
+                                                {bookingReference(b.id)}
+                                            </td>
+                                            <td className="py-4 px-4">
+                                                <div className="font-bold text-slate-900 dark:text-white">
+                                                    {b.owner?.firstName} {b.owner?.lastName}
                                                 </div>
-                                                <span
-                                                    className={cn(
-                                                        'inline-flex shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ring-inset',
-                                                        statusStyles[label]
-                                                    )}
+                                                <div className="text-[11px] text-slate-400">{b.owner?.email || '—'}</div>
+                                            </td>
+                                            <td className="py-4 px-4">
+                                                <div className="font-bold text-slate-900 dark:text-white">
+                                                    {b.sitter?.user?.firstName} {b.sitter?.user?.lastName}
+                                                </div>
+                                                <div className="text-[11px] text-slate-400">{b.sitter?.user?.email || '—'}</div>
+                                            </td>
+                                            <td className="py-4 px-4">
+                                                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                                                    {serviceLabel(b.serviceType)}
+                                                </span>
+                                                <div className="text-[11px] text-slate-400">
+                                                    {format(new Date(b.startDate), 'MMM d')} – {format(new Date(b.endDate), 'MMM d, yyyy')}
+                                                </div>
+                                            </td>
+                                            <td className="py-4 px-4 font-extrabold text-primary">
+                                                €{b.totalPrice}
+                                            </td>
+                                            <td className="py-4 px-4">
+                                                <span className={cn(
+                                                    'inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold ring-1 ring-inset',
+                                                    statusStyles[statusLabel(b.status)]
+                                                )}>
+                                                    {statusLabel(b.status)}
+                                                </span>
+                                            </td>
+                                            <td className="py-4 pr-6 text-right">
+                                                <button
+                                                    onClick={() => setSelectedBooking(b)}
+                                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
                                                 >
-                                                    {label}
-                                                </span>
-                                            </div>
-                                            <div className="mt-3 space-y-1 text-sm">
-                                                <p className="font-semibold text-slate-700 dark:text-slate-200">
-                                                    {booking.owner?.firstName} {booking.owner?.lastName}
-                                                </p>
-                                                <p className="text-xs text-slate-400">
-                                                    with {booking.sitter?.user?.firstName} {booking.sitter?.user?.lastName}
-                                                </p>
-                                            </div>
-                                            <div className="mt-3 flex items-center justify-between text-sm">
-                                                <span className="text-slate-500 dark:text-slate-400">
-                                                    {serviceLabel(booking.serviceType)}
-                                                </span>
-                                                <span className="font-bold text-slate-900 dark:text-white">
-                                                    ${Number(booking.totalPrice || 0).toFixed(2)}
-                                                </span>
-                                            </div>
-                                            <p className="mt-1 text-xs text-slate-400">
-                                                {format(new Date(booking.startDate), 'MMM d')} – {format(new Date(booking.endDate), 'MMM d, yyyy')}
-                                            </p>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </>
-                    )}
+                                                    <Eye className="h-3.5 w-3.5" />
+                                                    <span>Inspect</span>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </AdminTable>
 
-                    {/* Pagination */}
-                    {!isLoading && !isError && bookings.length > 0 && (
-                        <div className="flex items-center justify-between gap-3 border-t border-slate-100 p-4 dark:border-slate-800">
-                            <p className={cn('text-xs text-slate-400', isFetching && 'animate-pulse')}>
-                                {rangeLabel}
-                            </p>
+                        {/* Pagination Footer */}
+                        <div className="flex flex-col sm:flex-row items-center justify-between border-t border-slate-100 dark:border-slate-800 px-6 py-4 text-xs text-slate-500 gap-3">
+                            <span>
+                                Showing {bookings.length} of {total} booking{total === 1 ? '' : 's'}
+                            </span>
                             <div className="flex items-center gap-2">
                                 <button
-                                    onClick={() => setPage((current) => Math.max(1, current - 1))}
-                                    disabled={page <= 1}
-                                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                                    disabled={page <= 1 || isFetching}
+                                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                                    className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold disabled:opacity-40 dark:border-slate-800 dark:bg-slate-900"
                                 >
                                     <ChevronLeft className="h-4 w-4" />
-                                    Prev
+                                    <span>Previous</span>
                                 </button>
-                                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                <span className="px-2 font-bold text-slate-700 dark:text-slate-300">
                                     Page {page} of {totalPages}
                                 </span>
                                 <button
-                                    onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-                                    disabled={page >= totalPages}
-                                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                                    disabled={page >= totalPages || isFetching}
+                                    onClick={() => setPage((p) => p + 1)}
+                                    className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold disabled:opacity-40 dark:border-slate-800 dark:bg-slate-900"
                                 >
-                                    Next
+                                    <span>Next</span>
                                     <ChevronRight className="h-4 w-4" />
                                 </button>
                             </div>
                         </div>
-                    )}
+                    </AdminCard>
+                </AdminState>
+            </AdminPageFrame>
+
+            {/* Deep Booking Inspection & Override Modal */}
+            {selectedBooking && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+                    <div className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 space-y-5 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                            <div>
+                                <span className="font-mono text-xs font-extrabold text-primary">
+                                    {bookingReference(selectedBooking.id)}
+                                </span>
+                                <h3 className="font-display text-lg font-bold text-slate-900 dark:text-white">
+                                    {serviceLabel(selectedBooking.serviceType)} Details
+                                </h3>
+                            </div>
+                            <button
+                                onClick={() => setSelectedBooking(null)}
+                                className="p-1.5 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        {/* Participants 2-Col */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                                <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">
+                                    Pet Parent (Owner)
+                                </p>
+                                <p className="font-bold text-slate-900 dark:text-white">
+                                    {selectedBooking.owner?.firstName} {selectedBooking.owner?.lastName}
+                                </p>
+                                <p className="text-xs text-slate-500 mt-0.5">{selectedBooking.owner?.email || 'No email'}</p>
+                            </div>
+
+                            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+                                <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1">
+                                    Pet Sitter
+                                </p>
+                                <p className="font-bold text-slate-900 dark:text-white">
+                                    {selectedBooking.sitter?.user?.firstName} {selectedBooking.sitter?.user?.lastName}
+                                </p>
+                                <p className="text-xs text-slate-500 mt-0.5">{selectedBooking.sitter?.user?.email || 'No email'}</p>
+                            </div>
+                        </div>
+
+                        {/* Dates and Price Summary */}
+                        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 space-y-2 text-xs">
+                            <div className="flex justify-between">
+                                <span className="text-slate-500">Service Type:</span>
+                                <span className="font-bold text-slate-900 dark:text-white">{serviceLabel(selectedBooking.serviceType)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-slate-500">Scheduled Dates:</span>
+                                <span className="font-bold text-slate-900 dark:text-white">
+                                    {format(new Date(selectedBooking.startDate), 'MMM d, yyyy')} – {format(new Date(selectedBooking.endDate), 'MMM d, yyyy')}
+                                </span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-slate-500">Created:</span>
+                                <span className="text-slate-700 dark:text-slate-300">
+                                    {format(new Date(selectedBooking.createdAt), 'MMM d, yyyy h:mm a')}
+                                </span>
+                            </div>
+                            <div className="flex justify-between border-t border-slate-200/60 dark:border-slate-700/60 pt-2 text-sm">
+                                <span className="font-bold text-slate-900 dark:text-white">Total Gross Value:</span>
+                                <span className="font-extrabold text-primary text-base">€{selectedBooking.totalPrice}</span>
+                            </div>
+                        </div>
+
+                        {/* Owner message if provided */}
+                        {selectedBooking.message && (
+                            <div className="p-4 rounded-2xl bg-orange-50/50 dark:bg-orange-950/30 border border-orange-200/40 text-xs">
+                                <p className="text-[10px] font-extrabold uppercase text-primary mb-1">Owner Message / Notes</p>
+                                <p className="text-slate-700 dark:text-slate-300">{selectedBooking.message}</p>
+                            </div>
+                        )}
+
+                        {/* Admin Overrides */}
+                        <div className="border-t border-slate-100 dark:border-slate-800 pt-3 space-y-2">
+                            <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+                                Administrative Status Overrides
+                            </p>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <button
+                                    onClick={() => statusMutation.mutate({ id: selectedBooking.id, newStatus: 'ACCEPTED' })}
+                                    disabled={statusMutation.isPending || selectedBooking.status === 'ACCEPTED'}
+                                    className="px-3 py-1.5 rounded-xl border border-sky-200 bg-sky-50 text-sky-700 text-xs font-bold hover:bg-sky-100 disabled:opacity-40"
+                                >
+                                    Force Confirm
+                                </button>
+                                <button
+                                    onClick={() => statusMutation.mutate({ id: selectedBooking.id, newStatus: 'COMPLETED' })}
+                                    disabled={statusMutation.isPending || selectedBooking.status === 'COMPLETED'}
+                                    className="px-3 py-1.5 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs font-bold hover:bg-emerald-100 disabled:opacity-40"
+                                >
+                                    Mark Completed
+                                </button>
+                                <button
+                                    onClick={() => statusMutation.mutate({ id: selectedBooking.id, newStatus: 'CANCELLED' })}
+                                    disabled={statusMutation.isPending || selectedBooking.status === 'CANCELLED'}
+                                    className="px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-xs font-bold hover:bg-rose-100 disabled:opacity-40"
+                                >
+                                    Cancel Booking
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="pt-2 flex justify-end">
+                            <button
+                                onClick={() => setSelectedBooking(null)}
+                                className="px-5 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 dark:bg-white dark:text-slate-900"
+                            >
+                                Done
+                            </button>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
+            )}
+        </AdminShell>
     );
 };
 
