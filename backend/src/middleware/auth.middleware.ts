@@ -7,6 +7,14 @@ export interface AuthRequest extends Request {
     user?: any;
 }
 
+export const jwtSecret = (): string => {
+    const secret = process.env.JWT_SECRET?.trim();
+    if (!secret && process.env.NODE_ENV === 'production') {
+        throw new Error('JWT_SECRET must be configured in production');
+    }
+    return secret || 'development-only-jwt-secret';
+};
+
 export const authenticateToken = (req: AuthRequest, res: Response, next: NextFunction): void => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -17,7 +25,7 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
+        const decoded = jwt.verify(token, jwtSecret());
         req.user = decoded;
         next();
     } catch (error) {

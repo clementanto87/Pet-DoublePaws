@@ -1,6 +1,7 @@
 import { Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
+import { jwtSecret } from './middleware/auth.middleware';
 import { isAllowedOrigin } from './config/cors';
 
 let io: Server;
@@ -26,7 +27,7 @@ export const initSocket = (httpServer: HttpServer) => {
         }
 
         try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
+            const decoded = jwt.verify(token, jwtSecret());
             const payload = decoded as jwt.JwtPayload & { id?: string };
             if (!payload.id) {
                 return next(new Error('Invalid authentication token'));

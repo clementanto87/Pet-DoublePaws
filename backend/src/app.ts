@@ -42,8 +42,10 @@ app.post(
   handleStripeWebhook
 );
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+// Keep request bodies bounded globally; image uploads are already represented as
+// data URLs and should not be allowed to exhaust the API process memory.
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Routes
 app.use('/api/auth', authRoutes);

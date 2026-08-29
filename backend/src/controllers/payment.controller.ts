@@ -147,14 +147,15 @@ export const getPaymentForBooking = async (req: Request, res: Response) => {
 
         const payment = await paymentRepository().findOne({
             where: { bookingId },
-            relations: ['booking'],
+            relations: ['booking', 'booking.sitter', 'booking.sitter.user'],
         });
 
         if (!payment) {
             return res.json({ status: null });
         }
 
-        if (payment.ownerId !== userId && payment.booking?.sitterId !== userId) {
+        const isBookingSitter = payment.booking?.sitter?.userId === userId;
+        if (payment.ownerId !== userId && !isBookingSitter) {
             return res.status(403).json({ message: 'Not authorized' });
         }
 

@@ -10,13 +10,20 @@ interface PawPrintsProps {
 
 export const PawPrints: React.FC<PawPrintsProps> = ({ className, variant = 'walking' }) => {
     // Generate random positions for floating paws
-    const floatingPaws = Array.from({ length: 5 }).map((_, i) => ({
+    const floatingPaws = [
+        { id: 0, x: 12, y: 18, delay: 0, duration: 3.5, rotate: 18, size: 30 },
+        { id: 1, x: 34, y: 72, delay: 1.1, duration: 4.2, rotate: 142, size: 42 },
+        { id: 2, x: 58, y: 30, delay: 2.2, duration: 3.8, rotate: 238, size: 36 },
+        { id: 3, x: 76, y: 62, delay: 3.1, duration: 4.5, rotate: 296, size: 48 },
+        { id: 4, x: 88, y: 12, delay: 0.6, duration: 3.2, rotate: 84, size: 34 },
+    ].map((paw, i) => ({
         id: i,
-        x: Math.random() * 100,
-        y: Math.random() * 100,
-        delay: Math.random() * 5,
-        duration: 3 + Math.random() * 2,
-        rotate: Math.random() * 360,
+        x: paw.x,
+        y: paw.y,
+        delay: paw.delay,
+        duration: paw.duration,
+        rotate: paw.rotate,
+        size: paw.size,
     }));
 
     if (variant === 'floating') {
@@ -44,7 +51,7 @@ export const PawPrints: React.FC<PawPrintsProps> = ({ className, variant = 'walk
                             ease: "linear"
                         }}
                     >
-                        <PawPrint size={24 + Math.random() * 24} />
+                        <PawPrint size={paw.size} />
                     </motion.div>
                 ))}
             </div>

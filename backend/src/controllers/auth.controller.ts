@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
 import { emailService } from '../services/email.service';
+import { jwtSecret } from '../middleware/auth.middleware';
 
 const userRepository = AppDataSource.getRepository(User);
 const googleClient = new OAuth2Client();
@@ -72,7 +73,7 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
         // Generate JWT
         const token = jwt.sign(
             { id: newUser.id, email: newUser.email },
-            process.env.JWT_SECRET || 'your_jwt_secret',
+            jwtSecret(),
             { expiresIn: '1d' }
         );
 
@@ -116,7 +117,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         // Generate JWT
         const token = jwt.sign(
             { id: user.id, email: user.email },
-            process.env.JWT_SECRET || 'your_jwt_secret',
+            jwtSecret(),
             { expiresIn: '1d' }
         );
 
@@ -240,7 +241,7 @@ export const googleLogin = async (req: Request, res: Response): Promise<void> =>
         // Generate JWT
         const jwtToken = jwt.sign(
             { id: user.id, email: user.email },
-            process.env.JWT_SECRET || 'your_jwt_secret',
+            jwtSecret(),
             { expiresIn: '1d' }
         );
 
@@ -316,7 +317,7 @@ export const facebookLogin = async (req: Request, res: Response): Promise<void> 
 
         const jwtToken = jwt.sign(
             { id: user.id, email: user.email },
-            process.env.JWT_SECRET || 'your_jwt_secret',
+            jwtSecret(),
             { expiresIn: '1d' }
         );
 
@@ -387,7 +388,7 @@ export const appleLogin = async (req: Request, res: Response): Promise<void> => 
 
         const jwtToken = jwt.sign(
             { id: user.id, email: user.email },
-            process.env.JWT_SECRET || 'your_jwt_secret',
+            jwtSecret(),
             { expiresIn: '1d' }
         );
 

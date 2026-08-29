@@ -7,16 +7,33 @@ import { Message } from '../entities/Message.entity';
 import { getIO } from '../socket';
 import { emailService } from '../services/email.service';
 import { Payment } from '../entities/Payment.entity';
+import { Pet } from '../entities/Pet.entity';
 
 const bookingRepository = AppDataSource.getRepository(Booking);
 const sitterRepository = AppDataSource.getRepository(SitterProfile);
 const userRepository = AppDataSource.getRepository(User);
 const messageRepository = AppDataSource.getRepository(Message);
+const petRepository = AppDataSource.getRepository(Pet);
 
 export const createBooking = async (req: Request, res: Response) => {
     try {
         const { sitterId, serviceType, startDate, endDate, petIds, message, totalPrice } = req.body;
         const ownerId = (req as any).user.id; // Assuming auth middleware adds user to req
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const numericTotal = Number(totalPrice);
+        if (!serviceType || Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start || !Number.isFinite(numericTotal) || numericTotal < 0) {
+            return res.status(400).json({ message: 'Valid service, dates, and total price are required' });
+        }
+
+        const requestedPetIds = Array.isArray(petIds) ? [...new Set(petIds.map((petId: unknown) => String(petId)))] : [];
+        if (requestedPetIds.length > 0) {
+            const ownedPets = await petRepository.count({ where: requestedPetIds.map((id) => ({ id, ownerId })) });
+            if (ownedPets !== requestedPetIds.length) {
+                return res.status(403).json({ message: 'You can only book with pets in your profile' });
+            }
+        }
 
         const sitter = await sitterRepository.findOne({ where: { id: sitterId } });
         if (!sitter) {
@@ -27,11 +44,11 @@ export const createBooking = async (req: Request, res: Response) => {
             sitterId,
             ownerId,
             serviceType,
-            startDate,
-            endDate,
-            petIds: Array.isArray(petIds) ? petIds.map((petId: unknown) => String(petId)) : [],
+            startDate: start,
+            endDate: end,
+            petIds: requestedPetIds,
             message,
-            totalPrice,
+            totalPrice: numericTotal,
             status: BookingStatus.PENDING
         });
 
