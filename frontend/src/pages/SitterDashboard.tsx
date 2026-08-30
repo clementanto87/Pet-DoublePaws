@@ -187,8 +187,8 @@ const SitterDashboard: React.FC = () => {
                 showToast('Booking accepted successfully!', 'success');
             } else if (variables.status === BookingStatus.REJECTED) {
                 showToast('Booking rejected', 'info');
-            } else if (variables.status === BookingStatus.COMPLETED) {
-                showToast('Service marked as completed. The owner can now pay.', 'success');
+            } else if (variables.status === BookingStatus.COMPLETION_REQUESTED) {
+                showToast('Completion request sent to the owner.', 'success');
             }
         },
         onError: () => {
@@ -635,7 +635,7 @@ const SitterDashboard: React.FC = () => {
                                         {bookings.map((booking: Booking) => {
                                             const isPending = booking.status === BookingStatus.PENDING;
                                             const isAccepted = booking.status === BookingStatus.ACCEPTED;
-                                            const isCompleted = booking.status === BookingStatus.COMPLETED;
+                                                            const isCompleted = booking.status === BookingStatus.COMPLETED;
 
                                             const statusBadgeClass = isAccepted
                                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
@@ -721,12 +721,12 @@ const SitterDashboard: React.FC = () => {
                                                             {isAccepted && (
                                                                 <Button
                                                                     size="sm"
-                                                                    onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: BookingStatus.COMPLETED })}
+                                                                    onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: BookingStatus.COMPLETION_REQUESTED })}
                                                                     disabled={updateBookingStatusMutation.isPending}
                                                                     className="h-8 sm:h-9 px-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
                                                                 >
                                                                     <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
-                                                                    Complete
+                                                                    Request completion
                                                                 </Button>
                                                             )}
 

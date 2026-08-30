@@ -3,6 +3,7 @@ import api from '../lib/api';
 export const BookingStatus = {
     PENDING: 'PENDING',
     ACCEPTED: 'ACCEPTED',
+    COMPLETION_REQUESTED: 'COMPLETION_REQUESTED',
     REJECTED: 'REJECTED',
     COMPLETED: 'COMPLETED',
     CANCELLED: 'CANCELLED'

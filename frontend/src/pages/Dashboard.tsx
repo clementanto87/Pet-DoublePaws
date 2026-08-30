@@ -460,6 +460,7 @@ const Dashboard: React.FC = () => {
                                             const isCompleted = booking.status === BookingStatus.COMPLETED;
                                             const isPending = booking.status === BookingStatus.PENDING;
                                             const isAccepted = booking.status === BookingStatus.ACCEPTED;
+                                            const completionRequested = booking.status === BookingStatus.COMPLETION_REQUESTED;
 
                                             const statusBadgeClass = isAccepted
                                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
@@ -526,11 +527,17 @@ const Dashboard: React.FC = () => {
                                                             </Button>
                                                         )}
 
-                                                        {isCompleted && (
+                                                        {isAccepted && (
                                                             <PayButton
                                                                 bookingId={booking.id}
                                                                 amountLabel={booking.totalPrice ? `€${booking.totalPrice}` : undefined}
                                                             />
+                                                        )}
+
+                                                        {completionRequested && (
+                                                            <Button size="sm" onClick={async () => { try { await bookingService.updateStatus(booking.id, BookingStatus.COMPLETED); window.location.reload(); } catch { showToast('Failed to confirm completion', 'error'); } }}>
+                                                                Confirm completion
+                                                            </Button>
                                                         )}
 
                                                         {isCompleted && !(booking as any).review && (

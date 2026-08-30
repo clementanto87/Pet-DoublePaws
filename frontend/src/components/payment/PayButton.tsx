@@ -12,7 +12,7 @@ interface PayButtonProps {
 }
 
 /**
- * Shows "Pay" for a completed-but-unpaid booking, or a "Paid" badge once
+ * Shows "Pay" for an accepted booking, or a "Paid" badge once
  * settled. Fetches its own status so booking lists don't need extra plumbing.
  */
 export const PayButton: React.FC<PayButtonProps> = ({ bookingId, amountLabel }) => {

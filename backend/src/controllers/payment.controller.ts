@@ -39,9 +39,9 @@ export const getPaymentConfig = async (_req: Request, res: Response) => {
 /**
  * POST /api/payments/bookings/:bookingId/intent
  *
- * Creates (or returns the existing) Stripe PaymentIntent for a booking.
- * Per the agreed flow, the customer is only charged AFTER the service is
- * completed, so the booking must be in COMPLETED status.
+ * Creates (or returns the existing) Stripe PaymentIntent for an accepted booking.
+ * Stripe authorizes the funds now and captures them only after the customer
+ * confirms the sitter's completion request.
  */
 export const createPaymentIntent = async (req: Request, res: Response) => {
     try {
@@ -62,9 +62,9 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
             return res.status(403).json({ message: 'Not authorized to pay for this booking' });
         }
 
-        if (booking.status !== BookingStatus.COMPLETED) {
+        if (booking.status !== BookingStatus.ACCEPTED) {
             return res.status(400).json({
-                message: 'This booking can only be paid once the service is completed',
+                message: 'This booking can only be paid after the sitter accepts it',
             });
         }
 
@@ -83,7 +83,7 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
         if (existing) {
             const intent = await stripe.paymentIntents.retrieve(existing.stripePaymentIntentId);
             // Only reuse if it's still usable; otherwise fall through and make a new one.
-            if (intent.status !== 'canceled' && intent.status !== 'succeeded') {
+            if (intent.capture_method === 'manual' && intent.status !== 'canceled' && intent.status !== 'succeeded') {
                 return res.json({
                     clientSecret: intent.client_secret,
                     amount: existing.amount,
@@ -96,6 +96,7 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
         const intent = await stripe.paymentIntents.create({
             amount,
             currency: stripeCurrency,
+            capture_method: 'manual',
             // Lets Stripe show whatever methods are enabled on the account.
             automatic_payment_methods: { enabled: true },
             metadata: {
