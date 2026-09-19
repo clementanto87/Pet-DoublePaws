@@ -14,6 +14,12 @@ class AuthProvider with ChangeNotifier {
   late final GoogleSignIn _googleSignIn = _createGoogleSignIn();
   
   GoogleSignIn _createGoogleSignIn() {
+    if (kIsWeb) {
+      return GoogleSignIn(
+        scopes: ['email', 'profile'],
+        clientId: GoogleAuthConfig.webClientId,
+      );
+    }
     if (Platform.isIOS && GoogleAuthConfig.iosClientId != null) {
       return GoogleSignIn(
         scopes: ['email', 'profile'],

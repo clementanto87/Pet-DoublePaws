@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'api_service.dart';
@@ -22,16 +23,18 @@ class NotificationService {
   Future<void> init() async {
     if (_isInitialized) return;
 
-    // Initialize Local Notifications
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
-    
-    const initSettings = InitializationSettings(android: androidSettings, iOS: iosSettings);
-    await _localNotifications.initialize(initSettings);
+    if (!kIsWeb) {
+      // Initialize Local Notifications
+      const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const iosSettings = DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      );
+      
+      const initSettings = InitializationSettings(android: androidSettings, iOS: iosSettings);
+      await _localNotifications.initialize(initSettings);
+    }
 
     _isInitialized = true;
     print('NotificationService initialized');
@@ -94,6 +97,7 @@ class NotificationService {
   }
 
   Future<void> _showNotification({required int id, required String title, required String body}) async {
+    if (kIsWeb) return;
     const androidDetails = AndroidNotificationDetails(
       'pet_daycare_channel',
       'Pet Daycare Notifications',

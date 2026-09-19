@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
@@ -105,7 +106,7 @@ class _ChatScreenState extends State<ChatScreen> {
         _scrollToBottom();
         
         // Convert to Base64
-        final bytes = await File(image.path).readAsBytes();
+        final bytes = await image.readAsBytes();
         final base64Image = 'data:image/jpeg;base64,${base64Encode(bytes)}'; // Assuming jpeg/png
 
         // Send to backend
@@ -261,10 +262,16 @@ class _ChatScreenState extends State<ChatScreen> {
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(8),
                                       child: isLocal
-                                        ? Image.file(
-                                            File(imageUrl),
-                                            height: 200, width: 200, fit: BoxFit.cover,
-                                          )
+                                        ? (kIsWeb
+                                            ? Image.network(
+                                                imageUrl,
+                                                height: 200, width: 200, fit: BoxFit.cover,
+                                                errorBuilder: (c, o, s) => const Icon(Icons.broken_image),
+                                              )
+                                            : Image.file(
+                                                File(imageUrl),
+                                                height: 200, width: 200, fit: BoxFit.cover,
+                                              ))
                                         : (imageUrl.startsWith('data:image') 
                                             // Handle Base64 string from backend
                                             ? Image.memory(
