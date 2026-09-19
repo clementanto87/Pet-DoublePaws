@@ -87,48 +87,50 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
     const days = getDaysInMonth(currentMonth);
 
     return (
-        <div className={cn("bg-white dark:bg-gray-800 rounded-3xl border border-gray-200 dark:border-gray-700 overflow-hidden", className)}>
+        <div className={cn("bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 overflow-hidden shadow-xs", className)}>
             {/* Header */}
-            <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="text-center sm:text-left">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center justify-center sm:justify-start gap-2">
-                        <CalendarIcon className="w-5 h-5 text-primary" />
+            <div className="p-3.5 sm:p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                <div>
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <CalendarIcon className="w-4 h-4 text-primary" />
                         Availability
                     </h3>
-                    <p className="text-xs text-gray-500">Click dates to block/unblock</p>
+                    <p className="text-[11px] text-slate-500">Tap date to block / unblock</p>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-0.5">
                     <button
                         onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))}
-                        className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                        className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                        aria-label="Previous month"
                     >
-                        <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                        <ChevronLeft className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                     </button>
-                    <span className="font-bold text-gray-900 dark:text-white min-w-[110px] text-center text-sm">
-                        {MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                    <span className="font-bold text-slate-900 dark:text-white min-w-[90px] sm:min-w-[110px] text-center text-xs sm:text-sm">
+                        {MONTHS[currentMonth.getMonth()].slice(0, 3)} {currentMonth.getFullYear()}
                     </span>
                     <button
                         onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))}
-                        className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                        className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                        aria-label="Next month"
                     >
-                        <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                        <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-400" />
                     </button>
                 </div>
             </div>
 
             {/* Calendar Grid */}
-            <div className="p-6">
+            <div className="p-3 sm:p-5">
                 {/* Day Headers */}
-                <div className="grid grid-cols-7 gap-2 mb-4">
+                <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2">
                     {DAYS.map((day) => (
-                        <div key={day} className="h-10 flex items-center justify-center text-sm font-bold text-gray-400 uppercase tracking-wider">
-                            {day}
+                        <div key={day} className="h-6 flex items-center justify-center text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">
+                            {day.slice(0, 2)}
                         </div>
                     ))}
                 </div>
 
                 {/* Days */}
-                <div className="grid grid-cols-7 gap-2">
+                <div className="grid grid-cols-7 gap-1 sm:gap-2">
                     {days.map((date, index) => {
                         if (!date) return <div key={`empty-${index}`} className="aspect-square" />;
 
@@ -143,37 +145,28 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
                                 onClick={() => !isPast && onToggleDate(dateStr)}
                                 disabled={isPast}
                                 className={cn(
-                                    "aspect-square rounded-2xl flex flex-col items-center justify-center transition-all relative group",
+                                    "aspect-square rounded-xl sm:rounded-2xl flex flex-col items-center justify-center transition-all relative group text-xs",
                                     isPast
-                                        ? "bg-gray-50 dark:bg-gray-900 text-gray-300 dark:text-gray-700 cursor-not-allowed"
+                                        ? "bg-slate-50 dark:bg-slate-950/40 text-slate-300 dark:text-slate-700 cursor-not-allowed"
                                         : isBlocked
-                                            ? "bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400"
+                                            ? "bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 font-bold"
                                             : bookingStatus === 'accepted'
-                                                ? "bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400"
+                                                ? "bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 font-bold"
                                                 : bookingStatus === 'pending'
-                                                    ? "bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-400"
-                                                    : "bg-white dark:bg-gray-800 border-2 border-transparent hover:border-primary/50 hover:bg-primary/5 text-gray-700 dark:text-gray-300"
+                                                    ? "bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 font-bold"
+                                                    : "bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700 hover:border-primary/50 hover:bg-orange-50/20 text-slate-700 dark:text-slate-300"
                                 )}
                             >
                                 <span className={cn(
-                                    "text-lg font-medium",
+                                    "text-xs sm:text-sm font-semibold",
                                     !isPast && !isBlocked && !bookingStatus && "group-hover:text-primary"
                                 )}>
                                     {date.getDate()}
                                 </span>
                                 {isBlocked && (
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <Ban className="w-8 h-8 opacity-20" />
+                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                        <Ban className="w-4 h-4 sm:w-6 sm:h-6 opacity-25 text-red-600" />
                                     </div>
-                                )}
-                                {isBlocked && (
-                                    <span className="text-[10px] font-bold uppercase mt-1">Blocked</span>
-                                )}
-                                {!isBlocked && bookingStatus === 'accepted' && (
-                                    <span className="text-[10px] font-bold uppercase mt-1">Booked</span>
-                                )}
-                                {!isBlocked && bookingStatus === 'pending' && (
-                                    <span className="text-[10px] font-bold uppercase mt-1">Request</span>
                                 )}
                             </button>
                         );
@@ -182,26 +175,22 @@ export const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
             </div>
 
             {/* Legend */}
-            <div className="px-6 pb-6 flex flex-wrap items-center gap-4 text-xs sm:text-sm">
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-md border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"></div>
-                    <span className="text-gray-600 dark:text-gray-400">Available</span>
+            <div className="px-3 pb-3 sm:px-5 sm:pb-5 flex flex-wrap items-center gap-2 sm:gap-3 text-[10px] sm:text-xs">
+                <div className="flex items-center gap-1">
+                    <div className="w-2.5 h-2.5 rounded-sm border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800"></div>
+                    <span className="text-slate-500">Available</span>
                 </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-md border-2 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20"></div>
-                    <span className="text-gray-600 dark:text-gray-400">Booked</span>
+                <div className="flex items-center gap-1">
+                    <div className="w-2.5 h-2.5 rounded-sm border border-emerald-300 bg-emerald-50 dark:bg-emerald-950/40"></div>
+                    <span className="text-slate-500">Booked</span>
                 </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-md border-2 border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20"></div>
-                    <span className="text-gray-600 dark:text-gray-400">Request</span>
+                <div className="flex items-center gap-1">
+                    <div className="w-2.5 h-2.5 rounded-sm border border-amber-300 bg-amber-50 dark:bg-amber-950/40"></div>
+                    <span className="text-slate-500">Request</span>
                 </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-md border-2 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20"></div>
-                    <span className="text-gray-600 dark:text-gray-400">Blocked</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-md bg-gray-50 dark:bg-gray-900"></div>
-                    <span className="text-gray-400">Past</span>
+                <div className="flex items-center gap-1">
+                    <div className="w-2.5 h-2.5 rounded-sm border border-red-300 bg-red-50 dark:bg-red-950/40"></div>
+                    <span className="text-slate-500">Blocked</span>
                 </div>
             </div>
         </div>

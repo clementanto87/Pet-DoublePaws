@@ -19,6 +19,14 @@ import MessagesPage from './pages/MessagesPage';
 import SitterMessagesPage from './pages/SitterMessagesPage';
 import AdminPage from './pages/AdminPage';
 import AdminBookingsPage from './pages/AdminBookingsPage';
+import {
+  AdminAuditPage,
+  AdminPaymentsPage,
+  AdminReportsPage,
+  AdminSettingsPage,
+  AdminUsersPage,
+  AdminVerificationPage,
+} from './pages/AdminSectionPages';
 
 
 import { AuthProvider } from './context/AuthContext';
@@ -26,6 +34,9 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import ToastProvider from './components/ui/Toast';
 import GoogleOneTap from './components/auth/GoogleOneTap';
+import PrivacySettingsPage from './pages/PrivacySettingsPage';
+import CookieConsent from './components/privacy/CookieConsent';
+import { AboutPage, ContactPage, PricingPage, ServiceDetailPage, ServicesPage } from './pages/PublicInfoPages';
 
 // Create a client for React Query
 const queryClient = new QueryClient();
@@ -60,6 +71,11 @@ const AppShell: React.FC = () => {
       <main className="flex-1 w-full overflow-x-hidden">
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/services" element={<ServicesPage />} />
+          <Route path="/services/:slug" element={<ServiceDetailPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/contact" element={<ContactPage />} />
           <Route
             path="/dashboard"
             element={
@@ -68,6 +84,7 @@ const AppShell: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route path="/settings/privacy" element={<ProtectedRoute><PrivacySettingsPage /></ProtectedRoute>} />
           <Route
             path="/messages"
             element={
@@ -123,6 +140,12 @@ const AppShell: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          <Route path="/admin/verification" element={<ProtectedRoute><AdminVerificationPage /></ProtectedRoute>} />
+          <Route path="/admin/users" element={<ProtectedRoute><AdminUsersPage /></ProtectedRoute>} />
+          <Route path="/admin/payments" element={<ProtectedRoute><AdminPaymentsPage /></ProtectedRoute>} />
+          <Route path="/admin/reports" element={<ProtectedRoute><AdminReportsPage /></ProtectedRoute>} />
+          <Route path="/admin/settings" element={<ProtectedRoute><AdminSettingsPage /></ProtectedRoute>} />
+          <Route path="/admin/audit" element={<ProtectedRoute><AdminAuditPage /></ProtectedRoute>} />
 
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
@@ -144,6 +167,7 @@ function App() {
             <Router>
               <ScrollToTop />
               <AppShell />
+              <CookieConsent />
             </Router>
           </ToastProvider>
         </AuthProvider>

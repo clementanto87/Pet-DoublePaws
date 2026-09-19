@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useIsSitter } from '../hooks/useIsSitter';
 import { Button } from '../components/ui/Button';
@@ -28,6 +29,7 @@ import { PawPrints } from '../components/ui/PawPrints';
 
 const BecomeSitterLandingPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { isSitter } = useIsSitter();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [selectedEarning, setSelectedEarning] = useState<'partTime' | 'fullTime'>('partTime');
@@ -56,30 +58,30 @@ const BecomeSitterLandingPage: React.FC = () => {
   const benefits = [
     {
       icon: DollarSign,
-      title: 'Earn Great Income',
-      description: 'Set your own rates and earn up to $1,500+ per month caring for pets you love.',
-      highlight: '$1,500+/mo',
+      title: t('becomeSitter.benefits.earnIncome.title'),
+      description: t('becomeSitter.benefits.earnIncome.desc'),
+      highlight: t('becomeSitter.benefits.earnIncome.highlight'),
       color: 'from-green-400 to-emerald-500'
     },
     {
       icon: Clock,
-      title: 'Flexible Schedule',
-      description: 'Work when you want. You control your availability—part-time or full-time.',
-      highlight: 'Your Hours',
+      title: t('becomeSitter.benefits.flexibleSchedule.title'),
+      description: t('becomeSitter.benefits.flexibleSchedule.desc'),
+      highlight: t('becomeSitter.benefits.flexibleSchedule.highlight'),
       color: 'from-blue-400 to-cyan-500'
     },
     {
       icon: Heart,
-      title: 'Do What You Love',
-      description: 'Spend your days with adorable pets. Turn your passion into a rewarding career.',
-      highlight: 'Dream Job',
+      title: t('becomeSitter.benefits.doWhatYouLove.title'),
+      description: t('becomeSitter.benefits.doWhatYouLove.desc'),
+      highlight: t('becomeSitter.benefits.doWhatYouLove.highlight'),
       color: 'from-pink-400 to-rose-500'
     },
     {
       icon: Home,
-      title: 'Work From Home',
-      description: 'Provide boarding and daycare from the comfort of your own home.',
-      highlight: 'Home-Based',
+      title: t('becomeSitter.benefits.workFromHome.title'),
+      description: t('becomeSitter.benefits.workFromHome.desc'),
+      highlight: t('becomeSitter.benefits.workFromHome.highlight'),
       color: 'from-purple-400 to-indigo-500'
     }
   ];
@@ -191,7 +193,7 @@ const BecomeSitterLandingPage: React.FC = () => {
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/80 dark:bg-white/10 backdrop-blur-sm border border-primary/20 shadow-lg mb-8"
               >
                 <Sparkles className="w-4 h-4 text-primary" />
-                <span className="text-sm font-semibold text-primary">Join 10,000+ Pet Sitters</span>
+                <span className="text-sm font-semibold text-primary">{t('becomeSitter.hero.badge')}</span>
               </motion.div>
 
               <motion.h1
@@ -200,11 +202,11 @@ const BecomeSitterLandingPage: React.FC = () => {
                 transition={{ delay: 0.3 }}
                 className="text-5xl md:text-6xl lg:text-7xl font-display font-bold mb-6 leading-[1.05] tracking-tight"
               >
-                Turn Your Love <br className="hidden sm:block" />
-                for Pets Into{' '}
+                {t('becomeSitter.hero.title')} <br className="hidden sm:block" />
+                {' '}
                 <span className="relative inline-block">
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500">
-                    Income
+                    {t('becomeSitter.hero.titleHighlight')}
                   </span>
                   <motion.div
                     initial={{ scaleX: 0 }}
@@ -221,7 +223,7 @@ const BecomeSitterLandingPage: React.FC = () => {
                 transition={{ delay: 0.4 }}
                 className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed"
               >
-                Become a Double Paws sitter and earn money doing what you love—caring for adorable pets in your neighborhood.
+                {t('becomeSitter.hero.subtitle')}
               </motion.p>
 
               <motion.div
@@ -235,7 +237,7 @@ const BecomeSitterLandingPage: React.FC = () => {
                   size="lg"
                   className="text-lg px-10 h-14 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 shadow-lg shadow-green-500/25 hover:shadow-xl hover:shadow-green-500/30 hover:scale-105 transition-all duration-300 group"
                 >
-                  Start Earning Today
+                  {t('becomeSitter.hero.startEarning')}
                   <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
                 <Button
@@ -245,7 +247,7 @@ const BecomeSitterLandingPage: React.FC = () => {
                   className="text-lg px-10 h-14 bg-white/70 backdrop-blur-sm hover:bg-white group"
                 >
                   <DollarSign className="w-5 h-5 mr-2 text-green-500" />
-                  Calculate Earnings
+                  {t('becomeSitter.hero.calculate')}
                 </Button>
               </motion.div>
 
@@ -256,9 +258,9 @@ const BecomeSitterLandingPage: React.FC = () => {
                 className="flex flex-wrap items-center justify-center lg:justify-start gap-6 text-muted-foreground"
               >
                 {[
-                  { icon: Gift, text: 'Free to Join' },
-                  { icon: Shield, text: 'Insurance Included' },
-                  { icon: Zap, text: 'Quick Approval' }
+                  { icon: Gift, text: t('becomeSitter.hero.freeToJoin') },
+                  { icon: Shield, text: t('becomeSitter.hero.insuranceIncluded') },
+                  { icon: Zap, text: t('becomeSitter.hero.quickApproval') }
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
@@ -302,7 +304,7 @@ const BecomeSitterLandingPage: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-green-600 dark:text-green-400">$1,500+</p>
-                      <p className="text-sm text-muted-foreground">Monthly Potential</p>
+                      <p className="text-sm text-muted-foreground">{t('becomeSitter.hero.monthlyPotential')}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -329,7 +331,7 @@ const BecomeSitterLandingPage: React.FC = () => {
                       <div className="flex text-yellow-400">
                         {[1, 2, 3, 4, 5].map(i => <Star key={i} className="w-4 h-4 fill-current" />)}
                       </div>
-                      <p className="text-xs text-muted-foreground font-medium">Trusted by 10K+ Parents</p>
+                      <p className="text-xs text-muted-foreground font-medium">{t('becomeSitter.hero.trustedBy')}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -342,7 +344,7 @@ const BecomeSitterLandingPage: React.FC = () => {
                   className="absolute bottom-8 right-8 bg-gradient-to-r from-primary to-orange-500 text-white px-4 py-2 rounded-full shadow-lg hidden sm:flex items-center gap-2"
                 >
                   <Calendar className="w-4 h-4" />
-                  <span className="text-sm font-bold">5 Bookings Today</span>
+                  <span className="text-sm font-bold">{t('becomeSitter.hero.bookingsToday')}</span>
                 </motion.div>
               </div>
 

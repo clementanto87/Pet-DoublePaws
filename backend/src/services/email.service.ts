@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { bookingReference } from '../utils/bookingReference';
 
 export interface EmailUser {
     firstName?: string;
@@ -48,6 +49,7 @@ const formatDate = (value: Date | string): string => new Intl.DateTimeFormat('en
 
 const bookingSummary = (booking: BookingEmailData): string => `
     <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:16px;margin:20px 0">
+        <strong>Reference: ${escapeHtml(bookingReference(booking.id))}</strong><br />
         <strong>${escapeHtml(serviceLabel(booking.serviceType))}</strong><br />
         ${escapeHtml(formatDate(booking.startDate))} - ${escapeHtml(formatDate(booking.endDate))}<br />
         Total: <strong>EUR ${escapeHtml(booking.totalPrice)}</strong>

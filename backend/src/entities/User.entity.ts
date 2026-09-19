@@ -21,8 +21,17 @@ export class User {
     @Column()
     lastName!: string;
 
+    @Column({ nullable: true, type: 'text' })
+    profileImage?: string;
+
     @Column({ nullable: true, unique: true })
     googleId?: string;
+
+    @Column({ nullable: true, unique: true })
+    facebookId?: string;
+
+    @Column({ nullable: true, unique: true })
+    appleId?: string;
 
     @CreateDateColumn()
     createdAt!: Date;

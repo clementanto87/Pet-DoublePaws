@@ -30,7 +30,7 @@ export const paymentService = {
         return response.data;
     },
 
-    /** Create (or resume) the Stripe PaymentIntent for a completed booking. */
+    /** Create (or resume) the Stripe authorization hold for an accepted booking. */
     createIntent: async (bookingId: string): Promise<PaymentIntentResponse> => {
         const response = await api.post(`/payments/bookings/${bookingId}/intent`);
         return response.data;

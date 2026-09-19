@@ -10,7 +10,7 @@ import { sitterService } from '../services/sitter.service';
 // ['sitterProfile'] query key with the sitter dashboard so the result
 // is cached across the app.
 export const useIsSitter = () => {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, user } = useAuth();
 
     const { data, isLoading, isError } = useQuery({
         queryKey: ['sitterProfile'],
@@ -20,10 +20,12 @@ export const useIsSitter = () => {
         staleTime: 5 * 60 * 1000,
     });
 
+    const isSitterFromAuth = Boolean(user?.isSitter || user?.role === 'sitter' || user?.sitterProfileId);
+    const isSitterFromQuery = isAuthenticated && !!data && !isError;
+
     return {
-        // Only true once we've confirmed a profile exists.
-        isSitter: isAuthenticated && !!data && !isError,
-        // While unknown, callers can avoid flashing sitter-only UI.
-        isLoading: isAuthenticated && isLoading,
+        // True if verified via auth state or sitter profile query
+        isSitter: isSitterFromAuth || isSitterFromQuery,
+        isLoading: isAuthenticated && isLoading && !isSitterFromAuth,
     };
 };

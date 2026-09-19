@@ -41,10 +41,10 @@ const Footer: React.FC = () => {
                     <div>
                         <h3 className="font-display font-bold text-lg mb-6">{t('footer.quickLinks.title')}</h3>
                         <ul className="space-y-4">
-                            {[t('footer.quickLinks.home'), t('footer.quickLinks.about'), t('footer.quickLinks.services'), t('footer.quickLinks.pricing'), t('footer.quickLinks.contact')].map((item) => (
-                                <li key={item}>
-                                    <Link to="/" className="text-muted-foreground hover:text-primary transition-colors">
-                                        {item}
+                            {[['footer.quickLinks.home', '/'], ['footer.quickLinks.about', '/about'], ['footer.quickLinks.services', '/services'], ['footer.quickLinks.pricing', '/pricing'], ['footer.quickLinks.contact', '/contact']].map(([key, href]) => (
+                                <li key={key}>
+                                    <Link to={href} className="text-muted-foreground hover:text-primary transition-colors">
+                                        {t(key)}
                                     </Link>
                                 </li>
                             ))}
@@ -54,10 +54,10 @@ const Footer: React.FC = () => {
                     <div>
                         <h3 className="font-display font-bold text-lg mb-6">{t('footer.services.title')}</h3>
                         <ul className="space-y-4">
-                            {[t('footer.services.daycare'), t('footer.services.boarding'), t('footer.services.grooming'), t('footer.services.training'), t('footer.services.veterinary')].map((item) => (
-                                <li key={item}>
-                                    <Link to="/" className="text-muted-foreground hover:text-primary transition-colors">
-                                        {item}
+                            {[['footer.services.daycare', 'daycare'], ['footer.services.boarding', 'boarding'], ['footer.services.grooming', 'grooming'], ['footer.services.training', 'training'], ['footer.services.veterinary', 'veterinary']].map(([key, slug]) => (
+                                <li key={key}>
+                                    <Link to={`/services/${slug}`} className="text-muted-foreground hover:text-primary transition-colors">
+                                        {t(key)}
                                     </Link>
                                 </li>
                             ))}

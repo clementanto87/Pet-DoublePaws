@@ -7,16 +7,35 @@ import { Message } from '../entities/Message.entity';
 import { getIO } from '../socket';
 import { emailService } from '../services/email.service';
 import { Payment } from '../entities/Payment.entity';
+import { Pet } from '../entities/Pet.entity';
+import { stripe, isStripeConfigured } from '../config/stripe';
 
 const bookingRepository = AppDataSource.getRepository(Booking);
 const sitterRepository = AppDataSource.getRepository(SitterProfile);
 const userRepository = AppDataSource.getRepository(User);
 const messageRepository = AppDataSource.getRepository(Message);
+const petRepository = AppDataSource.getRepository(Pet);
+const paymentRepository = AppDataSource.getRepository(Payment);
 
 export const createBooking = async (req: Request, res: Response) => {
     try {
         const { sitterId, serviceType, startDate, endDate, petIds, message, totalPrice } = req.body;
         const ownerId = (req as any).user.id; // Assuming auth middleware adds user to req
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const numericTotal = Number(totalPrice);
+        if (!serviceType || Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start || !Number.isFinite(numericTotal) || numericTotal < 0) {
+            return res.status(400).json({ message: 'Valid service, dates, and total price are required' });
+        }
+
+        const requestedPetIds = Array.isArray(petIds) ? [...new Set(petIds.map((petId: unknown) => String(petId)))] : [];
+        if (requestedPetIds.length > 0) {
+            const ownedPets = await petRepository.count({ where: requestedPetIds.map((id) => ({ id, ownerId })) });
+            if (ownedPets !== requestedPetIds.length) {
+                return res.status(403).json({ message: 'You can only book with pets in your profile' });
+            }
+        }
 
         const sitter = await sitterRepository.findOne({ where: { id: sitterId } });
         if (!sitter) {
@@ -27,11 +46,11 @@ export const createBooking = async (req: Request, res: Response) => {
             sitterId,
             ownerId,
             serviceType,
-            startDate,
-            endDate,
-            petIds,
+            startDate: start,
+            endDate: end,
+            petIds: requestedPetIds,
             message,
-            totalPrice,
+            totalPrice: numericTotal,
             status: BookingStatus.PENDING
         });
 
@@ -64,7 +83,7 @@ export const createBooking = async (req: Request, res: Response) => {
                 const newMessage = messageRepository.create({
                     senderId: ownerId,
                     receiverId: sitter.userId, // Sitter's user ID
-                    content: message,
+                content: `Booking request\n\nService: ${serviceType}\nDates: ${start.toLocaleString()} - ${end.toLocaleString()}\nEstimated total: €${numericTotal.toFixed(2)}\n\nMessage from the customer:\n${message.trim()}`,
                     bookingId: booking.id,
                     read: false
                 });
@@ -92,7 +111,7 @@ export const getBookings = async (req: Request, res: Response) => {
         const pageSize = 5;
         const page = Math.max(1, Number.parseInt(String(req.query.page || '1'), 10) || 1);
 
-        const upcomingStatuses = [BookingStatus.PENDING, BookingStatus.ACCEPTED];
+        const upcomingStatuses = [BookingStatus.PENDING, BookingStatus.ACCEPTED, BookingStatus.COMPLETION_REQUESTED];
         const historyStatuses = [BookingStatus.COMPLETED, BookingStatus.REJECTED, BookingStatus.CANCELLED];
         const statuses = requestedStatus && [...upcomingStatuses, ...historyStatuses].includes(requestedStatus as BookingStatus)
             ? [requestedStatus as BookingStatus]
@@ -219,10 +238,11 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
 
         if (isSitter && [BookingStatus.ACCEPTED, BookingStatus.REJECTED].includes(status)) {
             isValidUpdate = true;
-        } else if (isSitter && status === BookingStatus.COMPLETED) {
-            // A sitter marks the service as done, which is what makes the booking
-            // payable (the customer is charged after completion).
+        } else if (isSitter && status === BookingStatus.COMPLETION_REQUESTED) {
+            // The sitter can request completion, but the customer must confirm it.
             isValidUpdate = booking.status === BookingStatus.ACCEPTED;
+        } else if (isOwner && status === BookingStatus.COMPLETED) {
+            isValidUpdate = booking.status === BookingStatus.COMPLETION_REQUESTED;
         } else if (isOwner && status === BookingStatus.CANCELLED) {
             isValidUpdate = true;
         }
@@ -231,10 +251,42 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
             return res.status(400).json({ message: 'Invalid status update for your role' });
         }
 
+        if (isOwner && status === BookingStatus.COMPLETED) {
+            const payment = await paymentRepository.findOne({ where: { bookingId: booking.id } });
+            if (!payment || payment.status !== 'PENDING' || !isStripeConfigured() || !stripe) {
+                return res.status(400).json({ message: 'Payment must be authorized before confirming completion' });
+            }
+            const intent = await stripe.paymentIntents.retrieve(payment.stripePaymentIntentId);
+            if (intent.status !== 'requires_capture') {
+                return res.status(400).json({ message: 'The payment authorization is no longer available' });
+            }
+            await stripe.paymentIntents.capture(payment.stripePaymentIntentId);
+        }
+
         booking.status = status;
         await bookingRepository.save(booking);
 
-        if (status === BookingStatus.ACCEPTED || status === BookingStatus.REJECTED || status === BookingStatus.COMPLETED) {
+        const statusMessages: Partial<Record<BookingStatus, string>> = {
+            [BookingStatus.ACCEPTED]: 'The sitter accepted your booking request. Please authorize the payment from your dashboard to confirm the booking.',
+            [BookingStatus.REJECTED]: 'The sitter declined this booking request.',
+            [BookingStatus.COMPLETION_REQUESTED]: 'The sitter marked the service as ready for completion. Please review the service and confirm completion from your dashboard.',
+            [BookingStatus.COMPLETED]: 'The customer confirmed that the service was completed. Thank you for using Double Paws.',
+            [BookingStatus.CANCELLED]: 'The customer cancelled this booking.',
+        };
+        const statusMessage = statusMessages[status as BookingStatus];
+        if (statusMessage) {
+            const receiverId = isSitter ? booking.ownerId : booking.sitter.userId;
+            const lifecycleMessage = messageRepository.create({
+                senderId: userId,
+                receiverId,
+                bookingId: booking.id,
+                content: statusMessage,
+                read: false,
+            });
+            await messageRepository.save(lifecycleMessage);
+        }
+
+        if (status === BookingStatus.ACCEPTED || status === BookingStatus.REJECTED || status === BookingStatus.COMPLETION_REQUESTED || status === BookingStatus.COMPLETED) {
             if (booking.owner) {
                 void emailService.sendBookingStatus(
                     booking.owner,

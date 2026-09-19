@@ -3,6 +3,7 @@ import api from '../lib/api';
 export const BookingStatus = {
     PENDING: 'PENDING',
     ACCEPTED: 'ACCEPTED',
+    COMPLETION_REQUESTED: 'COMPLETION_REQUESTED',
     REJECTED: 'REJECTED',
     COMPLETED: 'COMPLETED',
     CANCELLED: 'CANCELLED'
@@ -12,6 +13,7 @@ export type BookingStatus = typeof BookingStatus[keyof typeof BookingStatus];
 
 export interface Booking {
     id: string;
+    referenceNumber?: string;
     sitterId: string;
     ownerId: string;
     petIds: string[];

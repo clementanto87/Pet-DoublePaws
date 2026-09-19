@@ -2,12 +2,15 @@ import React, { createContext, useContext, useState, useEffect, type ReactNode }
 
 import api from '../lib/api';
 
-interface User {
+export interface User {
     id: string;
     firstName: string;
     lastName: string;
     email: string;
+    profileImage?: string;
     role?: 'user' | 'sitter' | 'admin';
+    isSitter?: boolean;
+    sitterProfileId?: string;
 }
 
 interface AuthContextType {
@@ -16,6 +19,8 @@ interface AuthContextType {
     login: (email: string, password: string) => Promise<void>;
     signup: (firstName: string, lastName: string, email: string, password: string) => Promise<void>;
     googleLogin: (token: string) => Promise<void>;
+    facebookLogin: (accessToken: string) => Promise<void>;
+    appleLogin: (idToken: string, userPayload?: { name?: { firstName?: string; lastName?: string }; email?: string }) => Promise<void>;
     logout: () => void;
     isLoading: boolean;
     error: string | null;
@@ -37,6 +42,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setUser(JSON.parse(storedUser));
             // Set default auth header
             api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+            // Refresh user details (including role & isSitter status from backend)
+            api.get('/auth/me')
+                .then((res) => {
+                    if (res.data) {
+                        setUser(res.data);
+                        localStorage.setItem('user', JSON.stringify(res.data));
+                    }
+                })
+                .catch(() => {});
         }
         setIsLoading(false);
     }, []);
@@ -101,6 +116,46 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
+    const facebookLogin = async (accessToken: string) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const response = await api.post('/auth/facebook', { accessToken });
+            const { user, token: jwtToken } = response.data;
+
+            localStorage.setItem('user', JSON.stringify(user));
+            localStorage.setItem('token', jwtToken);
+            api.defaults.headers.common['Authorization'] = `Bearer ${jwtToken}`;
+
+            setUser(user);
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Facebook login failed');
+            throw err;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const appleLogin = async (idToken: string, userPayload?: { name?: { firstName?: string; lastName?: string }; email?: string }) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const response = await api.post('/auth/apple', { id_token: idToken, user: userPayload });
+            const { user, token: jwtToken } = response.data;
+
+            localStorage.setItem('user', JSON.stringify(user));
+            localStorage.setItem('token', jwtToken);
+            api.defaults.headers.common['Authorization'] = `Bearer ${jwtToken}`;
+
+            setUser(user);
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Apple login failed');
+            throw err;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const logout = () => {
         setUser(null);
         localStorage.removeItem('user');
@@ -109,7 +164,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, signup, googleLogin, logout, isLoading, error }}>
+        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, signup, googleLogin, facebookLogin, appleLogin, logout, isLoading, error }}>
             {children}
         </AuthContext.Provider>
     );

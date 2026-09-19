@@ -14,3 +14,5 @@ export const Wordmark: React.FC<WordmarkProps> = ({ className }) => (
         <span className="ml-1 text-muted-foreground">24</span>
     </span>
 );
+
+export default Wordmark;

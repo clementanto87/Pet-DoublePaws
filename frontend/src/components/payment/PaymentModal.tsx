@@ -54,7 +54,7 @@ const CheckoutForm: React.FC<{ onPaid?: () => void; onClose: () => void }> = ({ 
             return;
         }
 
-        if (paymentIntent?.status === 'succeeded') {
+        if (paymentIntent?.status === 'succeeded' || paymentIntent?.status === 'requires_capture') {
             setSucceeded(true);
             // The webhook is the source of truth for our DB; give it a moment,
             // then let the parent refetch.

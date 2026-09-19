@@ -4,6 +4,8 @@ import type { SitterRegistrationData } from '../context/SitterRegistrationContex
 export interface SitterProfile {
     id: string;
     userId: string;
+    user?: { id: string; firstName: string; lastName: string; email?: string; profileImage?: string };
+    galleryImages?: string[];
     dob?: string;
     address?: string;
     latitude?: number;
@@ -46,6 +48,8 @@ export interface SitterProfile {
         accountHolderName: string;
         bankName: string;
     };
+    stripeConnectAccountId?: string;
+    stripeConnectStatus?: 'NOT_STARTED' | 'PENDING' | 'ENABLED';
     createdAt: string;
     updatedAt: string;
 }
@@ -68,6 +72,16 @@ export const sitterService = {
 
     updateProfile: async (data: Partial<SitterRegistrationData>): Promise<SitterProfile> => {
         const response = await api.post('/sitters', data);
+        return response.data;
+    },
+
+    startPayoutOnboarding: async (): Promise<{ url: string }> => {
+        const response = await api.post('/sitters/payouts/onboarding');
+        return response.data;
+    },
+
+    getPayoutStatus: async (): Promise<{ status: string; payoutsEnabled: boolean }> => {
+        const response = await api.get('/sitters/payouts/status');
         return response.data;
     },
 

@@ -17,6 +17,7 @@ import messageRoutes from './routes/message.routes';
 import adminRoutes from './routes/admin.routes';
 import supportRoutes from './routes/support.routes';
 import paymentRoutes from './routes/payment.routes';
+import privacyRoutes from './routes/privacy.routes';
 import { handleStripeWebhook } from './controllers/payment.controller';
 
 // Middleware
@@ -41,8 +42,10 @@ app.post(
   handleStripeWebhook
 );
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+// Keep request bodies bounded globally; image uploads are already represented as
+// data URLs and should not be allowed to exhaust the API process memory.
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -54,6 +57,7 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/support-requests', supportRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/privacy', privacyRoutes);
 
 // Basic route
 app.get('/', (req, res) => {
