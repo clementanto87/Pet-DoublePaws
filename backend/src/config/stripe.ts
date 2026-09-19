@@ -23,3 +23,44 @@ export const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 /** True when running against Stripe test keys — surfaced to the UI as a sandbox badge. */
 export const isStripeTestMode = (): boolean => Boolean(secretKey?.startsWith('sk_test_'));
+
+/** Default platform commission percentage (e.g. 10%). Configurable via PLATFORM_FEE_PERCENT env. */
+export const platformFeePercent = Math.max(0, Math.min(100, Number(process.env.PLATFORM_FEE_PERCENT) || 10));
+
+/**
+ * Calculates the platform commission (fee) and the net amount owed to the sitter.
+ */
+export const calculateFeeSplit = (totalAmountInCents: number) => {
+    const platformFeeAmount = Math.round(totalAmountInCents * (platformFeePercent / 100));
+    const sitterAmount = Math.max(0, totalAmountInCents - platformFeeAmount);
+    return {
+        platformFeeAmount,
+        sitterAmount,
+    };
+};
+
+/**
+ * Retrieves or creates a Stripe Customer object for a given user.
+ */
+export const getOrCreateStripeCustomer = async (user: { id: string; email: string; firstName?: string; lastName?: string; stripeCustomerId?: string }): Promise<string | null> => {
+    if (!stripe) return null;
+
+    if (user.stripeCustomerId) {
+        return user.stripeCustomerId;
+    }
+
+    try {
+        const customer = await stripe.customers.create({
+            email: user.email,
+            name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || undefined,
+            metadata: {
+                userId: user.id,
+            },
+        });
+        return customer.id;
+    } catch (error) {
+        console.error('Error creating Stripe customer:', error);
+        return null;
+    }
+};
+

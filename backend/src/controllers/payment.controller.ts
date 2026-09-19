@@ -1,12 +1,27 @@
 import { Request, Response } from 'express';
+import Stripe from 'stripe';
 import { AppDataSource } from '../config/database';
 import { Payment, PaymentStatus } from '../entities/Payment.entity';
 import { Booking, BookingStatus } from '../entities/Booking.entity';
-import { stripe, isStripeConfigured, stripeCurrency, stripeWebhookSecret, isStripeTestMode } from '../config/stripe';
+import { User } from '../entities/User.entity';
+import { SitterProfile } from '../entities/SitterProfile.entity';
+import { StripeWebhookEvent } from '../entities/StripeWebhookEvent.entity';
+import {
+    stripe,
+    isStripeConfigured,
+    stripeCurrency,
+    stripeWebhookSecret,
+    isStripeTestMode,
+    calculateFeeSplit,
+    getOrCreateStripeCustomer,
+} from '../config/stripe';
 import { emailService } from '../services/email.service';
 
 const paymentRepository = () => AppDataSource.getRepository(Payment);
 const bookingRepository = () => AppDataSource.getRepository(Booking);
+const userRepository = () => AppDataSource.getRepository(User);
+const sitterRepository = () => AppDataSource.getRepository(SitterProfile);
+const webhookEventRepository = () => AppDataSource.getRepository(StripeWebhookEvent);
 
 const notifyPaymentStatus = (payment: Payment, status: 'succeeded' | 'failed' | 'refunded') => {
     if (!payment.booking) return;
@@ -42,6 +57,9 @@ export const getPaymentConfig = async (_req: Request, res: Response) => {
  * Creates (or returns the existing) Stripe PaymentIntent for an accepted booking.
  * Stripe authorizes the funds now and captures them only after the customer
  * confirms the sitter's completion request.
+ *
+ * Routes net funds directly to the Sitter's Stripe Express account while Double Paws
+ * collects the platform commission as an application_fee_amount.
  */
 export const createPaymentIntent = async (req: Request, res: Response) => {
     try {
@@ -52,7 +70,11 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
         const { bookingId } = req.params;
         const userId = (req as any).user.id;
 
-        const booking = await bookingRepository().findOne({ where: { id: bookingId } });
+        const booking = await bookingRepository().findOne({
+            where: { id: bookingId },
+            relations: ['sitter', 'sitter.user', 'owner'],
+        });
+
         if (!booking) {
             return res.status(404).json({ message: 'Booking not found' });
         }
@@ -71,6 +93,19 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
         const amount = toMinorUnits(booking.totalPrice);
         if (!Number.isFinite(amount) || amount <= 0) {
             return res.status(400).json({ message: 'Booking has no payable amount' });
+        }
+
+        const { platformFeeAmount, sitterAmount } = calculateFeeSplit(amount);
+
+        // Fetch or create Stripe Customer for the owner
+        const user = await userRepository().findOne({ where: { id: userId } });
+        let customerId: string | null = null;
+        if (user) {
+            customerId = await getOrCreateStripeCustomer(user);
+            if (customerId && user.stripeCustomerId !== customerId) {
+                user.stripeCustomerId = customerId;
+                await userRepository().save(user);
+            }
         }
 
         // Reuse an existing intent so retrying never double-charges.
@@ -93,22 +128,41 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
             }
         }
 
-        const intent = await stripe.paymentIntents.create({
+        const sitterConnectAccountId = booking.sitter?.stripeConnectAccountId;
+
+        const paymentIntentParams: Stripe.PaymentIntentCreateParams = {
             amount,
             currency: stripeCurrency,
             capture_method: 'manual',
-            // Lets Stripe show whatever methods are enabled on the account.
             automatic_payment_methods: { enabled: true },
+            customer: customerId || undefined,
             metadata: {
                 bookingId: booking.id,
                 ownerId: booking.ownerId,
                 sitterId: booking.sitterId,
+                platformFeeAmount: String(platformFeeAmount),
+                sitterAmount: String(sitterAmount),
             },
-        });
+        };
+
+        // If sitter has an active Stripe Connect account, configure marketplace destination charges
+        if (sitterConnectAccountId) {
+            paymentIntentParams.application_fee_amount = platformFeeAmount;
+            paymentIntentParams.transfer_data = {
+                destination: sitterConnectAccountId,
+            };
+        }
+
+        const intent = await stripe.paymentIntents.create(
+            paymentIntentParams,
+            { idempotencyKey: `pi_create_${booking.id}_${amount}` }
+        );
 
         if (existing) {
             existing.stripePaymentIntentId = intent.id;
             existing.amount = amount;
+            existing.platformFeeAmount = platformFeeAmount;
+            existing.sitterAmount = sitterAmount;
             existing.currency = stripeCurrency;
             existing.status = PaymentStatus.PENDING;
             existing.failureReason = null;
@@ -120,6 +174,8 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
                     ownerId: booking.ownerId,
                     stripePaymentIntentId: intent.id,
                     amount,
+                    platformFeeAmount,
+                    sitterAmount,
                     currency: stripeCurrency,
                     status: PaymentStatus.PENDING,
                 })
@@ -174,7 +230,7 @@ export const getPaymentForBooking = async (req: Request, res: Response) => {
 };
 
 /**
- * GET /api/payments  — the signed-in user's payment history.
+ * GET /api/payments — the signed-in user's payment history.
  */
 export const getMyPayments = async (req: Request, res: Response) => {
     try {
@@ -195,10 +251,9 @@ export const getMyPayments = async (req: Request, res: Response) => {
  * POST /api/payments/webhook
  *
  * Stripe's server-to-server confirmation. This — not the browser — is the
- * source of truth for whether money actually moved: a client can always be
- * closed/tampered with mid-flow, so payment status is only ever written here.
+ * source of truth for whether money actually moved.
  *
- * Requires the RAW request body for signature verification (see app.ts).
+ * Includes event idempotency tracking and handles Stripe Connect account updates.
  */
 export const handleStripeWebhook = async (req: Request, res: Response) => {
     if (!isStripeConfigured() || !stripe) {
@@ -207,11 +262,9 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
 
     const signature = req.headers['stripe-signature'];
 
-    let event;
+    let event: Stripe.Event;
     try {
         if (!stripeWebhookSecret) {
-            // Without a signing secret we cannot trust the payload — refuse rather
-            // than trusting arbitrary input that can mark bookings as paid.
             console.error('STRIPE_WEBHOOK_SECRET is not set; rejecting webhook');
             return res.status(503).send('Webhook secret not configured');
         }
@@ -222,9 +275,15 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
     }
 
     try {
+        // Enforce idempotency: check if this event has already been processed
+        const existingEvent = await webhookEventRepository().findOne({ where: { id: event.id } });
+        if (existingEvent) {
+            return res.json({ received: true, duplicate: true });
+        }
+
         switch (event.type) {
             case 'payment_intent.succeeded': {
-                const intent = event.data.object as any;
+                const intent = event.data.object as Stripe.PaymentIntent;
                 const payment = await paymentRepository().findOne({
                     where: { stripePaymentIntentId: intent.id },
                     relations: ['booking', 'booking.owner', 'booking.sitter', 'booking.sitter.user'],
@@ -239,7 +298,7 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
                 break;
             }
             case 'payment_intent.payment_failed': {
-                const intent = event.data.object as any;
+                const intent = event.data.object as Stripe.PaymentIntent;
                 const payment = await paymentRepository().findOne({
                     where: { stripePaymentIntentId: intent.id },
                     relations: ['booking', 'booking.owner', 'booking.sitter', 'booking.sitter.user'],
@@ -256,16 +315,34 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
                 }
                 break;
             }
+            case 'payment_intent.canceled': {
+                const intent = event.data.object as Stripe.PaymentIntent;
+                const payment = await paymentRepository().findOne({
+                    where: { stripePaymentIntentId: intent.id },
+                    relations: ['booking', 'booking.owner', 'booking.sitter', 'booking.sitter.user'],
+                });
+                if (payment && payment.status !== PaymentStatus.FAILED) {
+                    await paymentRepository().update(
+                        { stripePaymentIntentId: intent.id },
+                        {
+                            status: PaymentStatus.FAILED,
+                            failureReason: 'Payment canceled',
+                        }
+                    );
+                }
+                break;
+            }
             case 'charge.refunded': {
-                const charge = event.data.object as any;
-                if (charge.payment_intent) {
+                const charge = event.data.object as Stripe.Charge;
+                const paymentIntentId = typeof charge.payment_intent === 'string' ? charge.payment_intent : charge.payment_intent?.id;
+                if (paymentIntentId) {
                     const payment = await paymentRepository().findOne({
-                        where: { stripePaymentIntentId: charge.payment_intent },
+                        where: { stripePaymentIntentId: paymentIntentId },
                         relations: ['booking', 'booking.owner', 'booking.sitter', 'booking.sitter.user'],
                     });
                     if (payment && payment.status !== PaymentStatus.REFUNDED) {
                         await paymentRepository().update(
-                            { stripePaymentIntentId: charge.payment_intent },
+                            { stripePaymentIntentId: paymentIntentId },
                             { status: PaymentStatus.REFUNDED }
                         );
                         notifyPaymentStatus(payment, 'refunded');
@@ -273,10 +350,31 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
                 }
                 break;
             }
+            case 'account.updated': {
+                // Stripe Connect Express account update: sync sitter payout onboarding status
+                const account = event.data.object as Stripe.Account;
+                const profile = await sitterRepository().findOne({
+                    where: { stripeConnectAccountId: account.id },
+                });
+                if (profile) {
+                    const newStatus = account.payouts_enabled ? 'ENABLED' : 'PENDING';
+                    if (profile.stripeConnectStatus !== newStatus) {
+                        profile.stripeConnectStatus = newStatus;
+                        await sitterRepository().save(profile);
+                    }
+                }
+                break;
+            }
             default:
-                // Unhandled event types are fine — acknowledge so Stripe stops retrying.
                 break;
         }
+
+        // Record that this webhook event has been successfully processed
+        await webhookEventRepository().save({
+            id: event.id,
+            type: event.type,
+            processedAt: new Date(),
+        });
 
         res.json({ received: true });
     } catch (error) {

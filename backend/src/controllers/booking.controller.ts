@@ -6,7 +6,7 @@ import { User } from '../entities/User.entity';
 import { Message } from '../entities/Message.entity';
 import { getIO } from '../socket';
 import { emailService } from '../services/email.service';
-import { Payment } from '../entities/Payment.entity';
+import { Payment, PaymentStatus } from '../entities/Payment.entity';
 import { Pet } from '../entities/Pet.entity';
 import { stripe, isStripeConfigured } from '../config/stripe';
 
@@ -253,14 +253,49 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
 
         if (isOwner && status === BookingStatus.COMPLETED) {
             const payment = await paymentRepository.findOne({ where: { bookingId: booking.id } });
-            if (!payment || payment.status !== 'PENDING' || !isStripeConfigured() || !stripe) {
+            if (!payment || payment.status !== PaymentStatus.PENDING || !isStripeConfigured() || !stripe) {
                 return res.status(400).json({ message: 'Payment must be authorized before confirming completion' });
             }
             const intent = await stripe.paymentIntents.retrieve(payment.stripePaymentIntentId);
             if (intent.status !== 'requires_capture') {
                 return res.status(400).json({ message: 'The payment authorization is no longer available' });
             }
-            await stripe.paymentIntents.capture(payment.stripePaymentIntentId);
+            await stripe.paymentIntents.capture(payment.stripePaymentIntentId, undefined, {
+                idempotencyKey: `pi_capture_${payment.stripePaymentIntentId}`,
+            });
+        }
+
+        if (status === BookingStatus.CANCELLED && isStripeConfigured() && stripe) {
+            const payment = await paymentRepository.findOne({ where: { bookingId: booking.id } });
+            if (payment) {
+                try {
+                    if (payment.status === PaymentStatus.PENDING) {
+                        const intent = await stripe.paymentIntents.retrieve(payment.stripePaymentIntentId);
+                        if (intent.status === 'requires_capture' || intent.status === 'requires_payment_method') {
+                            await stripe.paymentIntents.cancel(payment.stripePaymentIntentId, {
+                                cancellation_reason: 'requested_by_customer',
+                            }, {
+                                idempotencyKey: `pi_cancel_${payment.stripePaymentIntentId}`,
+                            });
+                            payment.status = PaymentStatus.FAILED;
+                            payment.failureReason = 'Booking cancelled';
+                            await paymentRepository.save(payment);
+                        }
+                    } else if (payment.status === PaymentStatus.SUCCEEDED) {
+                        const refund = await stripe.refunds.create({
+                            payment_intent: payment.stripePaymentIntentId,
+                            reverse_transfer: true,
+                        }, {
+                            idempotencyKey: `rf_${payment.stripePaymentIntentId}`,
+                        });
+                        payment.status = PaymentStatus.REFUNDED;
+                        payment.stripeRefundId = refund.id;
+                        await paymentRepository.save(payment);
+                    }
+                } catch (paymentErr) {
+                    console.error('Error handling payment cancellation/refund on booking cancel:', paymentErr);
+                }
+            }
         }
 
         booking.status = status;
