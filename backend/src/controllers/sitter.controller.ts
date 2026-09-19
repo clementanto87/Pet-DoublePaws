@@ -342,11 +342,15 @@ export const createPayoutOnboardingLink = async (req: AuthRequest, res: Response
             product_description: 'Pet sitting, boarding, and daycare services on Double Paws',
         };
 
-        const individualData = {
+        // Only pass phone if formatted as valid E.164 (+ followed by 7-15 digits)
+        const cleanPhone = profile.phone ? profile.phone.trim().replace(/[\s-()]/g, '') : undefined;
+        const validPhone = cleanPhone && /^\+[1-9]\d{7,14}$/.test(cleanPhone) ? cleanPhone : undefined;
+
+        const individualData: any = {
             first_name: user.firstName || undefined,
             last_name: user.lastName || undefined,
             email: user.email || undefined,
-            phone: profile.phone || undefined,
+            ...(validPhone ? { phone: validPhone } : {}),
             ...(dobObj ? { dob: dobObj } : {}),
         };
 
