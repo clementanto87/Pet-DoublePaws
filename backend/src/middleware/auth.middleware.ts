@@ -28,8 +28,12 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
         const decoded = jwt.verify(token, jwtSecret());
         req.user = decoded;
         next();
-    } catch (error) {
-        res.status(403).json({ message: 'Invalid token' });
+    } catch (error: any) {
+        if (error?.name === 'TokenExpiredError') {
+            res.status(401).json({ message: 'Token expired' });
+            return;
+        }
+        res.status(401).json({ message: 'Invalid token' });
     }
 };
 

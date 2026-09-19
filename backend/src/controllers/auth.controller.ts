@@ -10,6 +10,7 @@ import { jwtSecret } from '../middleware/auth.middleware';
 
 const userRepository = AppDataSource.getRepository(User);
 const googleClient = new OAuth2Client();
+const jwtExpiresIn = (): string => process.env.JWT_EXPIRES_IN || '7d';
 
 export const formatUserResponse = async (user: User) => {
     const sitterRepo = AppDataSource.getRepository(SitterProfile);
@@ -74,7 +75,7 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
         const token = jwt.sign(
             { id: newUser.id, email: newUser.email },
             jwtSecret(),
-            { expiresIn: '1d' }
+            { expiresIn: jwtExpiresIn() as any }
         );
 
         const userResponse = await formatUserResponse(newUser);
@@ -118,7 +119,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
         const token = jwt.sign(
             { id: user.id, email: user.email },
             jwtSecret(),
-            { expiresIn: '1d' }
+            { expiresIn: jwtExpiresIn() as any }
         );
 
         const userResponse = await formatUserResponse(user);
@@ -242,7 +243,7 @@ export const googleLogin = async (req: Request, res: Response): Promise<void> =>
         const jwtToken = jwt.sign(
             { id: user.id, email: user.email },
             jwtSecret(),
-            { expiresIn: '1d' }
+            { expiresIn: jwtExpiresIn() as any }
         );
 
         const userResponse = await formatUserResponse(user);
@@ -318,7 +319,7 @@ export const facebookLogin = async (req: Request, res: Response): Promise<void> 
         const jwtToken = jwt.sign(
             { id: user.id, email: user.email },
             jwtSecret(),
-            { expiresIn: '1d' }
+            { expiresIn: jwtExpiresIn() as any }
         );
 
         const userResponse = await formatUserResponse(user);
@@ -389,7 +390,7 @@ export const appleLogin = async (req: Request, res: Response): Promise<void> => 
         const jwtToken = jwt.sign(
             { id: user.id, email: user.email },
             jwtSecret(),
-            { expiresIn: '1d' }
+            { expiresIn: jwtExpiresIn() as any }
         );
 
         const userResponse = await formatUserResponse(user);

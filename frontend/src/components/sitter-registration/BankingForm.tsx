@@ -13,7 +13,15 @@ const BankingForm: React.FC = () => {
     const onboardingMutation = useMutation({
         mutationFn: sitterService.startPayoutOnboarding,
         onSuccess: ({ url }) => { window.location.href = url; },
-        onError: () => showToast('Secure payout onboarding is currently unavailable.', 'error'),
+        onError: (err: any) => {
+            const status = err.response?.status;
+            const message = err.response?.data?.message;
+            if (status === 401 || status === 403 || message === 'Invalid token' || message === 'Token expired' || message === 'Access token required') {
+                showToast('Your session has expired. Please log in again to continue.', 'error');
+                return;
+            }
+            showToast(message || 'Secure payout onboarding is currently unavailable.', 'error');
+        },
     });
 
     return (
