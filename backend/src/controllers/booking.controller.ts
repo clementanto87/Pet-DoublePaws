@@ -253,16 +253,22 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
 
         if (isOwner && status === BookingStatus.COMPLETED) {
             const payment = await paymentRepository.findOne({ where: { bookingId: booking.id } });
-            if (!payment || payment.status !== PaymentStatus.PENDING || !isStripeConfigured() || !stripe) {
-                return res.status(400).json({ message: 'Payment must be authorized before confirming completion' });
+            if (payment) {
+                if (payment.status === PaymentStatus.PENDING && isStripeConfigured() && stripe) {
+                    const intent = await stripe.paymentIntents.retrieve(payment.stripePaymentIntentId);
+                    if (intent.status === 'requires_capture') {
+                        await stripe.paymentIntents.capture(payment.stripePaymentIntentId, undefined, {
+                            idempotencyKey: `pi_capture_${payment.stripePaymentIntentId}`,
+                        });
+                        payment.status = PaymentStatus.SUCCEEDED;
+                        await paymentRepository.save(payment);
+                    } else if (intent.status !== 'succeeded') {
+                        return res.status(400).json({ message: 'The payment authorization is no longer available' });
+                    }
+                } else if (payment.status !== PaymentStatus.SUCCEEDED && payment.status !== PaymentStatus.PENDING) {
+                    return res.status(400).json({ message: 'Payment status does not permit completing this booking' });
+                }
             }
-            const intent = await stripe.paymentIntents.retrieve(payment.stripePaymentIntentId);
-            if (intent.status !== 'requires_capture') {
-                return res.status(400).json({ message: 'The payment authorization is no longer available' });
-            }
-            await stripe.paymentIntents.capture(payment.stripePaymentIntentId, undefined, {
-                idempotencyKey: `pi_capture_${payment.stripePaymentIntentId}`,
-            });
         }
 
         if (status === BookingStatus.CANCELLED && isStripeConfigured() && stripe) {
