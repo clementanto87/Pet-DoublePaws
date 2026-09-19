@@ -1,0 +1,13 @@
+# Cloudflare Workers (Static Assets) config for the Double Paws Flutter web app.
+#
+# The build step (scripts/cf-pages-build.sh) compiles the Flutter web release
+# into flutter_mobile/build/web. `npx wrangler deploy` then uploads that folder
+# as a static-assets Worker — no server code, just the static site.
+name = "pet-doublepaws"
+compatibility_date = "2025-06-01"
+
+[assets]
+directory = "flutter_mobile/build/web"
+# Flutter web is a single-page app: serve index.html for unknown paths so
+# deep links / client-side routes resolve instead of 404ing.
+not_found_handling = "single-page-application"
