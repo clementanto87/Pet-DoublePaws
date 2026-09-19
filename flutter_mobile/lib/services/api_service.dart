@@ -8,7 +8,14 @@ class ApiService {
   factory ApiService() => _instance;
   ApiService._internal();
 
+  // Compile-time override, e.g. for production builds:
+  //   flutter build web --dart-define=API_BASE_URL=https://pet-doublepaws-production.up.railway.app/api
+  // Falls back to local dev defaults per platform when not provided.
+  static const String _apiBaseUrlOverride =
+      String.fromEnvironment('API_BASE_URL');
+
   static String get baseUrl {
+    if (_apiBaseUrlOverride.isNotEmpty) return _apiBaseUrlOverride;
     if (kIsWeb) return 'http://localhost:5001/api';
     if (Platform.isAndroid) return 'http://10.0.2.2:5001/api';
     return 'http://127.0.0.1:5001/api'; // iOS Simulator uses localhost
