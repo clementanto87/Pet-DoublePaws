@@ -344,9 +344,13 @@ export const createPayoutOnboardingLink = async (req: AuthRequest, res: Response
         });
 
         res.json({ url: link.url });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Stripe Connect onboarding error:', error);
-        res.status(500).json({ message: 'Unable to start secure payout onboarding' });
+        const isConnectNotEnabled = error?.message?.includes('signed up for Connect') || error?.message?.includes('enable Connect');
+        const message = isConnectNotEnabled
+            ? 'Stripe Connect is not enabled on your Stripe account. Please visit https://dashboard.stripe.com/connect to enable Connect.'
+            : (error?.message || 'Unable to start secure payout onboarding');
+        res.status(500).json({ message });
     }
 };
 
