@@ -367,13 +367,6 @@ export const createPayoutOnboardingLink = async (req: AuthRequest, res: Response
             });
             accountId = account.id;
             profile.stripeConnectAccountId = accountId;
-        } else {
-            // Update existing account to ensure prefilled details apply and bypass questions
-            await stripe.accounts.update(accountId, {
-                business_type: 'individual',
-                business_profile: businessProfile,
-                individual: individualData,
-            });
         }
 
         profile.stripeConnectStatus = 'PENDING';
