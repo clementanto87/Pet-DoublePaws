@@ -320,27 +320,67 @@ export const createPayoutOnboardingLink = async (req: AuthRequest, res: Response
         let profile = await sitterRepository.findOneBy({ userId });
         if (!profile) profile = await sitterRepository.save(sitterRepository.create({ userId, user }));
 
+        const appUrl = (process.env.EMAIL_APP_URL || 'https://doublepaws24.com').replace(/\/$/, '');
+
+        // Extract DOB if provided in profile (YYYY-MM-DD)
+        let dobObj: { day: number; month: number; year: number } | undefined;
+        if (profile.dob) {
+            const parts = profile.dob.split('-');
+            if (parts.length === 3) {
+                const year = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10);
+                const day = parseInt(parts[2], 10);
+                if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+                    dobObj = { day, month, year };
+                }
+            }
+        }
+
+        const businessProfile = {
+            url: appUrl,
+            mcc: '7299', // Miscellaneous personal services / Pet care
+            product_description: 'Pet sitting, boarding, and daycare services on Double Paws',
+        };
+
+        const individualData = {
+            first_name: user.firstName || undefined,
+            last_name: user.lastName || undefined,
+            email: user.email || undefined,
+            phone: profile.phone || undefined,
+            ...(dobObj ? { dob: dobObj } : {}),
+        };
+
         let accountId = profile.stripeConnectAccountId;
         if (!accountId) {
             const account = await stripe.accounts.create({
                 type: 'express',
                 email: user.email,
                 country: process.env.STRIPE_CONNECT_COUNTRY || 'DE',
+                business_type: 'individual',
                 capabilities: { transfers: { requested: true } },
+                business_profile: businessProfile,
+                individual: individualData,
             });
             accountId = account.id;
             profile.stripeConnectAccountId = accountId;
+        } else {
+            // Update existing account to ensure prefilled details apply and bypass questions
+            await stripe.accounts.update(accountId, {
+                business_type: 'individual',
+                business_profile: businessProfile,
+                individual: individualData,
+            });
         }
 
         profile.stripeConnectStatus = 'PENDING';
         await sitterRepository.save(profile);
 
-        const appUrl = (process.env.EMAIL_APP_URL || 'http://localhost:5173').replace(/\/$/, '');
         const link = await stripe.accountLinks.create({
             account: accountId,
             refresh_url: `${appUrl}/become-a-sitter/register?connect=refresh`,
             return_url: `${appUrl}/sitter-dashboard?connect=complete`,
             type: 'account_onboarding',
+            collect: 'eventually_due',
         });
 
         res.json({ url: link.url });
