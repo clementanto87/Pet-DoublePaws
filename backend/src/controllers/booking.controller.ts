@@ -8,7 +8,7 @@ import { getIO } from '../socket';
 import { emailService } from '../services/email.service';
 import { Payment, PaymentStatus } from '../entities/Payment.entity';
 import { Pet } from '../entities/Pet.entity';
-import { stripe, isStripeConfigured } from '../config/stripe';
+import { stripe, isStripeConfigured, stripeCurrency } from '../config/stripe';
 
 const bookingRepository = AppDataSource.getRepository(Booking);
 const sitterRepository = AppDataSource.getRepository(SitterProfile);
@@ -262,11 +262,42 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
                         });
                         payment.status = PaymentStatus.SUCCEEDED;
                         await paymentRepository.save(payment);
-                    } else if (intent.status !== 'succeeded') {
+                    } else if (intent.status === 'succeeded') {
+                        payment.status = PaymentStatus.SUCCEEDED;
+                        await paymentRepository.save(payment);
+                    } else {
                         return res.status(400).json({ message: 'The payment authorization is no longer available' });
                     }
                 } else if (payment.status !== PaymentStatus.SUCCEEDED && payment.status !== PaymentStatus.PENDING) {
                     return res.status(400).json({ message: 'Payment status does not permit completing this booking' });
+                }
+
+                // Transfer sitter earnings from platform escrow account to Sitter's Stripe Connect account upon completion
+                if (payment.status === PaymentStatus.SUCCEEDED && isStripeConfigured() && stripe) {
+                    const sitterProfile = await sitterRepository.findOne({ where: { id: booking.sitterId } });
+                    const sitterConnectAccountId = sitterProfile?.stripeConnectAccountId || booking.sitter?.stripeConnectAccountId;
+
+                    if (sitterConnectAccountId && payment.sitterAmount && payment.sitterAmount > 0 && !payment.stripeTransferId) {
+                        try {
+                            const transfer = await stripe.transfers.create({
+                                amount: payment.sitterAmount,
+                                currency: payment.currency || stripeCurrency,
+                                destination: sitterConnectAccountId,
+                                transfer_group: `booking_${booking.id}`,
+                                metadata: {
+                                    bookingId: booking.id,
+                                    ownerId: booking.ownerId,
+                                    sitterId: booking.sitterId,
+                                },
+                            }, {
+                                idempotencyKey: `tr_${booking.id}_${payment.sitterAmount}`,
+                            });
+                            payment.stripeTransferId = transfer.id;
+                            await paymentRepository.save(payment);
+                        } catch (transferError) {
+                            console.error('Error transferring payout to sitter on completion:', transferError);
+                        }
+                    }
                 }
             }
         }
@@ -290,7 +321,7 @@ export const updateBookingStatus = async (req: Request, res: Response) => {
                     } else if (payment.status === PaymentStatus.SUCCEEDED) {
                         const refund = await stripe.refunds.create({
                             payment_intent: payment.stripePaymentIntentId,
-                            reverse_transfer: true,
+                            reverse_transfer: Boolean(payment.stripeTransferId),
                         }, {
                             idempotencyKey: `rf_${payment.stripePaymentIntentId}`,
                         });

@@ -1145,6 +1145,8 @@
     "testCardHint": "Testkarte 4242 4242 4242 4242, beliebiges künftiges Datum, beliebiger CVC.",
     "pay": "Bezahlen",
     "paid": "Bezahlt",
+    "paidSecured": "Bezahlt · Gesichert",
+    "escrowNote": "Zahlung wird bis zur Bestätigung der Durchführung treuhänderisch verwahrt.",
     "paymentPending": "Zahlung ausstehend",
     "paymentFailed": "Zahlung fehlgeschlagen",
     "markCompleted": "Als erledigt markieren",

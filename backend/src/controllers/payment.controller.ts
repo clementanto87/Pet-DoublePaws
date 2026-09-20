@@ -118,7 +118,7 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
         if (existing) {
             const intent = await stripe.paymentIntents.retrieve(existing.stripePaymentIntentId);
             // Only reuse if it's still usable; otherwise fall through and make a new one.
-            if (intent.capture_method === 'manual' && intent.status !== 'canceled' && intent.status !== 'succeeded') {
+            if (intent.status !== 'canceled' && intent.status !== 'succeeded') {
                 return res.json({
                     clientSecret: intent.client_secret,
                     amount: existing.amount,
@@ -128,14 +128,15 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
             }
         }
 
-        const sitterConnectAccountId = booking.sitter?.stripeConnectAccountId;
-
+        // Separate Charges and Transfers (Escrow Model):
+        // Funds are charged to and held in Double Paws' platform account upon booking acceptance.
+        // Net funds are transferred to the sitter only after mutual confirmation of completion.
         const paymentIntentParams: Stripe.PaymentIntentCreateParams = {
             amount,
             currency: stripeCurrency,
-            capture_method: 'manual',
             automatic_payment_methods: { enabled: true },
             customer: customerId || undefined,
+            transfer_group: `booking_${booking.id}`,
             metadata: {
                 bookingId: booking.id,
                 ownerId: booking.ownerId,
@@ -144,14 +145,6 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
                 sitterAmount: String(sitterAmount),
             },
         };
-
-        // If sitter has an active Stripe Connect account, configure marketplace destination charges
-        if (sitterConnectAccountId) {
-            paymentIntentParams.application_fee_amount = platformFeeAmount;
-            paymentIntentParams.transfer_data = {
-                destination: sitterConnectAccountId,
-            };
-        }
 
         const intent = await stripe.paymentIntents.create(
             paymentIntentParams,
@@ -214,6 +207,33 @@ export const getPaymentForBooking = async (req: Request, res: Response) => {
         const isBookingSitter = payment.booking?.sitter?.userId === userId;
         if (payment.ownerId !== userId && !isBookingSitter) {
             return res.status(403).json({ message: 'Not authorized' });
+        }
+
+        // Real-time synchronization with Stripe if status is still PENDING:
+        // Ensures instant UI reactivity without waiting for webhooks, and captures legacy holds.
+        if (payment.status === PaymentStatus.PENDING && isStripeConfigured() && stripe && payment.stripePaymentIntentId) {
+            try {
+                const intent = await stripe.paymentIntents.retrieve(payment.stripePaymentIntentId);
+                if (intent.status === 'succeeded') {
+                    payment.status = PaymentStatus.SUCCEEDED;
+                    payment.failureReason = null;
+                    await paymentRepository().save(payment);
+                    notifyPaymentStatus(payment, 'succeeded');
+                } else if (intent.status === 'requires_capture') {
+                    // Capture legacy authorization hold into platform escrow so it doesn't expire
+                    await stripe.paymentIntents.capture(payment.stripePaymentIntentId);
+                    payment.status = PaymentStatus.SUCCEEDED;
+                    payment.failureReason = null;
+                    await paymentRepository().save(payment);
+                    notifyPaymentStatus(payment, 'succeeded');
+                } else if (intent.status === 'canceled') {
+                    payment.status = PaymentStatus.FAILED;
+                    payment.failureReason = 'Payment canceled';
+                    await paymentRepository().save(payment);
+                }
+            } catch (syncError) {
+                console.warn('Could not sync payment intent from Stripe:', syncError);
+            }
         }
 
         res.json({
@@ -294,6 +314,17 @@ export const handleStripeWebhook = async (req: Request, res: Response) => {
                         { status: PaymentStatus.SUCCEEDED, failureReason: null }
                     );
                     notifyPaymentStatus(payment, 'succeeded');
+                }
+                break;
+            }
+            case 'payment_intent.amount_capturable_updated': {
+                const intent = event.data.object as Stripe.PaymentIntent;
+                if (intent.status === 'requires_capture') {
+                    try {
+                        await stripe.paymentIntents.capture(intent.id);
+                    } catch (captureErr) {
+                        console.error('Error capturing legacy authorized intent in webhook:', captureErr);
+                    }
                 }
                 break;
             }
