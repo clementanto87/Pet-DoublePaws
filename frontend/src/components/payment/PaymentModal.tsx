@@ -89,21 +89,25 @@ const CheckoutForm: React.FC<{ onPaid?: () => void; onClose: () => void }> = ({ 
                 </div>
             )}
 
-            <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                <Lock className="w-3.5 h-3.5" />
-                {t('payment.secureNote')}
+            {/* Pinned footer: keeps the Pay button reachable without scrolling
+                past the full list of payment methods. -mx-6/-mb-6 cancel the
+                modal body's padding so it spans edge to edge at the bottom. */}
+            <div className="sticky bottom-0 z-10 -mx-6 -mb-6 border-t border-gray-100 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 px-6 py-4 backdrop-blur">
+                <div className="mb-3 flex items-center gap-1.5 text-xs text-gray-500">
+                    <Lock className="w-3.5 h-3.5" />
+                    {t('payment.secureNote')}
+                </div>
+                <Button type="submit" disabled={!stripe || submitting} className="w-full h-12">
+                    {submitting ? (
+                        <span className="flex items-center gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            {t('payment.processing')}
+                        </span>
+                    ) : (
+                        t('payment.payNow')
+                    )}
+                </Button>
             </div>
-
-            <Button type="submit" disabled={!stripe || submitting} className="w-full h-12">
-                {submitting ? (
-                    <span className="flex items-center gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        {t('payment.processing')}
-                    </span>
-                ) : (
-                    t('payment.payNow')
-                )}
-            </Button>
         </form>
     );
 };
