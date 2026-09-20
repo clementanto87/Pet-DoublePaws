@@ -172,12 +172,47 @@ export const getBookings = async (req: Request, res: Response) => {
             query.skip((page - 1) * pageSize).take(pageSize).getMany(),
         ]);
 
+        let upcomingCount = 0;
+        let completedCount = 0;
+        let historyCount = 0;
+
+        if (role === 'sitter' && sitterProfileId) {
+            [upcomingCount, completedCount, historyCount] = await Promise.all([
+                bookingRepository.count({
+                    where: upcomingStatuses.map((status) => ({ sitterId: sitterProfileId, status })),
+                }),
+                bookingRepository.count({
+                    where: { sitterId: sitterProfileId, status: BookingStatus.COMPLETED },
+                }),
+                bookingRepository.count({
+                    where: historyStatuses.map((status) => ({ sitterId: sitterProfileId, status })),
+                }),
+            ]);
+        } else if (role === 'owner') {
+            [upcomingCount, completedCount, historyCount] = await Promise.all([
+                bookingRepository.count({
+                    where: upcomingStatuses.map((status) => ({ ownerId: userId, status })),
+                }),
+                bookingRepository.count({
+                    where: { ownerId: userId, status: BookingStatus.COMPLETED },
+                }),
+                bookingRepository.count({
+                    where: historyStatuses.map((status) => ({ ownerId: userId, status })),
+                }),
+            ]);
+        }
+
         return res.json({
             items: bookings,
             page,
             pageSize,
             total,
             totalPages: Math.ceil(total / pageSize),
+            counts: {
+                upcoming: upcomingCount,
+                completed: completedCount,
+                history: historyCount,
+            },
         });
     } catch (error) {
         console.error('Error fetching bookings:', error);

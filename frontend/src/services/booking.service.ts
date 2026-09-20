@@ -58,6 +58,11 @@ export interface PaginatedBookings {
     pageSize: number;
     total: number;
     totalPages: number;
+    counts?: {
+        upcoming: number;
+        completed: number;
+        history: number;
+    };
 }
 
 export interface BookingListParams {
