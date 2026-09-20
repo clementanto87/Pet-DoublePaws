@@ -6,9 +6,10 @@ import { useTranslation } from 'react-i18next';
 
 interface SocialAuthButtonsProps {
     mode?: 'login' | 'signup';
+    onSuccess?: () => void;
 }
 
-export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({ mode = 'login' }) => {
+export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({ mode = 'login', onSuccess }) => {
     const { googleLogin, facebookLogin, appleLogin } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
@@ -16,7 +17,11 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({ mode = 'lo
     const [loadingProvider, setLoadingProvider] = useState<'google' | 'facebook' | 'apple' | null>(null);
     const [socialError, setSocialError] = useState<string | null>(null);
 
-    const redirectPath = location.state?.from?.pathname || (mode === 'signup' ? '/' : '/dashboard');
+    const redirectPath = location.state?.from ? (
+        typeof location.state.from === 'string'
+            ? location.state.from
+            : ((location.state.from.pathname || '') + (location.state.from.search || '') + (location.state.from.hash || ''))
+    ) : (mode === 'signup' ? '/' : '/dashboard');
 
     const handleGoogleLogin = useGoogleLogin({
         scope: 'openid profile email',
@@ -25,7 +30,11 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({ mode = 'lo
             setSocialError(null);
             try {
                 await googleLogin(tokenResponse.access_token);
-                navigate(redirectPath, { replace: true });
+                if (onSuccess) {
+                    onSuccess();
+                } else {
+                    navigate(redirectPath, { replace: true });
+                }
             } catch (err: any) {
                 console.error('Google login failed', err);
                 setSocialError(err.response?.data?.message || 'Google sign-in failed');
@@ -50,13 +59,21 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({ mode = 'lo
             return;
         }
 
+        const handleSuccessfulAuth = () => {
+            if (onSuccess) {
+                onSuccess();
+            } else {
+                navigate(redirectPath, { replace: true });
+            }
+        };
+
         // Initialize Facebook SDK if available or load it dynamically
         const FB = (window as any).FB;
         if (FB) {
             FB.login((response: any) => {
                 if (response.authResponse?.accessToken) {
                     facebookLogin(response.authResponse.accessToken)
-                        .then(() => navigate(redirectPath, { replace: true }))
+                        .then(() => handleSuccessfulAuth())
                         .catch((err: any) => setSocialError(err.response?.data?.message || 'Facebook authentication failed'))
                         .finally(() => setLoadingProvider(null));
                 } else {
@@ -80,7 +97,7 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({ mode = 'lo
                 loadedFB.login((response: any) => {
                     if (response.authResponse?.accessToken) {
                         facebookLogin(response.authResponse.accessToken)
-                            .then(() => navigate(redirectPath, { replace: true }))
+                            .then(() => handleSuccessfulAuth())
                             .catch((err: any) => setSocialError(err.response?.data?.message || 'Facebook authentication failed'))
                             .finally(() => setLoadingProvider(null));
                     } else {
@@ -121,7 +138,11 @@ export const SocialAuthButtons: React.FC<SocialAuthButtonsProps> = ({ mode = 'lo
                 const response = await SDK.auth.signIn();
                 if (response?.authorization?.id_token) {
                     await appleLogin(response.authorization.id_token, response.user);
-                    navigate(redirectPath, { replace: true });
+                    if (onSuccess) {
+                        onSuccess();
+                    } else {
+                        navigate(redirectPath, { replace: true });
+                    }
                 }
             } catch (err: any) {
                 if (err?.error !== 'popup_closed_by_user') {

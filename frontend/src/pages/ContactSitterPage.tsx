@@ -21,7 +21,8 @@ import {
     Plus,
     Minus,
     ShieldCheck,
-    Check
+    Check,
+    Lock
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -34,6 +35,7 @@ import { petService, type PetData } from '../services/pet.service';
 import { sitterService } from '../services/sitter.service';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
+import { AuthModal } from '../components/auth/AuthModal';
 
 // Service options with icons and colors
 const services = [
@@ -194,25 +196,58 @@ const ContactSitterPage: React.FC = () => {
     const prefilledStartDate = searchParams.get('startDate') || '';
     const prefilledEndDate = searchParams.get('endDate') || '';
 
-    // Fetch user's pets
+    // Fetch user's pets (only if authenticated)
+    const { user } = useAuth();
     const { data: pets } = useQuery<PetData[]>({
         queryKey: ['myPets'],
-        queryFn: petService.getPets
+        queryFn: petService.getPets,
+        enabled: !!user,
     });
 
+    // Session draft key for this sitter to prevent losing entered details
+    const draftKey = id ? `doublepaws_booking_draft_${id}` : null;
+    const savedDraft = useMemo(() => {
+        if (!draftKey) return null;
+        try {
+            const raw = sessionStorage.getItem(draftKey);
+            return raw ? JSON.parse(raw) : null;
+        } catch {
+            return null;
+        }
+    }, [draftKey]);
+
     // Form states
-    const [selectedService, setSelectedService] = useState(prefilledService || 'boarding');
-    const [startDate, setStartDate] = useState(prefilledStartDate);
-    const [endDate, setEndDate] = useState(prefilledEndDate);
-    const [startTime, setStartTime] = useState('09:00');
-    const [endTime, setEndTime] = useState('17:00');
-    const [selectedPetIds, setSelectedPetIds] = useState<string[]>([]);
-    const [petCounts, setPetCounts] = useState({ dogs: 1, cats: 0 });
-    const [message, setMessage] = useState('');
+    const [selectedService, setSelectedService] = useState(savedDraft?.selectedService || prefilledService || 'boarding');
+    const [startDate, setStartDate] = useState(savedDraft?.startDate || prefilledStartDate);
+    const [endDate, setEndDate] = useState(savedDraft?.endDate || prefilledEndDate);
+    const [startTime, setStartTime] = useState(savedDraft?.startTime || '09:00');
+    const [endTime, setEndTime] = useState(savedDraft?.endTime || '17:00');
+    const [selectedPetIds, setSelectedPetIds] = useState<string[]>(savedDraft?.selectedPetIds || []);
+    const [petCounts, setPetCounts] = useState(savedDraft?.petCounts || { dogs: 1, cats: 0 });
+    const [message, setMessage] = useState(savedDraft?.message || '');
     const [isSending, setIsSending] = useState(false);
     const [isSent, setIsSent] = useState(false);
     const [monthOffset, setMonthOffset] = useState(0);
-    const { user } = useAuth();
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+    // Save form draft into sessionStorage on changes
+    React.useEffect(() => {
+        if (!draftKey || isSent) return;
+        try {
+            sessionStorage.setItem(draftKey, JSON.stringify({
+                selectedService,
+                startDate,
+                endDate,
+                startTime,
+                endTime,
+                selectedPetIds,
+                petCounts,
+                message,
+            }));
+        } catch (e) {
+            console.error('Failed to save booking draft to sessionStorage', e);
+        }
+    }, [draftKey, isSent, selectedService, startDate, endDate, startTime, endTime, selectedPetIds, petCounts, message]);
 
     // Toggle pet selection
     const togglePetSelection = (petId: string) => {
@@ -262,9 +297,9 @@ const ContactSitterPage: React.FC = () => {
         return Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
     }, [startDate, endDate]);
 
-    // Handle send message / request
-    const handleSendMessage = async () => {
-        if (!message.trim() || !sitter || !user) return;
+    // Submit booking request helper
+    const executeBookingSubmission = async () => {
+        if (!message.trim() || !sitter) return;
 
         setIsSending(true);
         try {
@@ -294,12 +329,32 @@ const ContactSitterPage: React.FC = () => {
                 message: finalMessage,
                 totalPrice: estimatedPrice || 20
             });
+
+            if (draftKey) {
+                sessionStorage.removeItem(draftKey);
+            }
             setIsSent(true);
         } catch (error) {
             console.error('Failed to create booking request:', error);
         } finally {
             setIsSending(false);
         }
+    };
+
+    // Handle send message / request
+    const handleSendMessage = async () => {
+        if (!message.trim() || !sitter) return;
+        if (!user) {
+            setIsAuthModalOpen(true);
+            return;
+        }
+        await executeBookingSubmission();
+    };
+
+    // Callback when user logs in successfully via AuthModal
+    const handleAuthSuccess = async () => {
+        setIsAuthModalOpen(false);
+        await executeBookingSubmission();
     };
 
     if (isLoadingSitter) {
@@ -586,6 +641,23 @@ const ContactSitterPage: React.FC = () => {
                                 {hasPetSelection && <CheckCircle className="w-5 h-5 text-emerald-500 shrink-0" />}
                             </div>
 
+                            {/* Nudge if unauthenticated */}
+                            {!user && (
+                                <div className="p-3.5 rounded-2xl bg-orange-50/50 dark:bg-orange-950/20 border border-orange-200/60 dark:border-orange-900/40 flex items-center justify-between">
+                                    <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                                        <Sparkles className="w-4 h-4 text-primary shrink-0" />
+                                        <span>Have registered pets? <strong>Log in</strong> to select them directly.</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsAuthModalOpen(true)}
+                                        className="text-xs font-bold text-primary hover:underline ml-2 whitespace-nowrap"
+                                    >
+                                        Log In
+                                    </button>
+                                </div>
+                            )}
+
                             {/* Registered Profile Pets if user has any */}
                             {pets && pets.length > 0 && (
                                 <div className="space-y-2">
@@ -641,11 +713,11 @@ const ContactSitterPage: React.FC = () => {
                                             <span>Dogs</span>
                                         </span>
                                         <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-2 py-1 rounded-xl border border-slate-200/80 shadow-2xs">
-                                            <button type="button" onClick={() => setPetCounts(p => ({ ...p, dogs: Math.max(0, p.dogs - 1) }))} className="p-1 text-slate-400 hover:text-slate-700">
+                                            <button type="button" onClick={() => setPetCounts((p: { dogs: number; cats: number }) => ({ ...p, dogs: Math.max(0, p.dogs - 1) }))} className="p-1 text-slate-400 hover:text-slate-700">
                                                 <Minus className="w-3.5 h-3.5" />
                                             </button>
                                             <span className="font-extrabold text-xs text-slate-900 dark:text-white min-w-[14px] text-center">{petCounts.dogs}</span>
-                                            <button type="button" onClick={() => setPetCounts(p => ({ ...p, dogs: p.dogs + 1 }))} className="p-1 text-slate-400 hover:text-slate-700">
+                                            <button type="button" onClick={() => setPetCounts((p: { dogs: number; cats: number }) => ({ ...p, dogs: p.dogs + 1 }))} className="p-1 text-slate-400 hover:text-slate-700">
                                                 <Plus className="w-3.5 h-3.5" />
                                             </button>
                                         </div>
@@ -657,11 +729,11 @@ const ContactSitterPage: React.FC = () => {
                                             <span>Cats</span>
                                         </span>
                                         <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-2 py-1 rounded-xl border border-slate-200/80 shadow-2xs">
-                                            <button type="button" onClick={() => setPetCounts(p => ({ ...p, cats: Math.max(0, p.cats - 1) }))} className="p-1 text-slate-400 hover:text-slate-700">
+                                            <button type="button" onClick={() => setPetCounts((p: { dogs: number; cats: number }) => ({ ...p, cats: Math.max(0, p.cats - 1) }))} className="p-1 text-slate-400 hover:text-slate-700">
                                                 <Minus className="w-3.5 h-3.5" />
                                             </button>
                                             <span className="font-extrabold text-xs text-slate-900 dark:text-white min-w-[14px] text-center">{petCounts.cats}</span>
-                                            <button type="button" onClick={() => setPetCounts(p => ({ ...p, cats: p.cats + 1 }))} className="p-1 text-slate-400 hover:text-slate-700">
+                                            <button type="button" onClick={() => setPetCounts((p: { dogs: number; cats: number }) => ({ ...p, cats: p.cats + 1 }))} className="p-1 text-slate-400 hover:text-slate-700">
                                                 <Plus className="w-3.5 h-3.5" />
                                             </button>
                                         </div>
@@ -722,6 +794,16 @@ const ContactSitterPage: React.FC = () => {
                                 </div>
                             </div>
 
+                            {/* Reassurance Alert for unauthenticated users */}
+                            {!user && (
+                                <div className="flex items-center gap-2.5 p-3.5 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/60 text-amber-800 dark:text-amber-200 text-xs">
+                                    <Lock className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                                    <span>
+                                        You'll be prompted to log in or create an account to finalize and send your request. Your booking details and message are kept safe!
+                                    </span>
+                                </div>
+                            )}
+
                             {/* Send Button */}
                             <Button
                                 onClick={handleSendMessage}
@@ -730,6 +812,12 @@ const ContactSitterPage: React.FC = () => {
                             >
                                 {isSending ? (
                                     <span>Sending request...</span>
+                                ) : !user ? (
+                                    <>
+                                        <Lock className="w-4 h-4" />
+                                        <span>Log In to Send Request</span>
+                                        <Sparkles className="w-4 h-4 opacity-70" />
+                                    </>
                                 ) : (
                                     <>
                                         <Send className="w-4 h-4" />
@@ -866,6 +954,15 @@ const ContactSitterPage: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* In-Page Auth Modal for Seamless Authentication */}
+            <AuthModal
+                isOpen={isAuthModalOpen}
+                onClose={() => setIsAuthModalOpen(false)}
+                onSuccess={handleAuthSuccess}
+                title="Log in to complete booking"
+                subtitle={`Sign in to send your booking request to ${sitterFirstName}. Your request details are saved.`}
+            />
         </div>
     );
 };
