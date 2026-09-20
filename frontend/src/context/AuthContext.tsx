@@ -51,9 +51,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                         localStorage.setItem('user', JSON.stringify(res.data));
                     }
                 })
-                .catch(() => {});
+                .catch((err) => {
+                    const status = err.response?.status;
+                    if (status === 401 || status === 403) {
+                        localStorage.removeItem('user');
+                        localStorage.removeItem('token');
+                        delete api.defaults.headers.common['Authorization'];
+                        setUser(null);
+                    }
+                });
         }
         setIsLoading(false);
+
+        const handleAuthExpired = () => {
+            setUser(null);
+        };
+        window.addEventListener('auth:expired', handleAuthExpired);
+        return () => window.removeEventListener('auth:expired', handleAuthExpired);
     }, []);
 
     const login = async (email: string, password: string) => {

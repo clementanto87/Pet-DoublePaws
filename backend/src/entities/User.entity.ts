@@ -33,6 +33,10 @@ export class User {
     @Column({ nullable: true, unique: true })
     appleId?: string;
 
+    /** Stripe Customer ID (cus_...) for saved payment methods and customer history. */
+    @Column({ nullable: true })
+    stripeCustomerId?: string;
+
     @CreateDateColumn()
     createdAt!: Date;
     @UpdateDateColumn()

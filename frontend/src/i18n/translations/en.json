@@ -1145,6 +1145,8 @@
     "testCardHint": "Use test card 4242 4242 4242 4242, any future expiry, any CVC.",
     "pay": "Pay",
     "paid": "Paid",
+    "paidSecured": "Paid · Escrow",
+    "escrowNote": "Funds are securely held in escrow until completion is confirmed.",
     "paymentPending": "Payment pending",
     "paymentFailed": "Payment failed",
     "markCompleted": "Mark completed",

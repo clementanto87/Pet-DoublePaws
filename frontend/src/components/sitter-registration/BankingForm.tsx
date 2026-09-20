@@ -13,7 +13,15 @@ const BankingForm: React.FC = () => {
     const onboardingMutation = useMutation({
         mutationFn: sitterService.startPayoutOnboarding,
         onSuccess: ({ url }) => { window.location.href = url; },
-        onError: () => showToast('Secure payout onboarding is currently unavailable.', 'error'),
+        onError: (err: any) => {
+            const status = err.response?.status;
+            const message = err.response?.data?.message;
+            if (status === 401 || status === 403 || message === 'Invalid token' || message === 'Token expired' || message === 'Access token required') {
+                showToast('Your session has expired. Please log in again to continue.', 'error');
+                return;
+            }
+            showToast(message || 'Secure payout onboarding is currently unavailable.', 'error');
+        },
     });
 
     return (
@@ -32,7 +40,19 @@ const BankingForm: React.FC = () => {
                 </div>
                 <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
                     <div><p className="font-semibold text-foreground">{payoutStatus?.payoutsEnabled ? t('sitterRegistration.forms.banking.connected') : t('sitterRegistration.forms.banking.connectTitle')}</p><p className="mt-1 text-sm text-muted-foreground">{isLoading ? t('sitterRegistration.forms.banking.checking') : payoutStatus?.payoutsEnabled ? t('sitterRegistration.forms.banking.connectedDescription') : t('sitterRegistration.forms.banking.connectDescription')}</p></div>
-                    {payoutStatus?.payoutsEnabled ? <CheckCircle className="h-6 w-6 text-emerald-500" /> : <Button type="button" onClick={() => onboardingMutation.mutate()} disabled={onboardingMutation.isPending}><ArrowUpRight className="mr-2 h-4 w-4" />{onboardingMutation.isPending ? t('sitterRegistration.forms.banking.opening') : t('sitterRegistration.forms.banking.connectButton')}</Button>}
+                    {payoutStatus?.payoutsEnabled ? (
+                        <div className="flex items-center gap-3">
+                            <CheckCircle className="h-6 w-6 text-emerald-500 shrink-0" />
+                            <Button type="button" variant="outline" size="sm" onClick={() => onboardingMutation.mutate()} disabled={onboardingMutation.isPending}>
+                                <ArrowUpRight className="mr-1.5 h-3.5 w-3.5" />
+                                {onboardingMutation.isPending ? t('sitterRegistration.forms.banking.opening') : 'Update details'}
+                            </Button>
+                        </div>
+                    ) : (
+                        <Button type="button" onClick={() => onboardingMutation.mutate()} disabled={onboardingMutation.isPending}>
+                            <ArrowUpRight className="mr-2 h-4 w-4" />{onboardingMutation.isPending ? t('sitterRegistration.forms.banking.opening') : t('sitterRegistration.forms.banking.connectButton')}
+                        </Button>
+                    )}
                 </div>
                 <p className="text-xs text-muted-foreground">{t('sitterRegistration.forms.banking.providerNote')}</p>
             </div>

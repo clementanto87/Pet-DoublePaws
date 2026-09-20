@@ -44,6 +44,22 @@ export class Payment {
     @Column('int')
     amount: number;
 
+    /** Platform fee in cents retained by Double Paws. */
+    @Column('int', { nullable: true })
+    platformFeeAmount?: number;
+
+    /** Net amount in cents transferred to the sitter's connected account. */
+    @Column('int', { nullable: true })
+    sitterAmount?: number;
+
+    /** Stripe Transfer ID (tr_...) or charge destination if applicable. */
+    @Column({ nullable: true })
+    stripeTransferId?: string;
+
+    /** Stripe Refund ID (re_...) if a refund was issued. */
+    @Column({ nullable: true })
+    stripeRefundId?: string;
+
     @Column({ default: 'eur' })
     currency: string;
 
