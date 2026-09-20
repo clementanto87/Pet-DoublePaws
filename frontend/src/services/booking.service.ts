@@ -28,6 +28,30 @@ export interface Booking {
     owner?: any; // Type properly if needed
 }
 
+export interface BookingPet {
+    id: string;
+    name: string;
+    species: string;
+    breed: string;
+    age: number;
+    weight: number;
+    specialNeeds?: string;
+    imageUrl?: string;
+}
+
+export interface BookingPayment {
+    id: string;
+    status: string;
+    amount: number;
+    currency: string;
+    createdAt: string;
+}
+
+export interface BookingDetail extends Booking {
+    pets?: BookingPet[];
+    payment?: BookingPayment | null;
+}
+
 export interface PaginatedBookings {
     items: Booking[];
     page: number;
@@ -58,6 +82,11 @@ export const bookingService = {
                 ...(normalized.status === 'ALL' ? { status: undefined } : {}),
             },
         });
+        return response.data;
+    },
+
+    getBookingById: async (id: string): Promise<BookingDetail> => {
+        const response = await api.get(`/bookings/${id}`);
         return response.data;
     },
 

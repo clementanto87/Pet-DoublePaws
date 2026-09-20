@@ -651,12 +651,13 @@ const SitterDashboard: React.FC = () => {
                                             return (
                                                 <div
                                                     key={booking.id}
-                                                    className="p-4 sm:p-6 transition hover:bg-slate-50/70 dark:hover:bg-slate-800/40 space-y-3 min-w-0 overflow-hidden"
+                                                    onClick={() => navigate(`/bookings/${booking.id}`)}
+                                                    className="p-4 sm:p-6 transition hover:bg-slate-50/70 dark:hover:bg-slate-800/40 space-y-3 min-w-0 overflow-hidden cursor-pointer group"
                                                 >
                                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
                                                         <div className="flex items-start gap-3 min-w-0 flex-1">
                                                             <div className={cn(
-                                                                'flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl border shadow-2xs font-bold text-xs sm:text-sm',
+                                                                'flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl border shadow-2xs font-bold text-xs sm:text-sm transition group-hover:scale-105',
                                                                 isAccepted
                                                                     ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/50 dark:border-emerald-800'
                                                                     : isPending
@@ -668,7 +669,7 @@ const SitterDashboard: React.FC = () => {
 
                                                             <div className="min-w-0 flex-1">
                                                                 <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                                                                    <h3 className="font-bold text-slate-900 dark:text-white capitalize truncate text-sm sm:text-base">
+                                                                    <h3 className="font-bold text-slate-900 dark:text-white capitalize truncate text-sm sm:text-base group-hover:text-primary transition">
                                                                         {booking.serviceType.replace(/([A-Z])/g, ' $1').trim()}
                                                                     </h3>
                                                                     <span className="font-mono text-xs text-slate-400 dark:text-slate-500">
@@ -706,7 +707,10 @@ const SitterDashboard: React.FC = () => {
                                                                 <>
                                                                     <Button
                                                                         size="sm"
-                                                                        onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: BookingStatus.ACCEPTED })}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            updateBookingStatusMutation.mutate({ id: booking.id, status: BookingStatus.ACCEPTED });
+                                                                        }}
                                                                         disabled={updateBookingStatusMutation.isPending}
                                                                         className="h-8 sm:h-9 px-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
                                                                     >
@@ -716,7 +720,10 @@ const SitterDashboard: React.FC = () => {
                                                                     <Button
                                                                         size="sm"
                                                                         variant="outline"
-                                                                        onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: BookingStatus.REJECTED })}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            updateBookingStatusMutation.mutate({ id: booking.id, status: BookingStatus.REJECTED });
+                                                                        }}
                                                                         disabled={updateBookingStatusMutation.isPending}
                                                                         className="h-8 sm:h-9 px-3 rounded-xl text-xs font-bold border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/50 dark:hover:bg-red-950/40"
                                                                     >
@@ -728,7 +735,10 @@ const SitterDashboard: React.FC = () => {
                                                             {isAccepted && (
                                                                 <Button
                                                                     size="sm"
-                                                                    onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: BookingStatus.COMPLETION_REQUESTED })}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        updateBookingStatusMutation.mutate({ id: booking.id, status: BookingStatus.COMPLETION_REQUESTED });
+                                                                    }}
                                                                     disabled={updateBookingStatusMutation.isPending}
                                                                     className="h-8 sm:h-9 px-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
                                                                 >
@@ -741,11 +751,18 @@ const SitterDashboard: React.FC = () => {
                                                                 size="icon"
                                                                 variant="outline"
                                                                 aria-label="Message owner"
-                                                                onClick={() => navigate('/sitter-messages', { state: { userId: booking.ownerId } })}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    navigate('/sitter-messages', { state: { userId: booking.ownerId } });
+                                                                }}
                                                                 className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl border-slate-200 dark:border-slate-700"
                                                             >
                                                                 <MessageSquare className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
                                                             </Button>
+
+                                                            <div className="hidden sm:flex items-center pl-1 text-slate-400 group-hover:text-primary transition group-hover:translate-x-0.5">
+                                                                <ChevronRight className="w-4 h-4" />
+                                                            </div>
                                                         </div>
                                                     </div>
 

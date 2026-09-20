@@ -6,6 +6,7 @@ import Footer from './components/layout/Footer';
 import LandingPage from './pages/LandingPage';
 import PetProfileCreation from './pages/PetProfileCreation';
 import BookingPage from './pages/BookingPage';
+import { BookingDetailPage } from './pages/BookingDetailPage';
 import PetSitterRegistration from './pages/PetSitterRegistration';
 import BecomeSitterLandingPage from './pages/BecomeSitterLandingPage';
 import SitterDashboard from './pages/SitterDashboard';
@@ -103,6 +104,14 @@ const AppShell: React.FC = () => {
           />
 
           <Route path="/booking" element={<BookingPage />} />
+          <Route
+            path="/bookings/:id"
+            element={
+              <ProtectedRoute>
+                <BookingDetailPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/sitter/:id" element={<SitterProfileView />} />
           <Route path="/contact-sitter/:id" element={<ContactSitterPage />} />

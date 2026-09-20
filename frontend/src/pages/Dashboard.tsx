@@ -477,11 +477,12 @@ const Dashboard: React.FC = () => {
                                             return (
                                                 <div
                                                     key={booking.id}
-                                                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 sm:p-6 transition hover:bg-slate-50/70 dark:hover:bg-slate-800/40"
+                                                    onClick={() => navigate(`/bookings/${booking.id}`)}
+                                                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 sm:p-6 transition hover:bg-slate-50/70 dark:hover:bg-slate-800/40 cursor-pointer group"
                                                 >
                                                     <div className="flex items-start gap-4 min-w-0">
                                                         <div className={cn(
-                                                            'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border shadow-2xs font-bold text-sm',
+                                                            'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border shadow-2xs font-bold text-sm transition group-hover:scale-105',
                                                             isCompleted
                                                                 ? 'bg-sky-50 text-sky-600 border-sky-200 dark:bg-sky-950/50 dark:border-sky-800'
                                                                 : isAccepted
@@ -493,9 +494,12 @@ const Dashboard: React.FC = () => {
 
                                                         <div className="min-w-0 flex-1">
                                                             <div className="flex flex-wrap items-center gap-2">
-                                                                <h3 className="font-bold text-slate-900 dark:text-white capitalize truncate text-sm sm:text-base">
+                                                                <h3 className="font-bold text-slate-900 dark:text-white capitalize truncate text-sm sm:text-base group-hover:text-primary transition">
                                                                     {booking.serviceType.replace(/([A-Z])/g, ' $1').trim()}
                                                                 </h3>
+                                                                <span className="font-mono text-xs text-slate-400 dark:text-slate-500">
+                                                                    #{bookingReference(booking.id, booking.referenceNumber)}
+                                                                </span>
                                                                 <span className={cn('rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide border', statusBadgeClass)}>
                                                                     {String(t(`dashboard.bookings.status.${booking.status.toLowerCase()}`, { defaultValue: booking.status }))}
                                                                 </span>
@@ -520,7 +524,10 @@ const Dashboard: React.FC = () => {
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
-                                                                onClick={() => handleCancel(booking.id)}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleCancel(booking.id);
+                                                                }}
                                                                 className="h-9 px-3 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
                                                             >
                                                                 {t('dashboard.bookings.cancel', 'Cancel')}
@@ -528,14 +535,16 @@ const Dashboard: React.FC = () => {
                                                         )}
 
                                                         {isAccepted && (
-                                                            <PayButton
-                                                                bookingId={booking.id}
-                                                                amountLabel={booking.totalPrice ? `€${booking.totalPrice}` : undefined}
-                                                            />
+                                                            <div onClick={(e) => e.stopPropagation()}>
+                                                                <PayButton
+                                                                    bookingId={booking.id}
+                                                                    amountLabel={booking.totalPrice ? `€${booking.totalPrice}` : undefined}
+                                                                />
+                                                            </div>
                                                         )}
 
                                                         {completionRequested && (
-                                                            <Button size="sm" onClick={async () => { try { await bookingService.updateStatus(booking.id, BookingStatus.COMPLETED); window.location.reload(); } catch { showToast('Failed to confirm completion', 'error'); } }}>
+                                                            <Button size="sm" onClick={async (e) => { e.stopPropagation(); try { await bookingService.updateStatus(booking.id, BookingStatus.COMPLETED); window.location.reload(); } catch { showToast('Failed to confirm completion', 'error'); } }}>
                                                                 Confirm completion
                                                             </Button>
                                                         )}
@@ -544,7 +553,7 @@ const Dashboard: React.FC = () => {
                                                             <Button
                                                                 size="sm"
                                                                 variant="outline"
-                                                                onClick={() => { setSelectedBookingId(booking.id); setReviewModalOpen(true); }}
+                                                                onClick={(e) => { e.stopPropagation(); setSelectedBookingId(booking.id); setReviewModalOpen(true); }}
                                                                 className="h-9 px-3 rounded-xl text-xs font-bold"
                                                             >
                                                                 <Star className="w-3.5 h-3.5 mr-1 text-amber-500 fill-amber-500" />
@@ -556,7 +565,7 @@ const Dashboard: React.FC = () => {
                                                             size="icon"
                                                             variant="outline"
                                                             aria-label={t('dashboard.quickActions.messages.title', 'Messages')}
-                                                            onClick={() => navigate('/messages', { state: { userId: booking.sitter?.userId } })}
+                                                            onClick={(e) => { e.stopPropagation(); navigate('/messages', { state: { userId: booking.sitter?.userId } }); }}
                                                             className="h-9 w-9 rounded-xl border-slate-200 dark:border-slate-700"
                                                         >
                                                             <MessageSquare className="h-4 w-4 text-slate-600 dark:text-slate-300" />

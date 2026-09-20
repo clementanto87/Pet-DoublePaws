@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { In } from 'typeorm';
 import { AppDataSource } from '../config/database';
 import { Booking, BookingStatus } from '../entities/Booking.entity';
 import { SitterProfile } from '../entities/SitterProfile.entity';
@@ -207,6 +208,58 @@ export const getBookingsBySitterId = async (req: Request, res: Response) => {
         return res.json(bookings);
     } catch (error) {
         console.error('Error fetching bookings by sitter:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+export const getBookingById = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const userId = (req as any).user?.id;
+        const userRole = (req as any).user?.role;
+
+        const booking = await bookingRepository.findOne({
+            where: { id },
+            relations: ['sitter', 'sitter.user', 'owner']
+        });
+
+        if (!booking) {
+            return res.status(404).json({ message: 'Booking not found' });
+        }
+
+        const isSitter = booking.sitter?.userId === userId;
+        const isOwner = booking.ownerId === userId;
+        const isAdmin = userRole === 'admin';
+
+        if (!isSitter && !isOwner && !isAdmin) {
+            return res.status(403).json({ message: 'Not authorized to view this booking' });
+        }
+
+        let pets: Pet[] = [];
+        if (Array.isArray(booking.petIds) && booking.petIds.length > 0) {
+            pets = await petRepository.find({
+                where: { id: In(booking.petIds) }
+            });
+        }
+
+        const payment = await paymentRepository.findOne({
+            where: { bookingId: booking.id },
+            order: { createdAt: 'DESC' }
+        });
+
+        return res.json({
+            ...booking,
+            pets,
+            payment: payment ? {
+                id: payment.id,
+                status: payment.status,
+                amount: payment.amount,
+                currency: payment.currency,
+                createdAt: payment.createdAt
+            } : null
+        });
+    } catch (error) {
+        console.error('Error fetching booking details:', error);
         return res.status(500).json({ message: 'Internal server error' });
     }
 };
