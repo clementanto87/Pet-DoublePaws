@@ -193,7 +193,13 @@ const Dashboard: React.FC = () => {
                 <div className="grid grid-cols-3 gap-2 sm:gap-4">
                     {/* Stat 1: Pets */}
                     <button
-                        onClick={() => navigate('/pet-profile')}
+                        onClick={() => {
+                            if (petCount === 1 && pets?.[0]) {
+                                navigate('/pet-profile', { state: { pet: pets[0] } });
+                                return;
+                            }
+                            navigate('/pet-profile');
+                        }}
                         className="flex flex-col justify-between p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-orange-300 dark:hover:border-orange-800 transition-all text-left group min-w-0"
                     >
                         <div className="flex items-center justify-between gap-1">
