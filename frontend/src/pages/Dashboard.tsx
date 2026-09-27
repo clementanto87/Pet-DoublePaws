@@ -125,8 +125,8 @@ const Dashboard: React.FC = () => {
     const formattedName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
 
     const petCount = pets?.length || 0;
-    const upcomingCount = activeTab === 'upcoming' ? (bookingPageData?.total || 0) : 0;
-    const completedCount = activeTab === 'history' ? bookings.filter((b: Booking) => b.status === BookingStatus.COMPLETED).length : 0;
+    const upcomingCount = bookingPageData?.counts?.upcoming ?? (activeTab === 'upcoming' ? (bookingPageData?.total || 0) : 0);
+    const completedCount = bookingPageData?.counts?.completed ?? (activeTab === 'history' ? (bookingPageData?.total || 0) : 0);
 
     if (petsLoading || bookingsLoading) {
         return (
@@ -190,25 +190,31 @@ const Dashboard: React.FC = () => {
                 </div>
 
                 {/* Modern 3-Column Metric Stat Bar */}
-                <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
+                <div className="grid grid-cols-3 gap-2 sm:gap-4">
                     {/* Stat 1: Pets */}
                     <button
-                        onClick={() => navigate('/pet-profile')}
-                        className="flex flex-col justify-between p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-orange-300 dark:hover:border-orange-800 transition-all text-left group"
+                        onClick={() => {
+                            if (petCount === 1 && pets?.[0]) {
+                                navigate('/pet-profile', { state: { pet: pets[0] } });
+                                return;
+                            }
+                            navigate('/pet-profile');
+                        }}
+                        className="flex flex-col justify-between p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-orange-300 dark:hover:border-orange-800 transition-all text-left group min-w-0"
                     >
-                        <div className="flex items-center justify-between">
-                            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+                        <div className="flex items-center justify-between gap-1">
+                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-slate-500 dark:text-slate-400 truncate">
                                 {t('dashboard.stats.myPets', 'My Pets')}
                             </span>
-                            <span className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-orange-50 dark:bg-orange-950/50 text-orange-600 dark:text-orange-400 group-hover:scale-110 transition-transform">
-                                <PawPrint className="h-4 w-4 sm:h-5 sm:w-5" />
+                            <span className="flex h-6 w-6 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl bg-orange-50 dark:bg-orange-950/50 text-orange-600 dark:text-orange-400 group-hover:scale-110 transition-transform">
+                                <PawPrint className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
                             </span>
                         </div>
-                        <div className="mt-2 sm:mt-3">
-                            <p className="text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                        <div className="mt-1.5 sm:mt-3">
+                            <p className="text-lg sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                                 {petCount}
                             </p>
-                            <p className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 font-medium truncate mt-0.5">
+                            <p className="text-[9px] sm:text-xs text-slate-400 dark:text-slate-500 font-medium truncate mt-0.5">
                                 {t('dashboard.statsSub.myPets', 'in your care')}
                             </p>
                         </div>
@@ -218,25 +224,25 @@ const Dashboard: React.FC = () => {
                     <button
                         onClick={() => { setActiveTab('upcoming'); setBookingPage(1); }}
                         className={cn(
-                            'flex flex-col justify-between p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border shadow-xs hover:shadow-md transition-all text-left group',
+                            'flex flex-col justify-between p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border shadow-xs hover:shadow-md transition-all text-left group min-w-0',
                             activeTab === 'upcoming'
                                 ? 'border-primary/60 ring-2 ring-primary/20 bg-orange-50/20 dark:bg-orange-950/10'
                                 : 'border-slate-200/80 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-800'
                         )}
                     >
-                        <div className="flex items-center justify-between">
-                            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+                        <div className="flex items-center justify-between gap-1">
+                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-slate-500 dark:text-slate-400 truncate">
                                 {t('dashboard.stats.upcoming', 'Upcoming')}
                             </span>
-                            <span className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
-                                <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
+                            <span className="flex h-6 w-6 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
+                                <Calendar className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
                             </span>
                         </div>
-                        <div className="mt-2 sm:mt-3">
-                            <p className="text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                        <div className="mt-1.5 sm:mt-3">
+                            <p className="text-lg sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                                 {upcomingCount}
                             </p>
-                            <p className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 font-medium truncate mt-0.5">
+                            <p className="text-[9px] sm:text-xs text-slate-400 dark:text-slate-500 font-medium truncate mt-0.5">
                                 {t('dashboard.statsSub.upcoming', 'active & pending')}
                             </p>
                         </div>
@@ -246,25 +252,25 @@ const Dashboard: React.FC = () => {
                     <button
                         onClick={() => { setActiveTab('history'); setBookingPage(1); }}
                         className={cn(
-                            'flex flex-col justify-between p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border shadow-xs hover:shadow-md transition-all text-left group',
+                            'flex flex-col justify-between p-3 sm:p-5 rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 border shadow-xs hover:shadow-md transition-all text-left group min-w-0',
                             activeTab === 'history'
                                 ? 'border-emerald-500/60 ring-2 ring-emerald-500/20 bg-emerald-50/20 dark:bg-emerald-950/10'
                                 : 'border-slate-200/80 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-800'
                         )}
                     >
-                        <div className="flex items-center justify-between">
-                            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+                        <div className="flex items-center justify-between gap-1">
+                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-tight text-slate-500 dark:text-slate-400 truncate">
                                 {t('dashboard.stats.completed', 'Completed')}
                             </span>
-                            <span className="flex h-7 w-7 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
-                                <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                            <span className="flex h-6 w-6 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
+                                <CheckCircle2 className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
                             </span>
                         </div>
-                        <div className="mt-2 sm:mt-3">
-                            <p className="text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                        <div className="mt-1.5 sm:mt-3">
+                            <p className="text-lg sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                                 {completedCount}
                             </p>
-                            <p className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 font-medium truncate mt-0.5">
+                            <p className="text-[9px] sm:text-xs text-slate-400 dark:text-slate-500 font-medium truncate mt-0.5">
                                 {t('dashboard.statsSub.completed', 'past stays')}
                             </p>
                         </div>
@@ -477,11 +483,12 @@ const Dashboard: React.FC = () => {
                                             return (
                                                 <div
                                                     key={booking.id}
-                                                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 sm:p-6 transition hover:bg-slate-50/70 dark:hover:bg-slate-800/40"
+                                                    onClick={() => navigate(`/bookings/${booking.id}`)}
+                                                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 sm:p-6 transition hover:bg-slate-50/70 dark:hover:bg-slate-800/40 cursor-pointer group"
                                                 >
                                                     <div className="flex items-start gap-4 min-w-0">
                                                         <div className={cn(
-                                                            'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border shadow-2xs font-bold text-sm',
+                                                            'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border shadow-2xs font-bold text-sm transition group-hover:scale-105',
                                                             isCompleted
                                                                 ? 'bg-sky-50 text-sky-600 border-sky-200 dark:bg-sky-950/50 dark:border-sky-800'
                                                                 : isAccepted
@@ -493,9 +500,12 @@ const Dashboard: React.FC = () => {
 
                                                         <div className="min-w-0 flex-1">
                                                             <div className="flex flex-wrap items-center gap-2">
-                                                                <h3 className="font-bold text-slate-900 dark:text-white capitalize truncate text-sm sm:text-base">
+                                                                <h3 className="font-bold text-slate-900 dark:text-white capitalize truncate text-sm sm:text-base group-hover:text-primary transition">
                                                                     {booking.serviceType.replace(/([A-Z])/g, ' $1').trim()}
                                                                 </h3>
+                                                                <span className="font-mono text-xs text-slate-400 dark:text-slate-500">
+                                                                    #{bookingReference(booking.id, booking.referenceNumber)}
+                                                                </span>
                                                                 <span className={cn('rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide border', statusBadgeClass)}>
                                                                     {String(t(`dashboard.bookings.status.${booking.status.toLowerCase()}`, { defaultValue: booking.status }))}
                                                                 </span>
@@ -520,7 +530,10 @@ const Dashboard: React.FC = () => {
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
-                                                                onClick={() => handleCancel(booking.id)}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleCancel(booking.id);
+                                                                }}
                                                                 className="h-9 px-3 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
                                                             >
                                                                 {t('dashboard.bookings.cancel', 'Cancel')}
@@ -528,14 +541,16 @@ const Dashboard: React.FC = () => {
                                                         )}
 
                                                         {isAccepted && (
-                                                            <PayButton
-                                                                bookingId={booking.id}
-                                                                amountLabel={booking.totalPrice ? `€${booking.totalPrice}` : undefined}
-                                                            />
+                                                            <div onClick={(e) => e.stopPropagation()}>
+                                                                <PayButton
+                                                                    bookingId={booking.id}
+                                                                    amountLabel={booking.totalPrice ? `€${booking.totalPrice}` : undefined}
+                                                                />
+                                                            </div>
                                                         )}
 
                                                         {completionRequested && (
-                                                            <Button size="sm" onClick={async () => { try { await bookingService.updateStatus(booking.id, BookingStatus.COMPLETED); window.location.reload(); } catch { showToast('Failed to confirm completion', 'error'); } }}>
+                                                            <Button size="sm" onClick={async (e) => { e.stopPropagation(); try { await bookingService.updateStatus(booking.id, BookingStatus.COMPLETED); window.location.reload(); } catch { showToast('Failed to confirm completion', 'error'); } }}>
                                                                 Confirm completion
                                                             </Button>
                                                         )}
@@ -544,7 +559,7 @@ const Dashboard: React.FC = () => {
                                                             <Button
                                                                 size="sm"
                                                                 variant="outline"
-                                                                onClick={() => { setSelectedBookingId(booking.id); setReviewModalOpen(true); }}
+                                                                onClick={(e) => { e.stopPropagation(); setSelectedBookingId(booking.id); setReviewModalOpen(true); }}
                                                                 className="h-9 px-3 rounded-xl text-xs font-bold"
                                                             >
                                                                 <Star className="w-3.5 h-3.5 mr-1 text-amber-500 fill-amber-500" />
@@ -556,7 +571,7 @@ const Dashboard: React.FC = () => {
                                                             size="icon"
                                                             variant="outline"
                                                             aria-label={t('dashboard.quickActions.messages.title', 'Messages')}
-                                                            onClick={() => navigate('/messages', { state: { userId: booking.sitter?.userId } })}
+                                                            onClick={(e) => { e.stopPropagation(); navigate('/messages', { state: { userId: booking.sitter?.userId } }); }}
                                                             className="h-9 w-9 rounded-xl border-slate-200 dark:border-slate-700"
                                                         >
                                                             <MessageSquare className="h-4 w-4 text-slate-600 dark:text-slate-300" />

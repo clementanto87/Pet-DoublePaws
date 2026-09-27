@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../services/api_service.dart';
+import '../providers/auth_provider.dart';
 
 class BookingProcessScreen extends StatefulWidget {
   final Map<String, dynamic> sitter;
@@ -495,6 +496,31 @@ class _BookingProcessScreenState extends State<BookingProcessScreen> {
   bool _isLoading = false;
 
   Future<void> _submitBooking() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (!authProvider.isAuthenticated) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Login Required'),
+          content: const Text('Please log in or sign up to send your booking request.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                context.push('/login');
+              },
+              child: const Text('Log In'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     
     // Calculate days

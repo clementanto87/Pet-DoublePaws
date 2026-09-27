@@ -16,8 +16,11 @@ const LoginPage: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { t } = useTranslation();
-
-    const from = location.state?.from?.pathname || '/dashboard';
+    const from = location.state?.from ? (
+        typeof location.state.from === 'string'
+            ? location.state.from
+            : ((location.state.from.pathname || '') + (location.state.from.search || '') + (location.state.from.hash || ''))
+    ) : '/dashboard';
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();

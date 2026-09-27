@@ -547,7 +547,7 @@ const SitterDashboard: React.FC = () => {
                                     {/* Segmented Tab Controls */}
                                     <div className="flex rounded-2xl bg-slate-100 dark:bg-slate-800 p-1 self-start sm:self-auto border border-slate-200/50 dark:border-slate-700/50">
                                         <button
-                                            onClick={() => { setActiveTab('upcoming'); setBookingPage(1); }}
+                                            onClick={() => { setActiveTab('upcoming'); setBookingStatusFilter('ALL'); setBookingPage(1); }}
                                             className={cn(
                                                 'rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-bold transition-all',
                                                 activeTab === 'upcoming'
@@ -558,7 +558,7 @@ const SitterDashboard: React.FC = () => {
                                             Upcoming & Pending
                                         </button>
                                         <button
-                                            onClick={() => { setActiveTab('history'); setBookingPage(1); }}
+                                            onClick={() => { setActiveTab('history'); setBookingStatusFilter('ALL'); setBookingPage(1); }}
                                             className={cn(
                                                 'rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-bold transition-all',
                                                 activeTab === 'history'
@@ -648,19 +648,19 @@ const SitterDashboard: React.FC = () => {
                                                 ? 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/60 dark:text-sky-300 dark:border-sky-800'
                                                 : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700';
 
-                                            const ownerName = booking.owner?.user
-                                                ? `${booking.owner.user.firstName} ${booking.owner.user.lastName || ''}`
-                                                : 'Pet Parent';
+                                            const ownerFullName = [booking.owner?.firstName, booking.owner?.lastName].filter(Boolean).join(' ').trim();
+                                            const ownerName = ownerFullName || booking.owner?.email || (booking.owner?.user ? `${booking.owner.user.firstName} ${booking.owner.user.lastName || ''}`.trim() : 'Pet Parent');
 
                                             return (
                                                 <div
                                                     key={booking.id}
-                                                    className="p-4 sm:p-6 transition hover:bg-slate-50/70 dark:hover:bg-slate-800/40 space-y-3 min-w-0 overflow-hidden"
+                                                    onClick={() => navigate(`/bookings/${booking.id}`)}
+                                                    className="p-4 sm:p-6 transition hover:bg-slate-50/70 dark:hover:bg-slate-800/40 space-y-3 min-w-0 overflow-hidden cursor-pointer group"
                                                 >
                                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
                                                         <div className="flex items-start gap-3 min-w-0 flex-1">
                                                             <div className={cn(
-                                                                'flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl border shadow-2xs font-bold text-xs sm:text-sm',
+                                                                'flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl border shadow-2xs font-bold text-xs sm:text-sm transition group-hover:scale-105',
                                                                 isAccepted
                                                                     ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/50 dark:border-emerald-800'
                                                                     : isPending
@@ -672,18 +672,26 @@ const SitterDashboard: React.FC = () => {
 
                                                             <div className="min-w-0 flex-1">
                                                                 <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                                                                    <h3 className="font-bold text-slate-900 dark:text-white capitalize truncate text-sm sm:text-base">
+                                                                    <h3 className="font-bold text-slate-900 dark:text-white capitalize truncate text-sm sm:text-base group-hover:text-primary transition">
                                                                         {booking.serviceType.replace(/([A-Z])/g, ' $1').trim()}
                                                                     </h3>
+                                                                    <span className="font-mono text-xs text-slate-400 dark:text-slate-500">
+                                                                        #{bookingReference(booking.id, booking.referenceNumber)}
+                                                                    </span>
                                                                     <span className={cn('rounded-full px-2 py-0.5 text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wide border', statusBadgeClass)}>
                                                                         {booking.status}
                                                                     </span>
                                                                 </div>
 
                                                                 <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400 min-w-0">
-                                                                    <span className="inline-flex items-center gap-1 font-medium text-slate-700 dark:text-slate-300 truncate">
+                                                                    <span className="inline-flex items-center gap-1 font-medium text-slate-700 dark:text-slate-300 truncate" title={booking.owner?.email || ownerName}>
                                                                         <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                                                                         <span className="truncate">{ownerName}</span>
+                                                                        {booking.owner?.email && ownerFullName && (
+                                                                            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-normal truncate">
+                                                                                ({booking.owner.email})
+                                                                            </span>
+                                                                        )}
                                                                     </span>
                                                                     <span className="inline-flex items-center gap-1 font-medium whitespace-nowrap">
                                                                         <Clock className="h-3.5 w-3.5 text-slate-400 shrink-0" />
@@ -702,7 +710,10 @@ const SitterDashboard: React.FC = () => {
                                                                 <>
                                                                     <Button
                                                                         size="sm"
-                                                                        onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: BookingStatus.ACCEPTED })}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            updateBookingStatusMutation.mutate({ id: booking.id, status: BookingStatus.ACCEPTED });
+                                                                        }}
                                                                         disabled={updateBookingStatusMutation.isPending}
                                                                         className="h-8 sm:h-9 px-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
                                                                     >
@@ -712,7 +723,10 @@ const SitterDashboard: React.FC = () => {
                                                                     <Button
                                                                         size="sm"
                                                                         variant="outline"
-                                                                        onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: BookingStatus.REJECTED })}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            updateBookingStatusMutation.mutate({ id: booking.id, status: BookingStatus.REJECTED });
+                                                                        }}
                                                                         disabled={updateBookingStatusMutation.isPending}
                                                                         className="h-8 sm:h-9 px-3 rounded-xl text-xs font-bold border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/50 dark:hover:bg-red-950/40"
                                                                     >
@@ -724,7 +738,10 @@ const SitterDashboard: React.FC = () => {
                                                             {isAccepted && (
                                                                 <Button
                                                                     size="sm"
-                                                                    onClick={() => updateBookingStatusMutation.mutate({ id: booking.id, status: BookingStatus.COMPLETION_REQUESTED })}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        updateBookingStatusMutation.mutate({ id: booking.id, status: BookingStatus.COMPLETION_REQUESTED });
+                                                                    }}
                                                                     disabled={updateBookingStatusMutation.isPending}
                                                                     className="h-8 sm:h-9 px-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
                                                                 >
@@ -737,11 +754,18 @@ const SitterDashboard: React.FC = () => {
                                                                 size="icon"
                                                                 variant="outline"
                                                                 aria-label="Message owner"
-                                                                onClick={() => navigate('/sitter-messages', { state: { userId: booking.ownerId } })}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    navigate('/sitter-messages', { state: { userId: booking.ownerId } });
+                                                                }}
                                                                 className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl border-slate-200 dark:border-slate-700"
                                                             >
                                                                 <MessageSquare className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
                                                             </Button>
+
+                                                            <div className="hidden sm:flex items-center pl-1 text-slate-400 group-hover:text-primary transition group-hover:translate-x-0.5">
+                                                                <ChevronRight className="w-4 h-4" />
+                                                            </div>
                                                         </div>
                                                     </div>
 

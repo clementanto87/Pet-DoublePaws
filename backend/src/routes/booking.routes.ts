@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createBooking, getBookings, getBookingsBySitterId, updateBookingStatus } from '../controllers/booking.controller';
+import { createBooking, getBookings, getBookingsBySitterId, getBookingById, updateBookingStatus } from '../controllers/booking.controller';
 import { authenticateToken } from '../middleware/auth.middleware';
 
 const router = Router();
@@ -12,6 +12,7 @@ router.use(authenticateToken);
 
 router.post('/', createBooking);
 router.get('/', getBookings);
+router.get('/:id', getBookingById);
 router.patch('/:id/status', updateBookingStatus);
 
 export default router;

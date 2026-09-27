@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Label } from '../components/ui/Label';
@@ -14,7 +14,14 @@ const SignupPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const { signup, error } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const { t } = useTranslation();
+
+    const from = location.state?.from ? (
+        typeof location.state.from === 'string'
+            ? location.state.from
+            : ((location.state.from.pathname || '') + (location.state.from.search || '') + (location.state.from.hash || ''))
+    ) : '/';
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -28,7 +35,7 @@ const SignupPage: React.FC = () => {
 
         try {
             await signup(firstName, lastName, email, password);
-            navigate('/');
+            navigate(from, { replace: true });
         } catch (err) {
             console.error('Signup failed', err);
         } finally {
