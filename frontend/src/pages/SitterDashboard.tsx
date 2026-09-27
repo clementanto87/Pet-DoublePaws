@@ -28,7 +28,8 @@ import {
     Image as ImageIcon,
     Trash2,
     ShieldCheck,
-    Check
+    Check,
+    Wallet
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -44,6 +45,8 @@ import { useToast } from '../components/ui/Toast';
 import { AvailabilityCalendar } from '../components/sitter/AvailabilityCalendar';
 import { SupportRequestCard } from '../components/support/SupportRequestCard';
 import { bookingReference } from '../utils/bookingReference';
+import { Modal } from '../components/ui/Modal';
+import BankingForm from '../components/sitter-registration/BankingForm';
 
 // Service name mapping
 const serviceNames: Record<string, string> = {
@@ -1019,6 +1022,17 @@ const SitterDashboard: React.FC = () => {
                             </button>
 
                             <button
+                                onClick={() => openEditModal('payment')}
+                                className="flex w-full items-center justify-between rounded-2xl border border-slate-100 dark:border-slate-800 p-2.5 sm:p-3 text-left text-xs font-semibold transition hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                            >
+                                <span className="flex items-center gap-2.5 truncate">
+                                    <Wallet className="h-4 w-4 text-primary shrink-0" />
+                                    <span className="truncate">Payment & Payout Details</span>
+                                </span>
+                                <ChevronRight className="h-4 w-4 text-slate-400 shrink-0" />
+                            </button>
+
+                            <button
                                 onClick={() => navigate('/become-a-sitter/register')}
                                 className="flex w-full items-center justify-between rounded-2xl border border-primary/20 bg-orange-50/40 dark:bg-orange-950/20 p-2.5 sm:p-3 text-left text-xs font-bold text-primary transition hover:bg-orange-50 dark:hover:bg-orange-950/40 mt-2"
                             >
@@ -1465,6 +1479,18 @@ const SitterDashboard: React.FC = () => {
                     </div>
                 </div>
             </EditModal>
+
+            {/* Payment & Payout Details — lets an existing sitter update their
+                payout/banking details (via Stripe Connect) without recreating
+                the whole profile. BankingForm has its own onboarding CTA, so we
+                use the plain Modal rather than the Save-footer EditModal. */}
+            <Modal
+                isOpen={editModal.isOpen && editModal.section === 'payment'}
+                onClose={() => setEditModal({ isOpen: false, section: '' })}
+                title={t('sitterDashboard.editTitles.payment', 'Payment & Payout Details')}
+            >
+                <BankingForm />
+            </Modal>
         </div>
     );
 };
