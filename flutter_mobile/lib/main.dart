@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -15,18 +16,34 @@ import 'screens/messages_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/my_pets_screen.dart';
 import 'screens/sitter_dashboard_screen.dart';
+import 'screens/assistant_screen.dart';
 import 'widgets/main_scaffold.dart';
 
 import 'services/notification_service.dart';
+import 'services/floating_assistant_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await NotificationService().init();
+  FloatingAssistantService.init();
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    FloatingAssistantService.onBubbleTapped = () {
+      _router.go('/assistant');
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +57,7 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFFF97316), // Orange primary color
+            seedColor: const Color(0xFFF97316),
             brightness: Brightness.light,
           ),
           useMaterial3: true,
@@ -139,6 +156,10 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/sitter-dashboard',
       builder: (context, state) => const SitterDashboardScreen(),
+    ),
+    GoRoute(
+      path: '/assistant',
+      builder: (context, state) => const AssistantScreen(),
     ),
   ],
 );
