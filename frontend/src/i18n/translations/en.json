@@ -34,7 +34,7 @@
     "switch": "Switch Language"
   },
   "navigation": {
-    "home": "Home24",
+    "home": "Home",
     "dashboard": "Dashboard",
     "sitterDashboard": "Sitter Dashboard",
     "becomeSitter": "Become a Sitter",
@@ -630,7 +630,7 @@
     "description": "Premium pet care services designed to make your furry friends feel right at home. Safe, fun, and loving environment.",
     "quickLinks": {
       "title": "Quick Links",
-      "home": "Home24",
+      "home": "Home",
       "about": "About Us",
       "services": "Services",
       "pricing": "Pricing",

@@ -34,7 +34,7 @@
     "switch": "Sprache wechseln"
   },
   "navigation": {
-    "home": "Home24",
+    "home": "Startseite",
     "dashboard": "Dashboard",
     "sitterDashboard": "Sitter-Dashboard",
     "becomeSitter": "Sitter werden",
@@ -630,7 +630,7 @@
     "description": "Premium-Tierbetreuungsdienste, die Ihre pelzigen Freunde wie zu Hause fühlen lassen. Sichere, lustige und liebevolle Umgebung.",
     "quickLinks": {
       "title": "Schnelllinks",
-      "home": "Home24",
+      "home": "Startseite",
       "about": "Über uns",
       "services": "Dienstleistungen",
       "pricing": "Preise",
