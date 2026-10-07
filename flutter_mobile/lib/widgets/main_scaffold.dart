@@ -30,7 +30,7 @@ class MainScaffold extends StatelessWidget {
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_rounded),
-            label: 'Home',
+            label: 'Home24',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.chat_bubble_rounded),
